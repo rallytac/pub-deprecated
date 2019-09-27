@@ -215,6 +215,12 @@ public class Engage
         public EngageStringCallback PFN_ENGAGE_GROUP_RAW_SENT;
         public EngageStringCallback PFN_ENGAGE_GROUP_RAW_SEND_FAILED;
         public EngageStringAndBlobCallback PFN_ENGAGE_GROUP_RAW_RECEIVED;
+
+        public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_EVENT_STARTED;
+        public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED;
+        public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_EVENT_ENDED;
+        public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_REPORT;
+        public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
     }
     #endregion
 
