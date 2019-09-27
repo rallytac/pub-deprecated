@@ -304,6 +304,13 @@ public class Engage
                                                  byte[] raw,
                                                  int rawSize,
                                                  string jsonRtpHeader);    
+
+    private static extern int engageQueryGroupTimeline(string id,
+                                                       string jsonParams);        
+
+    private static extern int engageLogMsg(int level,
+                                           string tag,
+                                           string msg);                                                                                                
     #endregion
 
     #region Internal functions
