@@ -998,18 +998,60 @@ public class Engage
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_ASSET_UNDISCOVERED = (string id, string nodeJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_STARTED = (string id, string eventJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupAssetUndiscovered(id, nodeJson);
+                n.onGroupTimelineEventStarted(id, eventJson);
             }
         }
     };
 
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED = (string id, string eventJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTimelineEventUpdated(id, eventJson);
+            }
+        }
+    };
 
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_ENDED(string id, string eventJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTimelineEventEnded(id, eventJson);
+            }
+        }
+    };
+
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_REPORT = (string id, string reportJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTimelineReport(id, reportJson);
+            }
+        }
+    };
+
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED = (string id) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTimelineReportFailed(id);
+            }
+        }
+    };
     #endregion
 
     #region Public functions
