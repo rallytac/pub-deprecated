@@ -1,4 +1,4 @@
-# Certicates
+# Certificates
 
 ___
 #IMPORTANT
