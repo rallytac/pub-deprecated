@@ -20,6 +20,15 @@ This directory contains RTS factory certificates and keys used for development a
 
 * ***rtsFactoryDefaultRpSrv.key*** is the private key for *rtsFactoryDefaultRpSrv.pem*.
 
+### Android Files
+We use Android Studio for development of apps for Android, including the sample applications in this repository.  Now those sample applications need certificates as well - and those files have to be in a particular directory structure layout and need to be named in a particular fashion as per requirements for Android Studio.  So, you'll see a directory named *android* and, within that *raw*.  This is the direcrory where Android Studio points to for the certificate files.
+
+Then, in that *raw* directory, are the files we use.  They are simply copies of *rtsCA.pem*, *rtsFactoryDefaultEngage.pem*, and *rtsFactoryDefaultEngage.key*.  But they have been renamed to meet Android Studio's requirements.  Henceforth, in that directory:
+
+* **rtsCA.pem** == **android_rts_ca_certificate.pem**
+* **rtsFactoryDefaultEngage.pem** == **android_rts_factory_default_engage_certificate.pem**
+* **rtsFactoryDefaultEngage.key** == **android_rts_factory_default_engage_private_key.key**
+
 ## Obtaining commercially-issued certificates
 Your best bet for production purposes is to use certificates issued by a trusted third-party such as a commercial Certificate Authority.  (A benefit to this is that the CA's certificate will most likely be installed as part of your operating system anyway.)  
 
