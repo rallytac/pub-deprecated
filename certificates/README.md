@@ -21,9 +21,9 @@ This directory contains RTS factory certificates and keys used for development a
 * ***rtsFactoryDefaultRpSrv.key*** is the private key for *rtsFactoryDefaultRpSrv.pem*.
 
 ## Obtaining commercially-issued certificates
-Your best bet for production purposes is to use certificates issued by a trusted thirdp-party such as a commercial Certificate Authority.  (A benefit to this is that the CA's certificate will most likely be installed as part of your operating system anyway.)  
+Your best bet for production purposes is to use certificates issued by a trusted third-party such as a commercial Certificate Authority.  (A benefit to this is that the CA's certificate will most likely be installed as part of your operating system anyway.)  
 
-Failing that, though, you can issue your own certificates - either by self-sgning them (not advised) or by becoming a CA yourself, creating certificates using your CA certificate, and installing your CA certificates on machines that will be validating your certificates.  We're going to cover that procedure in the next section.
+Failing that, though, you can issue your own certificates - either by self-signing them (not advised!) or by becoming a CA yourself, creating certificates using your CA certificate, and installing your CA certificates on machines that will be validating your certificates.  We're going to cover that procedure in the next section.
 
 ## Generating your own certificates
 Creating your own certificates is actually pretty straightforward once you get past all the scary-looking command-line options offered by tools such as OpenSSL (which we're going to use here). OpenSSL is likely already installed on your machine but, if not, grab it from https://www.openssl.org.
@@ -37,7 +37,7 @@ Let's create the certificate which is going to be used to issue subsequent certi
 We're going to use the *secp521r1* elliptic curve.  This will produce a file named *myCA.key*.  (You can use any file name you'd like.)
 
 ```
-openssl ecparam -name secp521r1 -genkey -out myCA.key
+# openssl ecparam -name secp521r1 -genkey -out myCA.key
 ```
 
 The contents of the file will look something like this - an unencrypted/unprotected private key.
@@ -57,7 +57,7 @@ iX30wv8n1HA0hnLgEwdaJgRC4sDbcKSjVderlL38bQ==
 #### Step 2: Encrypt the key
 Next, encrypt this key using AES256.  You will be asked for a passphrase/password that will protect your key.  Don't forget this password or you won't be able to recover your private key.
 ```
-openssl ec -in myCA.key -out myCA.key -aes256
+# openssl ec -in myCA.key -out myCA.key -aes256
 ```
 
 Your key file is now protected with your password and will look something like this:
@@ -80,7 +80,7 @@ kNEECZ0we85FfIu3y0idadUAVyCXW/d5RzgyN5Dy5H4=
 Now we'll use this key to create the CA certificate - which we'll store in *myCA.pem*.  Notice how in the example below, we specify a *-days* value of *3650*.  This means that the certificate will expire in 3650 days.  You can make this value whatever you'd like.
 
 ```
-openssl req -x509 -new -nodes -key myCA.key -sha256 -days 3650 -out myCA.pem
+# openssl req -x509 -new -nodes -key myCA.key -sha256 -days 3650 -out myCA.pem
 ```
 
 There's going to be quite a few pieces of information that OpenSSL will prompt you for during this - starting with the password/passphrase for the key file you created above.  (Hopefully you remembered it).  You will also be asked for information concerning the location of your organization (such as country, city, and other locality) as well as organization name and organizational unit name.  The unit name is often used to describe the use of the certificate - in this case, the fact that it is a CA certificate - and not an "ordinary" certificate.  Make sure you provide correct information for all this stuff.
@@ -121,7 +121,7 @@ Note that we're not going to encrypt the private key in these examples as these 
 We'll follow the same procedure here to generate a private key as we did for our CA certificate.
 
 ```
-openssl ecparam -name secp521r1 -genkey -out myClientCert.key
+# openssl ecparam -name secp521r1 -genkey -out myClientCert.key
 ```
 
 Your (unencryted) private key file will look something like this:
@@ -144,7 +144,7 @@ A CSR is a "Certificate Signing Request" which is simply a simply file based on 
 So, using the *myClientCert.key* created in Step 1:
 
 ```
-openssl req -new -key myClientCert.key -out myClientCert.csr
+# openssl req -new -key myClientCert.key -out myClientCert.csr
 ```
 
 This will give you a CSR file something like this:
@@ -166,11 +166,11 @@ Ob+l9w7dfs6jjxQF4D6sIqU=
 ```
 
 #### Step 3: Create the certificate from the CSR
-We're almost there.  The last thing we have to do is to actually create the certificate.  Normally this is something a commercial certificate authorority would do using its CA Certificate and associated private key.  But we're our own CA, so we use our CA Certificate goodies we created earlier to create (actually "issue" is the correct term) the certificate.
+We're almost there.  The last thing we have to do is to actually create the certificate.  Normally this is something a commercial certificate authority would do using its CA Certificate and associated private key.  But we're our own CA, so we use our CA Certificate goodies we created earlier to create (actually "issue" is the correct term) the certificate.
 
 Here's the command:
 ```
-openssl x509 -req -in myClientCert.csr -CA myCA.pem -CAkey myCA.key -CAcreateserial -out myClientCert.pem -days 3650 -sha256
+# openssl x509 -req -in myClientCert.csr -CA myCA.pem -CAkey myCA.key -CAcreateserial -out myClientCert.pem -days 3650 -sha256
 ```
 
 As this command will be using the private key for our CA Certificate (which we encrypted - remember?), you will have to enter the password for that CA private key.
