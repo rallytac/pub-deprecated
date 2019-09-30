@@ -14,6 +14,16 @@ buildscript {
     }
 }
 
+project.ext {
+    versionCode = 83
+    versionName = "1.83"
+    engageRootPath = "../../../.."
+    engageEngineBuild = "release"
+    engageEngineVersion = "1.83.8833"
+    engageEngineAarPath = engageRootPath + "/bin/" + engageEngineVersion + "/android"
+    engageEngineAarFile = "engage-engine-" + engageEngineBuild + "-" + engageEngineVersion + ".aar"
+}
+
 allprojects {
     repositories {
         google()

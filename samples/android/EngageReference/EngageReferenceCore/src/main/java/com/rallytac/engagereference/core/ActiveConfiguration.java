@@ -727,8 +727,8 @@ public class ActiveConfiguration
                     certificate = new JSONObject();
                 }
 
-                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.certificate, Utils.getStringResource(Globals.getEngageApplication(), R.raw.dev_x509_cert));
-                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.key, Utils.getStringResource(Globals.getEngageApplication(), R.raw.dev_x509_key));
+                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.certificate, Utils.getStringResource(Globals.getEngageApplication(), R.raw.android_rts_factory_default_engage_certificate));
+                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.key, Utils.getStringResource(Globals.getEngageApplication(), R.raw.android_rts_factory_default_engage_private_key));
 
                 security.put(Engine.JsonFields.EnginePolicy.Certificate.objectName, certificate);
                 rc.put(Engine.JsonFields.EnginePolicy.Security.objectName, security);

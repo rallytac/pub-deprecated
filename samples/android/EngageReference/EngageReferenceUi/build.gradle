@@ -6,8 +6,8 @@ android {
         applicationId "com.rallytac.engage.engagereferenceui"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 82
-        versionName "1.82"
+        versionCode project.versionCode
+        versionName project.versionName
         vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
@@ -40,7 +40,7 @@ dependencies {
     implementation project(':engageReferenceCore')
 
     // Engage Engine
-    implementation fileTree(dir: '../../artifacts/android', include: ["engage-engine-release-1.82.8835.aar"])
+    implementation fileTree(dir: project.engageEngineAarPath, include: [project.engageEngineAarFile])
 
     // Other libraries and such
     implementation fileTree(dir: 'libs', include: ['*.jar'])

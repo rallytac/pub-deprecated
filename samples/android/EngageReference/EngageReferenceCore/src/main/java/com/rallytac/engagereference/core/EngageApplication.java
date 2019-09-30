@@ -997,8 +997,8 @@ public class EngageApplication
                 host.put("port", _activeConfiguration.getRpPort());
 
                 rallypoint.put("host", host);
-                rallypoint.put("certificate", Utils.getStringResource(this, R.raw.dev_x509_cert));
-                rallypoint.put("certificateKey", Utils.getStringResource(this, R.raw.dev_x509_key));
+                rallypoint.put("certificate", Utils.getStringResource(this, R.raw.android_rts_factory_default_engage_certificate));
+                rallypoint.put("certificateKey", Utils.getStringResource(this, R.raw.android_rts_factory_default_engage_private_key));
 
 
                 JSONArray rallypoints = new JSONArray();
