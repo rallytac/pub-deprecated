@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="10dp"
+    android:paddingTop="10dp">
+
+    <ImageView
+        android:id="@+id/ivEventType"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_event_transmit" />
+
+    <TextView
+        android:id="@+id/tvSourceEntity"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        android:text="(source entity)"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/ivEventType"
+        app:layout_constraintEnd_toStartOf="@+id/tvAudioLengthMs"
+        app:layout_constraintStart_toEndOf="@+id/ivEventType"
+        app:layout_constraintTop_toTopOf="@+id/ivEventType" />
+
+    <TextView
+        android:id="@+id/tvAudioLengthMs"
+        android:layout_width="64dp"
+        android:layout_height="25dp"
+        android:layout_marginEnd="8dp"
+        android:gravity="end"
+        android:text="#"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/tvSourceEntity"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/tvSourceEntity" />
+
+    <TextView
+        android:id="@+id/tvExtraInformation"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:textSize="10sp"
+        android:text="(extra information)"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ivEventType" />
+</android.support.constraint.ConstraintLayout>

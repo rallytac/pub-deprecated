@@ -1,0 +1,57 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 82
+        versionName "1.82"
+        vectorDrawables.useSupportLibrary = true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    android.libraryVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "engage-reference-core-${variant.name}-${defaultConfig.versionName}.aar"
+        }
+    }
+    lintOptions {
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    // Engage Engine
+    implementation fileTree(dir: '../../artifacts/android', include: ["engage-engine-release-1.82.8835.aar"])
+
+    // Other libraries and such
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    // Android goodies
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:preference-v7:28.0.0'
+    implementation 'com.android.support:support-vector-drawable:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+
+    // QR codes
+    implementation 'com.journeyapps:zxing-android-embedded:3.5.0'
+
+    // Google Maps
+    implementation 'com.google.android.gms:play-services-maps:16.1.0'
+    implementation 'com.google.android.gms:play-services-location:16.0.0'
+    implementation 'com.google.android.gms:play-services-maps:16.1.0'
+
+    // Charting
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+}

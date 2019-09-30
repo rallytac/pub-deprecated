@@ -1,0 +1,87 @@
+{
+  "dataDirectory":"/sdcard/com.rallytac.engage/engine",
+
+  "licensing":{
+    "key":"",
+    "activationCode":""
+  },
+
+  "internals":{
+    "disableWatchdog":false,
+    "watchdogIntervalMs":5000,
+    "watchdogHangDetectionMs":2000,
+    "housekeeperIntervalMs":1000,
+    "maxTxSecs":30
+  },
+
+  "timelines": {
+    "enabled":true,
+    "storageRoot":"",
+    "maxStorageQuotaMb":128,
+    "maxEventAgeSecs":2592000,
+    "maxEvents":10000,
+    "groomingIntervalSecs":1800
+  },
+
+
+  "networking":{
+    "defaultNic":"",
+    "maxOutputQueuePackets":100,
+    "rtpJitterMinMs":500,
+    "rtpJitterMaxMs":1000,
+    "rtpLatePacketSequenceRange":5,
+    "rtpLatePacketTimestampRangeMs":2000,
+    "rtpInboundProcessorInactivityMs":2000,
+    "multicastRejoinSecs":8,
+    "rpLeafConnectTimeoutSecs":10,
+    "maxReconnectPauseMs":5000,
+    "reconnectFailurePauseIncrementMs":500,
+    "sendFailurePauseMs":1000
+  },
+
+  "audio":{
+    "speakerQueueMs":250,
+    "microphoneQueueMs":60,
+    "pcmSamplingRate":16000,
+    "pcmMinPlatformSampleCount":250,
+    "pcmMaxSamplesInQueue":1000,
+    "pcmSpeakerBuffers":5,
+    "outputChannels":2,
+    "outputGainPercentage":0,
+    "allowOutputOnTransmit": false
+  },
+
+  "security":{
+    "certificate":{
+      "certificate":"",
+      "key":""
+    }
+  },
+
+  "discovery": {
+    "ssdp": {
+      "enabled":false,
+      "ageTimeoutMs":30000,
+      "searchTerms":[
+        "engage:eu",
+        "engage:rp",
+        "engage:gc"
+      ],
+      "address": {
+        "address": "239.255.255.250",
+        "port": 1900
+      }
+    },
+    "cistech": {
+      "enabled":false,
+      "ageTimeoutMs":5000,
+      "address": {
+        "address": "234.10.10.21",
+        "port": 21080
+      }
+    },
+    "trellisware": {
+      "enabled":false
+    }
+  }
+}
