@@ -1,0 +1,4 @@
+samples/cs/engage-sample-cs-console/.vs/*
+samples/cs/engage-sample-cs-console/bin/*
+samples/cs/engage-sample-cs-console/obj/*
+samples/cs/engage-sample-cs-console/packages/*
