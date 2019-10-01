@@ -5,7 +5,6 @@
 
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace engage_sample_cs_console
@@ -722,6 +721,30 @@ namespace engage_sample_cs_console
             Console.WriteLine("C#: onLicenseExpiring: " + secondsLeft);
         }
 
+        public void onGroupTimelineEventStarted(string id, string eventJson)
+        {
+            Console.WriteLine("C#: onGroupTimelineEventStarted: " + id + ", event=" + eventJson);
+        }
+
+        public void onGroupTimelineEventUpdated(string id, string eventJson)
+        {
+            Console.WriteLine("C#: onGroupTimelineEventUpdated: " + id + ", event=" + eventJson);
+        }
+
+        public void onGroupTimelineEventEnded(string id, string eventJson)
+        {
+            Console.WriteLine("C#: onGroupTimelineEventEnded: " + id + ", event=" + eventJson);
+        }
+
+        public void onGroupTimelineReport(string id, string reportJson)
+        {
+            Console.WriteLine("C#: onGroupTimelineReport: " + id + ", event=" + reportJson);
+        }
+
+        public void onGroupTimelineReportFailed(string id)
+        {
+            Console.WriteLine("C#: onGroupTimelineReportFailed: " + id);
+        }
         #endregion
     }
 }
