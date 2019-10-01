@@ -83,7 +83,7 @@ public class Engage
         void onGroupRawReceived(string id, byte[] raw, int rawSize);
 
         void onGroupTimelineEventStarted(string id, string eventJson);
-        void onGroupTimelineUpdated(string id, string eventJson);
+        void onGroupTimelineEventUpdated(string id, string eventJson);
         void onGroupTimelineEventEnded(string id, string eventJson);
         void onGroupTimelineReport(string id, string reportJson);
         void onGroupTimelineReportFailed(string id);
@@ -140,7 +140,6 @@ public class Engage
     private delegate void EngageString2AndBlobCallback(string s, string j, IntPtr ptr, int i);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void EngageStringAndTwoIntCallback(string s, int i1, int i2);
-
     #endregion
 
     #region Structures
@@ -226,7 +225,7 @@ public class Engage
         public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED;
         public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_EVENT_ENDED;
         public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_REPORT;
-        public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
+        public EngageStringCallback PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
     }
     #endregion
 
@@ -1020,7 +1019,7 @@ public class Engage
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_ENDED(string id, string eventJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_ENDED = (string id, string eventJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
@@ -1042,7 +1041,7 @@ public class Engage
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED = (string id) =>
     {
         lock (_groupNotificationSubscribers)
         {
