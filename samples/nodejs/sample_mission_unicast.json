@@ -1,0 +1,180 @@
+{
+   "meta":{
+     "version":1,
+     "created":"2019-02-07T18:44:43.511Z"
+   },
+   
+   "id":"{41029930-a56d-4f2b-8acc-8e654781780c}",
+   "name":"Sample Mission (Multicast)",
+   "description":"This is a sample mission over unicast only",
+
+   "groups":[
+     {
+       "type":2,
+       "id":"{ead2d373-7bca-472c-8732-7e1c27a69b27}",
+       "name":"Mission Control",
+       "cryptoPassword":"03718654A5663427311F0A0BE704BC65CA732AA8280509365EE4B711B3FB1A43",
+       "rx":{
+         "address":"234.42.42.99",
+         "port":19999
+       },
+       "tx":{
+         "address":"234.42.42.99",
+         "port":19999
+       },
+       "presence":{
+         "format":1,
+         "intervalSecs":30,
+         "forceOnAudioTransmit":false,
+         "listenOnly":false
+       },
+       "rallypoints": [
+           {
+               "host": {
+                   "address": "sta.rp.rallytac.com",
+                   "port": 7443
+               },
+               "certificate": "\n-----BEGIN CERTIFICATE-----\nMIIDfzCCAmegAwIBAgIUZofUeNpX20CzCqEYUsl0mUHVkTwwDQYJKoZIhvcNAQELBQAwTzELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAldBMRAwDgYDVQQHDAdTZWF0dGxlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTgxMjExMjI1OTMyWhcNMTkxMjExMjI1OTMyWjBPMQswCQYDVQQGEwJVUzELMAkGA1UECAwCV0ExEDAOBgNVBAcMB1NlYXR0bGUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALmrian7jB4qLnevECfUp/GUPjptTE/x9XY0XF+xuNu4kNuZl2w4GNkUwCxlTnGYIcZvdjhToQC2TpDDGLiPMU43VTfUbjz62sEadEpigOwfkcft1/5eXs5kBupKaII1v25FT9wo6jR0unYUn/8NbbJOt8Qo+prE0Ag1jmoXwB7KL7GWf5r7ll2LlHJFoUOjQtWu8mzq7o16HxEsiqs9NiwykzumNqiVIkM8TVFPJ+Wgbbj5Tqheqmrgk/9fT/0WMFzbADxJVEa2WlNBTX0m951EvEzlvwBfdpsfcuFj1C8iHun2peoShRtHzYsWoxV8z5tTi7ia8ueMpz9a4KEH1FcCAwEAAaNTMFEwHQYDVR0OBBYEFBwDHftiN5PNoGQ3G7s0fRfWNrDNMB8GA1UdIwQYMBaAFBwDHftiN5PNoGQ3G7s0fRfWNrDNMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAF73+9idwN2UfNW0bq30THcetZXXkqECz4ZPstC4dZyGaMEU/umoej0mTU6oTCYZZUM8wG6/DP9x9QXiPTB6FxxdiEYI5YWdEcsJU2Ff5MO85ykyo9/PAm4luealWaSOo893LaQWCO3Vx8ln7xrzrT/a7dnKLESSogOihxDdasZGLVSuj7KAVDGUiOTRO/jnGk8JXA9coNI2S0QSw/UaC1kOSAZasXI1XXehNA6YEBmpYa2zBqkaMcroMp2HyPMZeJzCkhA1CsWJKMtp7k7h6/eWLSCdBikd3OC44TUws1DSmkZZzTS9gmsywxRsInSlsXtXcHGbUfuLeDerMxZtWCM=\n-----END CERTIFICATE-----\n",
+               "certificateKey": "\n-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5q4mp+4weKi53rxAn1KfxlD46bUxP8fV2NFxfsbjbuJDbmZdsOBjZFMAsZU5xmCHGb3Y4U6EAtk6Qwxi4jzFON1U31G48+trBGnRKYoDsH5HH7df+Xl7OZAbqSmiCNb9uRU/cKOo0dLp2FJ//DW2yTrfEKPqaxNAINY5qF8Aeyi+xln+a+5Zdi5RyRaFDo0LVrvJs6u6Neh8RLIqrPTYsMpM7pjaolSJDPE1RTyfloG24+U6oXqpq4JP/X0/9FjBc2wA8SVRGtlpTQU19JvedRLxM5b8AX3abH3LhY9QvIh7p9qXqEoUbR82LFqMVfM+bU4u4mvLnjKc/WuChB9RXAgMBAAECggEANH8d42PuUDEZBloHNVvZSGLj3V098HS3NH7Fh4EWhXl/67dXqw+JZweI9oSGU3PySMsHIBH1OeBSAnhHKxfBlx3qCGkV6kP7ShISw11qmliqvV6wbYl9QNnjYqc7OWW9BI6wb81Zuw8uEWjvfAvt8jZzmxEDGnN/ZnLOG40vkwSYYhu1WtVynuebVQnXHgW8/k3AV1o8yREvNOezz2hqcUr1g6ByU5aaLLFJ+N//lNagQnB09diRQKpQAOXGBY3GsPrtJhfLIlmaYrSI3LwkM7BtpPpYyoRe4tHJJSaB8gXJ5nbe/jg4z1D+vS+CNbQGk/ddeKJuypJKJy1+x+8NIQKBgQDkErbYmlLqGz7/B432CulVtamO8i1bxyytRlCcWyns5+tBzXtDdjh2DJBMPfJFpoM0kWk6KGXrFq3jaze+KGMACex5jTrIWxbCqM53xmxtfH1nMHGVcgJMA4JlERtU7AFYd8R3BNY9JBBUQYOTtwEBM/B4Cupzedl98b2dE5hS+QKBgQDQZ6Nll8LRuLjPfPAInaZno8hJr0JBPts+Cd9f+Imhm0vkxxWenj9qNpGbh6lcFkztNc95POP0K3LP0AGQg40G8zlEDTzIn5nHoPVeeBNcH/8Lphxh2xs/U5rJ6WB3L8pDlTGVMo63p/JJCpmsExp1dc+ldX1VVTQ3EhovAMTlzwKBgAKpiULcAk3DRaf6cZjGpdSfSzxk7Uyd9ZKMOJKqqcGfL2rUODUgYyZVnTWWn4ZanDt32w+XuyDUYfE+pibtF8K/WuhMUrxV+90H1WkmgsuAYYJb2WeSLh6vB82gNn52Rsm+lCeDgfCyxBIHtb56q2NVNOBh2DzC1lwW/0yfFu8ZAoGBAKIEAAYp7j3mcl5zzZOVI9msfTezdTmN6RmYyTwt1ql5No4bq5YNhlVHKPmVhLdfatx6mdmx2bFn2bDvD1hOvONrUNizxc5eLUoBut9/T+WtxjRDJgt5L/ySPWK8+M6Pq5nQsaRAkqz6dqQMBp28mDQ6q3wBE7e0LoylmQ9zdJ8HAoGAVFZ93YQjmSmZqcA7UyLEofQrr9HD7XTVvHTPUF2txRy8RwAGNK1JcSBIerOJu4+z7F1Iq+nXHY1YDoJicv4zWvk/rNfgSVny3MjlSfS4UCGY2VRNVGwmL7jy/Feva0SxXNU2lFVroh2jklS9Sd5GapqAMtMQGENuR8wsWDEZ51I=\n-----END PRIVATE KEY-----\n"
+           }
+       ]       
+     },
+
+
+     {
+       "type":1,
+       "id":"{770bc400-a0ea-4e7e-a624-20e2b6d2706b}",
+       "name":"Alpha",
+       "cryptoPassword":"84788DD4A5883EE1311E1A04F704BC650A2A2AA82805931A5EE4B0EA9C4B1DEF",
+       "rx":{
+         "address":"234.42.42.1",
+         "port":18000
+       },
+       "tx":{
+         "address":"234.42.42.1",
+         "port":18000
+       },
+       "txAudio":{
+         "encoder":21,
+         "fdx":false,
+         "framingMs":20,
+         "maxTxSecs":0,
+         "noHdrExt":false
+       },
+       "audio":{
+         "inputId":0,
+         "inputGain":0,
+         "outputId":0,
+         "outputGain":0
+       },
+       "rallypoints": [
+           {
+               "host": {
+                   "address": "sta.rp.rallytac.com",
+                   "port": 7443
+               },
+               "certificate": "\n-----BEGIN CERTIFICATE-----\nMIIDfzCCAmegAwIBAgIUZofUeNpX20CzCqEYUsl0mUHVkTwwDQYJKoZIhvcNAQELBQAwTzELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAldBMRAwDgYDVQQHDAdTZWF0dGxlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTgxMjExMjI1OTMyWhcNMTkxMjExMjI1OTMyWjBPMQswCQYDVQQGEwJVUzELMAkGA1UECAwCV0ExEDAOBgNVBAcMB1NlYXR0bGUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALmrian7jB4qLnevECfUp/GUPjptTE/x9XY0XF+xuNu4kNuZl2w4GNkUwCxlTnGYIcZvdjhToQC2TpDDGLiPMU43VTfUbjz62sEadEpigOwfkcft1/5eXs5kBupKaII1v25FT9wo6jR0unYUn/8NbbJOt8Qo+prE0Ag1jmoXwB7KL7GWf5r7ll2LlHJFoUOjQtWu8mzq7o16HxEsiqs9NiwykzumNqiVIkM8TVFPJ+Wgbbj5Tqheqmrgk/9fT/0WMFzbADxJVEa2WlNBTX0m951EvEzlvwBfdpsfcuFj1C8iHun2peoShRtHzYsWoxV8z5tTi7ia8ueMpz9a4KEH1FcCAwEAAaNTMFEwHQYDVR0OBBYEFBwDHftiN5PNoGQ3G7s0fRfWNrDNMB8GA1UdIwQYMBaAFBwDHftiN5PNoGQ3G7s0fRfWNrDNMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAF73+9idwN2UfNW0bq30THcetZXXkqECz4ZPstC4dZyGaMEU/umoej0mTU6oTCYZZUM8wG6/DP9x9QXiPTB6FxxdiEYI5YWdEcsJU2Ff5MO85ykyo9/PAm4luealWaSOo893LaQWCO3Vx8ln7xrzrT/a7dnKLESSogOihxDdasZGLVSuj7KAVDGUiOTRO/jnGk8JXA9coNI2S0QSw/UaC1kOSAZasXI1XXehNA6YEBmpYa2zBqkaMcroMp2HyPMZeJzCkhA1CsWJKMtp7k7h6/eWLSCdBikd3OC44TUws1DSmkZZzTS9gmsywxRsInSlsXtXcHGbUfuLeDerMxZtWCM=\n-----END CERTIFICATE-----\n",
+               "certificateKey": "\n-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5q4mp+4weKi53rxAn1KfxlD46bUxP8fV2NFxfsbjbuJDbmZdsOBjZFMAsZU5xmCHGb3Y4U6EAtk6Qwxi4jzFON1U31G48+trBGnRKYoDsH5HH7df+Xl7OZAbqSmiCNb9uRU/cKOo0dLp2FJ//DW2yTrfEKPqaxNAINY5qF8Aeyi+xln+a+5Zdi5RyRaFDo0LVrvJs6u6Neh8RLIqrPTYsMpM7pjaolSJDPE1RTyfloG24+U6oXqpq4JP/X0/9FjBc2wA8SVRGtlpTQU19JvedRLxM5b8AX3abH3LhY9QvIh7p9qXqEoUbR82LFqMVfM+bU4u4mvLnjKc/WuChB9RXAgMBAAECggEANH8d42PuUDEZBloHNVvZSGLj3V098HS3NH7Fh4EWhXl/67dXqw+JZweI9oSGU3PySMsHIBH1OeBSAnhHKxfBlx3qCGkV6kP7ShISw11qmliqvV6wbYl9QNnjYqc7OWW9BI6wb81Zuw8uEWjvfAvt8jZzmxEDGnN/ZnLOG40vkwSYYhu1WtVynuebVQnXHgW8/k3AV1o8yREvNOezz2hqcUr1g6ByU5aaLLFJ+N//lNagQnB09diRQKpQAOXGBY3GsPrtJhfLIlmaYrSI3LwkM7BtpPpYyoRe4tHJJSaB8gXJ5nbe/jg4z1D+vS+CNbQGk/ddeKJuypJKJy1+x+8NIQKBgQDkErbYmlLqGz7/B432CulVtamO8i1bxyytRlCcWyns5+tBzXtDdjh2DJBMPfJFpoM0kWk6KGXrFq3jaze+KGMACex5jTrIWxbCqM53xmxtfH1nMHGVcgJMA4JlERtU7AFYd8R3BNY9JBBUQYOTtwEBM/B4Cupzedl98b2dE5hS+QKBgQDQZ6Nll8LRuLjPfPAInaZno8hJr0JBPts+Cd9f+Imhm0vkxxWenj9qNpGbh6lcFkztNc95POP0K3LP0AGQg40G8zlEDTzIn5nHoPVeeBNcH/8Lphxh2xs/U5rJ6WB3L8pDlTGVMo63p/JJCpmsExp1dc+ldX1VVTQ3EhovAMTlzwKBgAKpiULcAk3DRaf6cZjGpdSfSzxk7Uyd9ZKMOJKqqcGfL2rUODUgYyZVnTWWn4ZanDt32w+XuyDUYfE+pibtF8K/WuhMUrxV+90H1WkmgsuAYYJb2WeSLh6vB82gNn52Rsm+lCeDgfCyxBIHtb56q2NVNOBh2DzC1lwW/0yfFu8ZAoGBAKIEAAYp7j3mcl5zzZOVI9msfTezdTmN6RmYyTwt1ql5No4bq5YNhlVHKPmVhLdfatx6mdmx2bFn2bDvD1hOvONrUNizxc5eLUoBut9/T+WtxjRDJgt5L/ySPWK8+M6Pq5nQsaRAkqz6dqQMBp28mDQ6q3wBE7e0LoylmQ9zdJ8HAoGAVFZ93YQjmSmZqcA7UyLEofQrr9HD7XTVvHTPUF2txRy8RwAGNK1JcSBIerOJu4+z7F1Iq+nXHY1YDoJicv4zWvk/rNfgSVny3MjlSfS4UCGY2VRNVGwmL7jy/Feva0SxXNU2lFVroh2jklS9Sd5GapqAMtMQGENuR8wsWDEZ51I=\n-----END PRIVATE KEY-----\n"
+           }
+       ]
+     },
+
+
+     {
+       "type":1,
+       "id":"{9d4c3587-f736-455c-83ab-19c7169c1228}",
+       "name":"Bravo",
+       "rx":{
+         "address":"234.42.42.2",
+         "port":18002
+       },
+       "tx":{
+         "address":"234.42.42.2",
+         "port":18002
+       },
+       "txAudio":{
+         "encoder":20,
+         "fdx":false,
+         "framingMs":20,
+         "maxTxSecs":0,
+         "noHdrExt":false
+       },
+       "rallypoints": [
+           {
+               "host": {
+                   "address": "sta.rp.rallytac.com",
+                   "port": 7443
+               },
+               "certificate": "\n-----BEGIN CERTIFICATE-----\nMIIDfzCCAmegAwIBAgIUZofUeNpX20CzCqEYUsl0mUHVkTwwDQYJKoZIhvcNAQELBQAwTzELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAldBMRAwDgYDVQQHDAdTZWF0dGxlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTgxMjExMjI1OTMyWhcNMTkxMjExMjI1OTMyWjBPMQswCQYDVQQGEwJVUzELMAkGA1UECAwCV0ExEDAOBgNVBAcMB1NlYXR0bGUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALmrian7jB4qLnevECfUp/GUPjptTE/x9XY0XF+xuNu4kNuZl2w4GNkUwCxlTnGYIcZvdjhToQC2TpDDGLiPMU43VTfUbjz62sEadEpigOwfkcft1/5eXs5kBupKaII1v25FT9wo6jR0unYUn/8NbbJOt8Qo+prE0Ag1jmoXwB7KL7GWf5r7ll2LlHJFoUOjQtWu8mzq7o16HxEsiqs9NiwykzumNqiVIkM8TVFPJ+Wgbbj5Tqheqmrgk/9fT/0WMFzbADxJVEa2WlNBTX0m951EvEzlvwBfdpsfcuFj1C8iHun2peoShRtHzYsWoxV8z5tTi7ia8ueMpz9a4KEH1FcCAwEAAaNTMFEwHQYDVR0OBBYEFBwDHftiN5PNoGQ3G7s0fRfWNrDNMB8GA1UdIwQYMBaAFBwDHftiN5PNoGQ3G7s0fRfWNrDNMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAF73+9idwN2UfNW0bq30THcetZXXkqECz4ZPstC4dZyGaMEU/umoej0mTU6oTCYZZUM8wG6/DP9x9QXiPTB6FxxdiEYI5YWdEcsJU2Ff5MO85ykyo9/PAm4luealWaSOo893LaQWCO3Vx8ln7xrzrT/a7dnKLESSogOihxDdasZGLVSuj7KAVDGUiOTRO/jnGk8JXA9coNI2S0QSw/UaC1kOSAZasXI1XXehNA6YEBmpYa2zBqkaMcroMp2HyPMZeJzCkhA1CsWJKMtp7k7h6/eWLSCdBikd3OC44TUws1DSmkZZzTS9gmsywxRsInSlsXtXcHGbUfuLeDerMxZtWCM=\n-----END CERTIFICATE-----\n",
+               "certificateKey": "\n-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5q4mp+4weKi53rxAn1KfxlD46bUxP8fV2NFxfsbjbuJDbmZdsOBjZFMAsZU5xmCHGb3Y4U6EAtk6Qwxi4jzFON1U31G48+trBGnRKYoDsH5HH7df+Xl7OZAbqSmiCNb9uRU/cKOo0dLp2FJ//DW2yTrfEKPqaxNAINY5qF8Aeyi+xln+a+5Zdi5RyRaFDo0LVrvJs6u6Neh8RLIqrPTYsMpM7pjaolSJDPE1RTyfloG24+U6oXqpq4JP/X0/9FjBc2wA8SVRGtlpTQU19JvedRLxM5b8AX3abH3LhY9QvIh7p9qXqEoUbR82LFqMVfM+bU4u4mvLnjKc/WuChB9RXAgMBAAECggEANH8d42PuUDEZBloHNVvZSGLj3V098HS3NH7Fh4EWhXl/67dXqw+JZweI9oSGU3PySMsHIBH1OeBSAnhHKxfBlx3qCGkV6kP7ShISw11qmliqvV6wbYl9QNnjYqc7OWW9BI6wb81Zuw8uEWjvfAvt8jZzmxEDGnN/ZnLOG40vkwSYYhu1WtVynuebVQnXHgW8/k3AV1o8yREvNOezz2hqcUr1g6ByU5aaLLFJ+N//lNagQnB09diRQKpQAOXGBY3GsPrtJhfLIlmaYrSI3LwkM7BtpPpYyoRe4tHJJSaB8gXJ5nbe/jg4z1D+vS+CNbQGk/ddeKJuypJKJy1+x+8NIQKBgQDkErbYmlLqGz7/B432CulVtamO8i1bxyytRlCcWyns5+tBzXtDdjh2DJBMPfJFpoM0kWk6KGXrFq3jaze+KGMACex5jTrIWxbCqM53xmxtfH1nMHGVcgJMA4JlERtU7AFYd8R3BNY9JBBUQYOTtwEBM/B4Cupzedl98b2dE5hS+QKBgQDQZ6Nll8LRuLjPfPAInaZno8hJr0JBPts+Cd9f+Imhm0vkxxWenj9qNpGbh6lcFkztNc95POP0K3LP0AGQg40G8zlEDTzIn5nHoPVeeBNcH/8Lphxh2xs/U5rJ6WB3L8pDlTGVMo63p/JJCpmsExp1dc+ldX1VVTQ3EhovAMTlzwKBgAKpiULcAk3DRaf6cZjGpdSfSzxk7Uyd9ZKMOJKqqcGfL2rUODUgYyZVnTWWn4ZanDt32w+XuyDUYfE+pibtF8K/WuhMUrxV+90H1WkmgsuAYYJb2WeSLh6vB82gNn52Rsm+lCeDgfCyxBIHtb56q2NVNOBh2DzC1lwW/0yfFu8ZAoGBAKIEAAYp7j3mcl5zzZOVI9msfTezdTmN6RmYyTwt1ql5No4bq5YNhlVHKPmVhLdfatx6mdmx2bFn2bDvD1hOvONrUNizxc5eLUoBut9/T+WtxjRDJgt5L/ySPWK8+M6Pq5nQsaRAkqz6dqQMBp28mDQ6q3wBE7e0LoylmQ9zdJ8HAoGAVFZ93YQjmSmZqcA7UyLEofQrr9HD7XTVvHTPUF2txRy8RwAGNK1JcSBIerOJu4+z7F1Iq+nXHY1YDoJicv4zWvk/rNfgSVny3MjlSfS4UCGY2VRNVGwmL7jy/Feva0SxXNU2lFVroh2jklS9Sd5GapqAMtMQGENuR8wsWDEZ51I=\n-----END PRIVATE KEY-----\n"
+           }
+       ]
+     },
+
+
+     {
+       "type":1,
+       "id":"{e7280f07-6712-463f-a811-cc3ed4128cd9}",
+       "name":"Charlie",
+       "cryptoPassword":"0521202069301D08AF3A34E9B1FAB0AF091E6F01E9F67C4FD0633554268A378F",
+       "rx":{
+         "address":"234.42.42.3",
+         "port":18004
+       },
+       "tx":{
+         "address":"234.42.42.3",
+         "port":18004
+       },
+       "txAudio":{
+         "encoder":21,
+         "fdx":false,
+         "framingMs":20,
+         "maxTxSecs":0,
+         "noHdrExt":false
+       },
+       "rallypoints": [
+           {
+               "host": {
+                   "address": "sta.rp.rallytac.com",
+                   "port": 7443
+               },
+               "certificate": "\n-----BEGIN CERTIFICATE-----\nMIIDfzCCAmegAwIBAgIUZofUeNpX20CzCqEYUsl0mUHVkTwwDQYJKoZIhvcNAQELBQAwTzELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAldBMRAwDgYDVQQHDAdTZWF0dGxlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTgxMjExMjI1OTMyWhcNMTkxMjExMjI1OTMyWjBPMQswCQYDVQQGEwJVUzELMAkGA1UECAwCV0ExEDAOBgNVBAcMB1NlYXR0bGUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALmrian7jB4qLnevECfUp/GUPjptTE/x9XY0XF+xuNu4kNuZl2w4GNkUwCxlTnGYIcZvdjhToQC2TpDDGLiPMU43VTfUbjz62sEadEpigOwfkcft1/5eXs5kBupKaII1v25FT9wo6jR0unYUn/8NbbJOt8Qo+prE0Ag1jmoXwB7KL7GWf5r7ll2LlHJFoUOjQtWu8mzq7o16HxEsiqs9NiwykzumNqiVIkM8TVFPJ+Wgbbj5Tqheqmrgk/9fT/0WMFzbADxJVEa2WlNBTX0m951EvEzlvwBfdpsfcuFj1C8iHun2peoShRtHzYsWoxV8z5tTi7ia8ueMpz9a4KEH1FcCAwEAAaNTMFEwHQYDVR0OBBYEFBwDHftiN5PNoGQ3G7s0fRfWNrDNMB8GA1UdIwQYMBaAFBwDHftiN5PNoGQ3G7s0fRfWNrDNMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAF73+9idwN2UfNW0bq30THcetZXXkqECz4ZPstC4dZyGaMEU/umoej0mTU6oTCYZZUM8wG6/DP9x9QXiPTB6FxxdiEYI5YWdEcsJU2Ff5MO85ykyo9/PAm4luealWaSOo893LaQWCO3Vx8ln7xrzrT/a7dnKLESSogOihxDdasZGLVSuj7KAVDGUiOTRO/jnGk8JXA9coNI2S0QSw/UaC1kOSAZasXI1XXehNA6YEBmpYa2zBqkaMcroMp2HyPMZeJzCkhA1CsWJKMtp7k7h6/eWLSCdBikd3OC44TUws1DSmkZZzTS9gmsywxRsInSlsXtXcHGbUfuLeDerMxZtWCM=\n-----END CERTIFICATE-----\n",
+               "certificateKey": "\n-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5q4mp+4weKi53rxAn1KfxlD46bUxP8fV2NFxfsbjbuJDbmZdsOBjZFMAsZU5xmCHGb3Y4U6EAtk6Qwxi4jzFON1U31G48+trBGnRKYoDsH5HH7df+Xl7OZAbqSmiCNb9uRU/cKOo0dLp2FJ//DW2yTrfEKPqaxNAINY5qF8Aeyi+xln+a+5Zdi5RyRaFDo0LVrvJs6u6Neh8RLIqrPTYsMpM7pjaolSJDPE1RTyfloG24+U6oXqpq4JP/X0/9FjBc2wA8SVRGtlpTQU19JvedRLxM5b8AX3abH3LhY9QvIh7p9qXqEoUbR82LFqMVfM+bU4u4mvLnjKc/WuChB9RXAgMBAAECggEANH8d42PuUDEZBloHNVvZSGLj3V098HS3NH7Fh4EWhXl/67dXqw+JZweI9oSGU3PySMsHIBH1OeBSAnhHKxfBlx3qCGkV6kP7ShISw11qmliqvV6wbYl9QNnjYqc7OWW9BI6wb81Zuw8uEWjvfAvt8jZzmxEDGnN/ZnLOG40vkwSYYhu1WtVynuebVQnXHgW8/k3AV1o8yREvNOezz2hqcUr1g6ByU5aaLLFJ+N//lNagQnB09diRQKpQAOXGBY3GsPrtJhfLIlmaYrSI3LwkM7BtpPpYyoRe4tHJJSaB8gXJ5nbe/jg4z1D+vS+CNbQGk/ddeKJuypJKJy1+x+8NIQKBgQDkErbYmlLqGz7/B432CulVtamO8i1bxyytRlCcWyns5+tBzXtDdjh2DJBMPfJFpoM0kWk6KGXrFq3jaze+KGMACex5jTrIWxbCqM53xmxtfH1nMHGVcgJMA4JlERtU7AFYd8R3BNY9JBBUQYOTtwEBM/B4Cupzedl98b2dE5hS+QKBgQDQZ6Nll8LRuLjPfPAInaZno8hJr0JBPts+Cd9f+Imhm0vkxxWenj9qNpGbh6lcFkztNc95POP0K3LP0AGQg40G8zlEDTzIn5nHoPVeeBNcH/8Lphxh2xs/U5rJ6WB3L8pDlTGVMo63p/JJCpmsExp1dc+ldX1VVTQ3EhovAMTlzwKBgAKpiULcAk3DRaf6cZjGpdSfSzxk7Uyd9ZKMOJKqqcGfL2rUODUgYyZVnTWWn4ZanDt32w+XuyDUYfE+pibtF8K/WuhMUrxV+90H1WkmgsuAYYJb2WeSLh6vB82gNn52Rsm+lCeDgfCyxBIHtb56q2NVNOBh2DzC1lwW/0yfFu8ZAoGBAKIEAAYp7j3mcl5zzZOVI9msfTezdTmN6RmYyTwt1ql5No4bq5YNhlVHKPmVhLdfatx6mdmx2bFn2bDvD1hOvONrUNizxc5eLUoBut9/T+WtxjRDJgt5L/ySPWK8+M6Pq5nQsaRAkqz6dqQMBp28mDQ6q3wBE7e0LoylmQ9zdJ8HAoGAVFZ93YQjmSmZqcA7UyLEofQrr9HD7XTVvHTPUF2txRy8RwAGNK1JcSBIerOJu4+z7F1Iq+nXHY1YDoJicv4zWvk/rNfgSVny3MjlSfS4UCGY2VRNVGwmL7jy/Feva0SxXNU2lFVroh2jklS9Sd5GapqAMtMQGENuR8wsWDEZ51I=\n-----END PRIVATE KEY-----\n"
+           }
+       ]
+     },
+
+
+     {
+       "type":1,
+       "id":"{91220ae4-b610-4295-9db0-ec648b36f362}",
+       "name":"Delta",
+       "rx":{
+         "address":"234.42.42.4",
+         "port":18006
+       },
+       "tx":{
+         "address":"234.42.42.4",
+         "port":18006
+       },
+       "txAudio":{
+         "encoder":1,
+         "fdx":false,
+         "framingMs":21,
+         "maxTxSecs":0,
+         "noHdrExt":true
+       },
+       "rallypoints": [
+           {
+               "host": {
+                   "address": "sta.rp.rallytac.com",
+                   "port": 7443
+               },
+               "certificate": "\n-----BEGIN CERTIFICATE-----\nMIIDfzCCAmegAwIBAgIUZofUeNpX20CzCqEYUsl0mUHVkTwwDQYJKoZIhvcNAQELBQAwTzELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAldBMRAwDgYDVQQHDAdTZWF0dGxlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTgxMjExMjI1OTMyWhcNMTkxMjExMjI1OTMyWjBPMQswCQYDVQQGEwJVUzELMAkGA1UECAwCV0ExEDAOBgNVBAcMB1NlYXR0bGUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALmrian7jB4qLnevECfUp/GUPjptTE/x9XY0XF+xuNu4kNuZl2w4GNkUwCxlTnGYIcZvdjhToQC2TpDDGLiPMU43VTfUbjz62sEadEpigOwfkcft1/5eXs5kBupKaII1v25FT9wo6jR0unYUn/8NbbJOt8Qo+prE0Ag1jmoXwB7KL7GWf5r7ll2LlHJFoUOjQtWu8mzq7o16HxEsiqs9NiwykzumNqiVIkM8TVFPJ+Wgbbj5Tqheqmrgk/9fT/0WMFzbADxJVEa2WlNBTX0m951EvEzlvwBfdpsfcuFj1C8iHun2peoShRtHzYsWoxV8z5tTi7ia8ueMpz9a4KEH1FcCAwEAAaNTMFEwHQYDVR0OBBYEFBwDHftiN5PNoGQ3G7s0fRfWNrDNMB8GA1UdIwQYMBaAFBwDHftiN5PNoGQ3G7s0fRfWNrDNMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAF73+9idwN2UfNW0bq30THcetZXXkqECz4ZPstC4dZyGaMEU/umoej0mTU6oTCYZZUM8wG6/DP9x9QXiPTB6FxxdiEYI5YWdEcsJU2Ff5MO85ykyo9/PAm4luealWaSOo893LaQWCO3Vx8ln7xrzrT/a7dnKLESSogOihxDdasZGLVSuj7KAVDGUiOTRO/jnGk8JXA9coNI2S0QSw/UaC1kOSAZasXI1XXehNA6YEBmpYa2zBqkaMcroMp2HyPMZeJzCkhA1CsWJKMtp7k7h6/eWLSCdBikd3OC44TUws1DSmkZZzTS9gmsywxRsInSlsXtXcHGbUfuLeDerMxZtWCM=\n-----END CERTIFICATE-----\n",
+               "certificateKey": "\n-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5q4mp+4weKi53rxAn1KfxlD46bUxP8fV2NFxfsbjbuJDbmZdsOBjZFMAsZU5xmCHGb3Y4U6EAtk6Qwxi4jzFON1U31G48+trBGnRKYoDsH5HH7df+Xl7OZAbqSmiCNb9uRU/cKOo0dLp2FJ//DW2yTrfEKPqaxNAINY5qF8Aeyi+xln+a+5Zdi5RyRaFDo0LVrvJs6u6Neh8RLIqrPTYsMpM7pjaolSJDPE1RTyfloG24+U6oXqpq4JP/X0/9FjBc2wA8SVRGtlpTQU19JvedRLxM5b8AX3abH3LhY9QvIh7p9qXqEoUbR82LFqMVfM+bU4u4mvLnjKc/WuChB9RXAgMBAAECggEANH8d42PuUDEZBloHNVvZSGLj3V098HS3NH7Fh4EWhXl/67dXqw+JZweI9oSGU3PySMsHIBH1OeBSAnhHKxfBlx3qCGkV6kP7ShISw11qmliqvV6wbYl9QNnjYqc7OWW9BI6wb81Zuw8uEWjvfAvt8jZzmxEDGnN/ZnLOG40vkwSYYhu1WtVynuebVQnXHgW8/k3AV1o8yREvNOezz2hqcUr1g6ByU5aaLLFJ+N//lNagQnB09diRQKpQAOXGBY3GsPrtJhfLIlmaYrSI3LwkM7BtpPpYyoRe4tHJJSaB8gXJ5nbe/jg4z1D+vS+CNbQGk/ddeKJuypJKJy1+x+8NIQKBgQDkErbYmlLqGz7/B432CulVtamO8i1bxyytRlCcWyns5+tBzXtDdjh2DJBMPfJFpoM0kWk6KGXrFq3jaze+KGMACex5jTrIWxbCqM53xmxtfH1nMHGVcgJMA4JlERtU7AFYd8R3BNY9JBBUQYOTtwEBM/B4Cupzedl98b2dE5hS+QKBgQDQZ6Nll8LRuLjPfPAInaZno8hJr0JBPts+Cd9f+Imhm0vkxxWenj9qNpGbh6lcFkztNc95POP0K3LP0AGQg40G8zlEDTzIn5nHoPVeeBNcH/8Lphxh2xs/U5rJ6WB3L8pDlTGVMo63p/JJCpmsExp1dc+ldX1VVTQ3EhovAMTlzwKBgAKpiULcAk3DRaf6cZjGpdSfSzxk7Uyd9ZKMOJKqqcGfL2rUODUgYyZVnTWWn4ZanDt32w+XuyDUYfE+pibtF8K/WuhMUrxV+90H1WkmgsuAYYJb2WeSLh6vB82gNn52Rsm+lCeDgfCyxBIHtb56q2NVNOBh2DzC1lwW/0yfFu8ZAoGBAKIEAAYp7j3mcl5zzZOVI9msfTezdTmN6RmYyTwt1ql5No4bq5YNhlVHKPmVhLdfatx6mdmx2bFn2bDvD1hOvONrUNizxc5eLUoBut9/T+WtxjRDJgt5L/ySPWK8+M6Pq5nQsaRAkqz6dqQMBp28mDQ6q3wBE7e0LoylmQ9zdJ8HAoGAVFZ93YQjmSmZqcA7UyLEofQrr9HD7XTVvHTPUF2txRy8RwAGNK1JcSBIerOJu4+z7F1Iq+nXHY1YDoJicv4zWvk/rNfgSVny3MjlSfS4UCGY2VRNVGwmL7jy/Feva0SxXNU2lFVroh2jklS9Sd5GapqAMtMQGENuR8wsWDEZ51I=\n-----END PRIVATE KEY-----\n"
+           }
+       ]
+     }
+   ]
+ }
+ 
