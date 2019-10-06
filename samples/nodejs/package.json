@@ -1,0 +1,17 @@
+{
+  "name": "native-module-engage",
+  "version": "1.0.0",
+  "description": "Use Engage from Node.",
+  "files": [
+    "engage.cpp",
+    "binding.gyp",
+    "index.js"
+  ],
+  "dependencies": {
+    "bindings": "^1.5.0",
+    "chalk": "^2.4.2",
+    "nan": "^2.14.0",
+    "linus": "^0.0.6",
+    "node-gyp": "^4.0.0"
+  }
+}

@@ -1,0 +1,3 @@
+include ':engageEngine'
+include ':engageReferenceCore'
+include ':engageReferenceUI'

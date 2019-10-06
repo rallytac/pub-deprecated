@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.rallytac.engagereference.core">
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
+    <!-- Ignore Android Studio complaining about this permission for system apps -->
+    <uses-permission android:name="android.permission.BATTERY_STATS"/>
+
+    <uses-feature android:name="android.hardware.location.gps" />
+    <uses-feature android:name="android.hardware.location.network" />
+
+    <application
+        android:name=".EngageApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        tools:ignore="GoogleAppIndexingWarning">
+        <activity
+            android:name=".UserNodeViewActivity"
+            android:label="@string/title_activity_single_user_biometrics_view"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".ContactActivity" /> <!-- Sharing out -->
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.rallytac.engagereference.core.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider> <!-- Sharing in -->
+        <activity android:name=".AndroidIntentActionListenerActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity> <!-- NOTE: An empty stub - check the note in the meta-data above! -->
+        <activity android:name=".MainActivity" /> <!-- Sonim buttons -->
+        <meta-data
+            android:name="app_key_ptt_data"
+            android:value="62b393bf90ef462f39c0edf9fadb4e9348ccbdf888e9e0ab295fc07c99920e0f85048b899931e644cbfe74654151a6f7" />
+        <meta-data
+            android:name="app_key_ptt_priority"
+            android:value="999" /> <!-- Our service -->
+        <service
+            android:name=".EngageService"
+            android:enabled="true"
+            android:exported="false" /> <!-- The first activity that is run upon startup -->
+        <activity
+            android:name=".LauncherActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings" />
+        <activity
+            android:name=".MissionEditActivity"
+            android:label="@string/title_activity_edit_mission" />
+        <activity
+            android:name=".MissionListActivity"
+            android:label="@string/title_activity_missions" />
+        <activity
+            android:name=".OrientationIndependentQrCodeScanActivity"
+            android:screenOrientation="fullSensor"
+            android:stateNotNeeded="true"
+            android:theme="@style/zxing_CaptureTheme"
+            android:windowSoftInputMode="stateAlwaysHidden" />
+        <activity
+            android:name=".MapActivity"
+            android:label="@string/title_activity_map" />
+        <activity android:name=".ShareMissionActivity">
+            <intent-filter>
+                <action android:name="ccom.rallytac.engagereference.core.ShareMissionActivity" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".AboutActivity" />
+    </application>
+
+</manifest>

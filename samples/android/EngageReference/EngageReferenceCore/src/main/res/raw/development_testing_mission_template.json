@@ -1,0 +1,85 @@
+{
+  "meta":{
+    "version":1,
+    "created":"2019-02-07T18:44:43.511Z"
+  },
+
+  "id":"{cb367182-d8c4-47a0-95c6-03740be049ec}",
+  "name":"Group Test",
+  "description":"This is a developer test mission",
+
+  "groups":[
+    {
+      "type":2,
+      "id":"{070a8820-2fb4-4688-a8a8-f90f48fc4145}",
+      "name":"Presence",
+      "cryptoPassword":"11718654A5663427311F0A0BE704BC65CA732AA8280509365EE4B711B3FB1A43",
+      "rx":{
+        "address":"235.42.42.99",
+        "port":20999
+      },
+      "tx":{
+        "address":"235.42.42.99",
+        "port":20999
+      },
+      "presence":{
+        "format":1,
+        "intervalSecs":30,
+        "forceOnAudioTransmit":false,
+        "listenOnly":false
+      }
+    },
+
+
+    {
+      "type":1,
+      "id":"{0f7ddaef-73e2-4ccd-b6e0-f5b3506c2849}",
+      "name":"Audio",
+      "cryptoPassword":"11788DD4A5883EE1311E1A04F704BC650A2A2AA82805931A5EE4B0EA9C4B1DEF",
+      "rx":{
+        "address":"235.42.42.1",
+        "port":19000
+      },
+      "tx":{
+        "address":"235.42.42.1",
+        "port":19000
+      },
+      "txAudio":{
+        "encoder":20,
+        "fdx":false,
+        "framingMs":20,
+        "maxTxSecs":0,
+        "noHdrExt":false
+      },
+      "audio":{
+        "inputId":0,
+        "inputGain":0,
+        "outputId":0,
+        "outputGain":0
+      }
+    },
+
+
+    {
+      "type":3,
+      "id":"{8da684f3-2bc2-40a2-a6d0-ae20b4213dc7}",
+      "name":"Raw",
+      "rx":{
+        "address":"235.42.42.2",
+        "port":19001
+      },
+      "tx":{
+        "address":"235.42.42.2",
+        "port":19001
+      },
+      "txAudio":{
+        "encoder":10,
+        "fdx":false,
+        "framingMs":20,
+        "maxTxSecs":0,
+        "noHdrExt":false
+      }
+    }
+  ]
+}
+
