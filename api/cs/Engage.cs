@@ -81,6 +81,12 @@ public class Engage
         void onGroupRawSent(string id);
         void onGroupRawSendFailed(string id);
         void onGroupRawReceived(string id, byte[] raw, int rawSize);
+
+        void onGroupTimelineEventStarted(string id, string eventJson);
+        void onGroupTimelineEventUpdated(string id, string eventJson);
+        void onGroupTimelineEventEnded(string id, string eventJson);
+        void onGroupTimelineReport(string id, string reportJson);
+        void onGroupTimelineReportFailed(string id);
     }
     #endregion
 
@@ -134,7 +140,6 @@ public class Engage
     private delegate void EngageString2AndBlobCallback(string s, string j, IntPtr ptr, int i);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void EngageStringAndTwoIntCallback(string s, int i1, int i2);
-
     #endregion
 
     #region Structures
@@ -220,7 +225,7 @@ public class Engage
         public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED;
         public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_EVENT_ENDED;
         public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_REPORT;
-        public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
+        public EngageStringCallback PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
     }
     #endregion
 
@@ -305,9 +310,11 @@ public class Engage
                                                  int rawSize,
                                                  string jsonRtpHeader);    
 
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageQueryGroupTimeline(string id,
                                                        string jsonParams);        
 
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageLogMsg(int level,
                                            string tag,
                                            string msg);                                                                                                
@@ -426,6 +433,13 @@ public class Engage
         cb.PFN_ENGAGE_GROUP_RAW_SENT = on_ENGAGE_GROUP_RAW_SENT;
         cb.PFN_ENGAGE_GROUP_RAW_SEND_FAILED = on_ENGAGE_GROUP_RAW_SEND_FAILED;
         cb.PFN_ENGAGE_GROUP_RAW_RECEIVED = on_ENGAGE_GROUP_RAW_RECEIVED;
+
+        cb.PFN_ENGAGE_GROUP_TIMELINE_EVENT_STARTED = on_ENGAGE_GROUP_TIMELINE_EVENT_STARTED;
+        cb.PFN_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED = on_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED;
+        cb.PFN_ENGAGE_GROUP_TIMELINE_EVENT_ENDED = on_ENGAGE_GROUP_TIMELINE_EVENT_ENDED;
+
+        cb.PFN_ENGAGE_GROUP_TIMELINE_REPORT = on_ENGAGE_GROUP_TIMELINE_REPORT;
+        cb.PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED = on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
 
         return engageRegisterCallbacks(ref cb);
     }
@@ -982,6 +996,61 @@ public class Engage
             }
         }
     };
+
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_STARTED = (string id, string eventJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTimelineEventStarted(id, eventJson);
+            }
+        }
+    };
+
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED = (string id, string eventJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTimelineEventUpdated(id, eventJson);
+            }
+        }
+    };
+
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_ENDED = (string id, string eventJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTimelineEventEnded(id, eventJson);
+            }
+        }
+    };
+
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_REPORT = (string id, string reportJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTimelineReport(id, reportJson);
+            }
+        }
+    };
+
+    private EngageStringCallback on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED = (string id) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTimelineReportFailed(id);
+            }
+        }
+    };
     #endregion
 
     #region Public functions
@@ -1130,6 +1199,16 @@ public class Engage
     public int setGroupRxVolume(string id, int left, int right)
     {
         return engageSetGroupRxVolume(id, left, right);
+    }
+
+    public int queryGroupTimeline(string id, string jsonParams)
+    {
+        return engageQueryGroupTimeline(id, jsonParams);
+    }
+
+    public int logMsg(int level, string tag, string msg)
+    {
+        return engageLogMsg(level, tag, msg);
     }
 
     public String getVersion()
