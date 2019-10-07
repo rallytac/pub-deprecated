@@ -65,6 +65,10 @@ stdin.addListener("data", function(d) {
     {
         showHelp();
     }
+    else if(input == "tc")
+    {
+        testCrypto();
+    }
     else if(input == "q")
     {
         engage.disableCallbacks()
@@ -182,6 +186,7 @@ function showHelp()
 {
     console.log("?................... help");
     console.log("q................... quit");
+    console.log("tc.................. test crypto");
     console.log("ca||c<n>............ create all groups || group n");
     console.log("da||d<n>............ delete all groups || group n");
     console.log("ja||j<n>............ join all groups || group n");
@@ -475,4 +480,66 @@ function unmuteRxOnAllGroups()
     {
         engage.unmuteGroupRx(groups[groupIndex].id);
     }    
+}
+
+//--------------------------------------------------------
+function toHexString(byteArray) 
+{
+    return Array.from(byteArray, function(byte) 
+    {
+      return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+    }).join(' ')
+}
+
+function testCrypto()
+{
+    logMsg("Testing encryption/decryption using Engage's crypto module");
+
+    // This is *NOT* the encryption key but, rather, the hex representation of
+    // the *password* used by Engage to _derive_ an encryption key using the
+    // PBKDF2 algorithm - https://en.wikipedia.org/wiki/PBKDF2
+    const pbkdf2PasswordForEncryption = "adac22000d3f46829471f75515907fde";
+
+    // Our original data - it needs to be a Buffer of unsigned bytes
+    const original = Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]); 
+
+    // Print out the original 
+    logMsg("original data length  : " + original.length + " bytes")
+    logMsg("original data         : " + toHexString(original));
+
+    // Encrypt and print
+    const encrypted = engage.encrypt(original, 0, original.length, pbkdf2PasswordForEncryption);
+    logMsg("encrypted data length : " + encrypted.length + " bytes")
+    logMsg("encrypted data        : " + toHexString(encrypted));
+
+    // Decrypt our data
+    const decrypted = engage.decrypt(encrypted, 0, encrypted.length, pbkdf2PasswordForEncryption);
+    logMsg("decrypted data length : " + decrypted.length + " bytes")
+    logMsg("decrypted data        : " + toHexString(decrypted));
+
+    if(decrypted.length == original.length)
+    {
+        var errorFound = false;
+        for(x = 0; x < decrypted.length; x++)
+        {
+            if(decrypted[x] != original[x])
+            {
+                errorFound = true;
+                break;
+            }
+        }
+
+        if(!errorFound)
+        {
+            logMsg("encryption & decryption test passed");
+        }
+        else
+        {
+            logMsg("encryption & decryption test failed due to decryption mismatch with original");
+        }
+    }
+    else
+    {
+        logMsg("ERROR:  decrypted length does not match original length");
+    }
 }

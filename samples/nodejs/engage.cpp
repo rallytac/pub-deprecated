@@ -669,19 +669,67 @@ NAN_METHOD(updatePresenceDescriptor)
 //--------------------------------------------------------
 NAN_METHOD(encrypt)
 {
-    //engageEncrypt(.. TODO ...);
+    Isolate* isolate = info.GetIsolate();
+    uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject(isolate));
+    size_t inputOfs = INTVAL(1);
+    size_t inputLen = INTVAL(2);
+
+    // Our output is going to contain encrypted data padded to 16 bytes + another 16 bytes of IV
+    uint8_t *outputBytes = new uint8_t[inputLen + 16 * 2];
+    
+    int bytesInOutput =  engageEncrypt(inputBytes + inputOfs, inputLen, outputBytes, STRVAL(3));
+
+    if(bytesInOutput > 0)
+    {
+        info.GetReturnValue().Set(Nan::CopyBuffer((char*)outputBytes, bytesInOutput).ToLocalChecked());
+    }
+
+    delete[] outputBytes;
 }
 
 //--------------------------------------------------------
 NAN_METHOD(decrypt)
 {
-    //engageDecrypt(.. TODO ...);
+    Isolate* isolate = info.GetIsolate();
+    uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject(isolate));
+    size_t inputOfs = INTVAL(1);
+    size_t inputLen = INTVAL(2);
+
+    // Our output is not going to be larger than the input (if anything, it'll be smaller)
+    uint8_t *outputBytes = new uint8_t[inputLen];
+    
+    int bytesInOutput =  engageDecrypt(inputBytes + inputOfs, inputLen, outputBytes, STRVAL(3));
+
+    if(bytesInOutput > 0)
+    {
+        info.GetReturnValue().Set(Nan::CopyBuffer((char*)outputBytes, bytesInOutput).ToLocalChecked());
+    }
+
+    delete[] outputBytes;
 }
 
 //--------------------------------------------------------
 NAN_METHOD(updateLicense)
 {
     engageUpdateLicense(STRVAL(0), STRVAL(1), STRVAL(2));
+}
+
+NAN_METHOD(HelloWorld)
+{
+    Isolate* isolate = info.GetIsolate();
+    uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject(isolate));
+    size_t inputOfs = INTVAL(1);
+    size_t inputLen = INTVAL(2);
+
+   uint8_t *output = new uint8_t[inputLen];
+   for(size_t x = 0; x < inputLen; x++)
+   {
+       output[x] = *(inputBytes + inputOfs + x);
+   }
+
+   info.GetReturnValue().Set(Nan::CopyBuffer((char*)output, inputLen).ToLocalChecked());
+
+   delete[] output;
 }
 
 //--------------------------------------------------------
@@ -723,6 +771,9 @@ NAN_MODULE_INIT(Init)
     ENGAGE_BINDING(decrypt);
 
     ENGAGE_BINDING(updateLicense);
+
+    ENGAGE_BINDING(HelloWorld);    
 }
 
 NODE_MODULE(engage, Init)
+
