@@ -245,15 +245,15 @@ namespace ConfigurationObjects
         return rc;
     }
 
-    class Documentable
+    class ConfigurationObjectBase
     {
     public:
-        Documentable()              
+        ConfigurationObjectBase()              
         {   
             _documenting = false;         
         }
 
-        virtual ~Documentable()
+        virtual ~ConfigurationObjectBase()
         {            
         }
 
@@ -264,11 +264,11 @@ namespace ConfigurationObjects
 
     protected:
         bool _documenting;
-    };
+    };    
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RtpHeader)
-    class RtpHeader : public Documentable
+    class RtpHeader : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(RtpHeader)
@@ -330,7 +330,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(BlobInfo)
-    class BlobInfo : public Documentable
+    class BlobInfo : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(BlobInfo)
@@ -394,7 +394,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(AdvancedTxParams)
-    class AdvancedTxParams : public Documentable
+    class AdvancedTxParams : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(AdvancedTxParams)
@@ -447,7 +447,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Identity)
-    class Identity : public Documentable
+    class Identity : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Identity)
@@ -497,7 +497,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Location)
-    class Location : public Documentable
+    class Location : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Location)
@@ -565,7 +565,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Power)
-    class Power : public Documentable
+    class Power : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Power)
@@ -611,7 +611,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Connectivity)
-    class Connectivity : public Documentable
+    class Connectivity : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Connectivity)
@@ -665,7 +665,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(GroupAlias)
-    class GroupAlias : public Documentable
+    class GroupAlias : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(GroupAlias)
@@ -707,7 +707,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(PresenceDescriptor)
-    class PresenceDescriptor : public Documentable
+    class PresenceDescriptor : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(PresenceDescriptor)
@@ -818,7 +818,7 @@ namespace ConfigurationObjects
     
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(NetworkTxOptions)
-    class NetworkTxOptions : public Documentable
+    class NetworkTxOptions : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(NetworkTxOptions)
@@ -869,7 +869,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(NetworkAddress)
-    class NetworkAddress : public Documentable
+    class NetworkAddress : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(NetworkAddress)
@@ -908,7 +908,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Rallypoint)
-    class Rallypoint : public Documentable
+    class Rallypoint : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Rallypoint)
@@ -976,7 +976,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(TxAudio)
-    class TxAudio : public Documentable
+    class TxAudio : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(TxAudio)
@@ -1081,7 +1081,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(AudioDeviceDescriptor)
-    class AudioDeviceDescriptor : public Documentable
+    class AudioDeviceDescriptor : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(AudioDeviceDescriptor)
@@ -1139,7 +1139,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Audio)
-    class Audio : public Documentable
+    class Audio : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Audio)
@@ -1191,7 +1191,7 @@ namespace ConfigurationObjects
     
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(TalkerInformation)
-    class TalkerInformation : public Documentable
+    class TalkerInformation : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(TalkerInformation)
@@ -1228,7 +1228,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(GroupTalkers)
-    class GroupTalkers : public Documentable
+    class GroupTalkers : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(GroupTalkers)
@@ -1261,7 +1261,7 @@ namespace ConfigurationObjects
     
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Presence)
-    class Presence : public Documentable
+    class Presence : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Presence)
@@ -1315,7 +1315,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Advertising)
-    class Advertising : public Documentable
+    class Advertising : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Advertising)
@@ -1356,7 +1356,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(GroupTimeline)
-    class GroupTimeline : public Documentable
+    class GroupTimeline : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(GroupTimeline)
@@ -1393,7 +1393,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Group)
-    class Group : public Documentable
+    class Group : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Group)
@@ -1499,7 +1499,7 @@ namespace ConfigurationObjects
     
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Mission)
-    class Mission : public Documentable
+    class Mission : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Mission)
@@ -1549,7 +1549,7 @@ namespace ConfigurationObjects
     
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(LicenseDescriptor)
-    class LicenseDescriptor : public Documentable
+    class LicenseDescriptor : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(LicenseDescriptor)
@@ -1639,7 +1639,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyNetworking)
-    class EnginePolicyNetworking : public Documentable
+    class EnginePolicyNetworking : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyNetworking)
@@ -1721,7 +1721,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyAudio)
-    class EnginePolicyAudio : public Documentable
+    class EnginePolicyAudio : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyAudio)
@@ -1787,7 +1787,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(SecurityCertificate)
-    class SecurityCertificate : public Documentable
+    class SecurityCertificate : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(SecurityCertificate)
@@ -1840,7 +1840,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicySecurity)
-    class EnginePolicySecurity : public Documentable
+    class EnginePolicySecurity : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicySecurity)
@@ -1873,7 +1873,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyLogging)
-    class EnginePolicyLogging : public Documentable
+    class EnginePolicyLogging : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyLogging)
@@ -1911,7 +1911,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyLicensing)
-    class EnginePolicyLicensing : public Documentable
+    class EnginePolicyLicensing : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyLicensing)
@@ -1956,7 +1956,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(DiscoverySsdp)
-    class DiscoverySsdp : public Documentable
+    class DiscoverySsdp : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(DiscoverySsdp)
@@ -2009,7 +2009,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(DiscoverySap)
-    class DiscoverySap : public Documentable
+    class DiscoverySap : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(DiscoverySap)
@@ -2058,7 +2058,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(DiscoveryCistech)
-    class DiscoveryCistech : public Documentable
+    class DiscoveryCistech : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(DiscoveryCistech)
@@ -2104,7 +2104,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(DiscoveryTrellisware)
-    class DiscoveryTrellisware : public Documentable
+    class DiscoveryTrellisware : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(DiscoveryTrellisware)
@@ -2137,7 +2137,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(DiscoveryConfiguration)
-    class DiscoveryConfiguration : public Documentable
+    class DiscoveryConfiguration : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(DiscoveryConfiguration)
@@ -2182,7 +2182,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyInternals)
-    class EnginePolicyInternals : public Documentable
+    class EnginePolicyInternals : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyInternals)
@@ -2231,7 +2231,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyTimelines)
-    class EnginePolicyTimelines : public Documentable
+    class EnginePolicyTimelines : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyTimelines)
@@ -2288,7 +2288,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicy)
-    class EnginePolicy : public Documentable
+    class EnginePolicy : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicy)
@@ -2354,7 +2354,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(TalkgroupAsset)
-    class TalkgroupAsset : public Documentable
+    class TalkgroupAsset : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(TalkgroupAsset)
@@ -2391,7 +2391,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EngageDiscoveredGroup)
-    class EngageDiscoveredGroup : public Documentable
+    class EngageDiscoveredGroup : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EngageDiscoveredGroup)
@@ -2432,7 +2432,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointPeer)
-    class RallypointPeer : public Documentable
+    class RallypointPeer : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(RallypointPeer)
@@ -2477,7 +2477,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointServerStatusReport)
-    class RallypointServerStatusReport : public Documentable
+    class RallypointServerStatusReport : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(RallypointServerStatusReport)
@@ -2485,6 +2485,10 @@ namespace ConfigurationObjects
     public:
         std::string                     fileName;
         int                             intervalSecs;
+        bool                            enabled;
+        bool                            includeLinks;
+        bool                            includePeerLinkDetails;
+        bool                            includeClientLinkDetails;
 
         RallypointServerStatusReport()
         {
@@ -2494,7 +2498,11 @@ namespace ConfigurationObjects
         void clear()
         {
             fileName.clear();
-            intervalSecs = 30;
+            intervalSecs = 60;
+            enabled = false;
+            includeLinks = false;
+            includePeerLinkDetails = false;
+            includeClientLinkDetails = false;
         }
     };
     
@@ -2502,19 +2510,88 @@ namespace ConfigurationObjects
     {
         j = nlohmann::json{
             TOJSON_IMPL(fileName),
-            TOJSON_IMPL(intervalSecs)
+            TOJSON_IMPL(intervalSecs),
+            TOJSON_IMPL(enabled),
+            TOJSON_IMPL(includeLinks),
+            TOJSON_IMPL(includePeerLinkDetails),
+            TOJSON_IMPL(includeClientLinkDetails)
         };
     }
     static void from_json(const nlohmann::json& j, RallypointServerStatusReport& p)
     {
         p.clear();
         getOptional<std::string>("fileName", p.fileName, j);
-        getOptional<int>("intervalSecs", p.intervalSecs, j, 30);
+        getOptional<int>("intervalSecs", p.intervalSecs, j, 60);
+        getOptional<bool>("enabled", p.enabled, j, false);
+        getOptional<bool>("includeLinks", p.includeLinks, j, false);
+        getOptional<bool>("includePeerLinkDetails", p.includePeerLinkDetails, j, false);
+        getOptional<bool>("includeClientLinkDetails", p.includeClientLinkDetails, j, false);
+    }    
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(RallypointServerLinkGraph)
+    class RallypointServerLinkGraph : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(RallypointServerLinkGraph)
+
+    public:
+        std::string                     fileName;
+        int                             minRefreshSecs;
+        bool                            enabled;
+        bool                            includeDigraphEnclosure;
+        bool                            includeClients;
+        std::string                     coreRpStyling;
+        std::string                     leafRpStyling;
+        std::string                     clientStyling;
+
+        RallypointServerLinkGraph()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            fileName.clear();
+            minRefreshSecs = 5;
+            enabled = false;
+            includeDigraphEnclosure = true;
+            includeClients = true;
+            coreRpStyling = "[shape=hexagon color=firebrick style=filled]";
+            leafRpStyling = "[shape=box color=gray style=filled]";
+            clientStyling.clear();
+        }
+    };
+    
+    static void to_json(nlohmann::json& j, const RallypointServerLinkGraph& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(fileName),
+            TOJSON_IMPL(minRefreshSecs),
+            TOJSON_IMPL(enabled),
+            TOJSON_IMPL(includeDigraphEnclosure),
+            TOJSON_IMPL(includeClients),
+            TOJSON_IMPL(coreRpStyling),
+            TOJSON_IMPL(leafRpStyling),
+            TOJSON_IMPL(clientStyling)
+        };
+    }
+    static void from_json(const nlohmann::json& j, RallypointServerLinkGraph& p)
+    {
+        p.clear();
+        getOptional<std::string>("fileName", p.fileName, j);
+        getOptional<int>("minRefreshSecs", p.minRefreshSecs, j, 5);
+        getOptional<bool>("enabled", p.enabled, j, false);
+        getOptional<bool>("includeDigraphEnclosure", p.includeDigraphEnclosure, j, true);
+        getOptional<bool>("includeClients", p.includeClients, j, true);
+        getOptional<std::string>("coreRpStyling", p.coreRpStyling, j, "[shape=hexagon color=firebrick style=filled]");
+        getOptional<std::string>("leafRpStyling", p.leafRpStyling, j, "[shape=box color=gray style=filled]");
+        getOptional<std::string>("clientStyling", p.clientStyling, j);        
     }    
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointExternalHealthCheckResponder)
-    class RallypointExternalHealthCheckResponder : public Documentable
+    class RallypointExternalHealthCheckResponder : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(RallypointExternalHealthCheckResponder)
@@ -2552,7 +2629,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Tls)
-    class Tls : public Documentable
+    class Tls : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Tls)
@@ -2609,7 +2686,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(PeeringConfiguration)
-    class PeeringConfiguration : public Documentable
+    class PeeringConfiguration : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(PeeringConfiguration)
@@ -2662,7 +2739,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointServer)
-    class RallypointServer : public Documentable
+    class RallypointServer : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(RallypointServer)
@@ -2679,6 +2756,7 @@ namespace ConfigurationObjects
         int                                         ioPools;
         uint64_t                                    msdToken;
         RallypointServerStatusReport                statusReport;
+        RallypointServerLinkGraph                   linkGraph;
         RallypointExternalHealthCheckResponder      externalHealthCheckResponder;
         bool                                        allowPeerForwarding;
         std::string                                 multicastInterfaceName;
@@ -2689,6 +2767,10 @@ namespace ConfigurationObjects
         PeeringConfiguration                        peeringConfiguration;       // NOTE: This is NOT serialized
 
         bool                                        isMeshLeaf;
+
+        bool                                        disableWatchdog;
+        int                                         watchdogIntervalMs;
+        int                                         watchdogHangDetectionMs;
 
         RallypointServer()
         {
@@ -2709,6 +2791,7 @@ namespace ConfigurationObjects
             ioPools = -1;
             msdToken = 0;
             statusReport.clear();
+            linkGraph.clear();
             externalHealthCheckResponder.clear();
             allowPeerForwarding = false;
             multicastInterfaceName.clear();
@@ -2716,6 +2799,9 @@ namespace ConfigurationObjects
             discovery.clear();
             forwardDiscoveredGroups = false;
             isMeshLeaf = false;
+            disableWatchdog = false;
+            watchdogIntervalMs = 5000;
+            watchdogHangDetectionMs = 2000;
         }
     };
     
@@ -2734,19 +2820,23 @@ namespace ConfigurationObjects
             TOJSON_IMPL(ioPools),
             TOJSON_IMPL(msdToken),
             TOJSON_IMPL(statusReport),
+            TOJSON_IMPL(linkGraph),
             TOJSON_IMPL(externalHealthCheckResponder),
             TOJSON_IMPL(allowPeerForwarding),
             TOJSON_IMPL(multicastInterfaceName),
             TOJSON_IMPL(tls),
             TOJSON_IMPL(discovery),
             TOJSON_IMPL(forwardDiscoveredGroups),
-            TOJSON_IMPL(isMeshLeaf)
+            TOJSON_IMPL(isMeshLeaf),
+            TOJSON_IMPL(disableWatchdog),
+            TOJSON_IMPL(watchdogIntervalMs),
+            TOJSON_IMPL(watchdogHangDetectionMs)
         };
     }
     static void from_json(const nlohmann::json& j, RallypointServer& p)
     {
         p.clear();
-        j.at("id").get_to(p.id);
+        getOptional<std::string>("id", p.id, j);
         j.at("certificate").get_to(p.certificate);
         getOptional<bool>("requireFips", p.requireFips, j, false);
         getOptional<std::string>("interfaceName", p.interfaceName, j);
@@ -2758,6 +2848,7 @@ namespace ConfigurationObjects
         getOptional<int>("ioPools", p.ioPools, j, -1);
         getOptional<uint64_t>("msdToken", p.msdToken, j, 0);
         getOptional<RallypointServerStatusReport>("statusReport", p.statusReport, j);
+        getOptional<RallypointServerLinkGraph>("linkGraph", p.linkGraph, j);
         getOptional<RallypointExternalHealthCheckResponder>("externalHealthCheckResponder", p.externalHealthCheckResponder, j);
         getOptional<bool>("allowPeerForwarding", p.allowPeerForwarding, j, false);        
         getOptional<std::string>("multicastInterfaceName", p.multicastInterfaceName, j);
@@ -2765,12 +2856,15 @@ namespace ConfigurationObjects
         getOptional<DiscoveryConfiguration>("discovery", p.discovery, j);   
         getOptional<bool>("forwardDiscoveredGroups", p.forwardDiscoveredGroups, j, false);
         getOptional<bool>("isMeshLeaf", p.isMeshLeaf, j, false);
+        getOptional<bool>("disableWatchdog", p.disableWatchdog, j, false);        
+        getOptional<int>("watchdogIntervalMs", p.watchdogIntervalMs, j, 5000);
+        getOptional<int>("watchdogHangDetectionMs", p.watchdogHangDetectionMs, j, 2000);
     }    
 
     
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(PlatformDiscoveredService)
-    class PlatformDiscoveredService : public Documentable
+    class PlatformDiscoveredService : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(PlatformDiscoveredService)
@@ -2828,7 +2922,7 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(TimelineQueryParameters)
-    class TimelineQueryParameters : public Documentable
+    class TimelineQueryParameters : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(TimelineQueryParameters)
