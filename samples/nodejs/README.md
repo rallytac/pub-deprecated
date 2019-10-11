@@ -1,9 +1,12 @@
 # Quick Notes
-* Build with: 
+This sample requires the "engage-engine" npm package.  Install it as follows:
+
 ```
-yarn
+npm install engage-engine
 ```
-* Run with:
+
+Then, run the sample with:
+
 ```
 node engage-cmd.js
 ```
