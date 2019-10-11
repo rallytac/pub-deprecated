@@ -15,7 +15,7 @@ logMsg("Copyright (c) 2018 Rally Tactical Systems, Inc.");
 logMsg("=================================================================");
 
 // Our global Engage object - its "methods" closely match the API calls in the Engine
-let engage = require("./");
+let engage = require("engage-engine");
 
 // Our TX priority and flags
 var txPriority = 0;
