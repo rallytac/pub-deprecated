@@ -40,16 +40,17 @@ function publish_it()
     mkdir -p lib/linux.x64
     cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/linux.x64/libengage-static.a lib/linux.x64
 
-    #mkdir -p lib/linux.ia32
-    #cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/linux.ia32/libengage-static.a lib/linux.ia32
+    mkdir -p lib/win.x64
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.x64/engage-static.lib lib/win.x64
 
-    #mkdir -p lib/win.x64
-    #mkdir -p lib/win.ia32
+    mkdir -p lib/win.ia32
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.ia32/engage-static.lib lib/win.ia32
 
     npm version ${LATEST_BIN_VERSION}
-    #npm publish
+    npm publish
 
     cd ${CURRDIR}
+    rm -rf ${BUILD_ROOT}
 }
 
 determine_latest_bin_version
