@@ -10,6 +10,7 @@ BUILD_ROOT=${THIS_ROOT}/.build
 API_ROOT=${THIS_ROOT}/../
 BIN_ROOT=${THIS_ROOT}/../../bin
 LATEST_BIN_VERSION=""
+VERSION_EXTENSION="${1}"
 
 function determine_latest_bin_version()
 {
@@ -35,18 +36,20 @@ function publish_it()
     cp ${API_ROOT}/c/include/* include
 
     mkdir -p lib/darwin.x64
-    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/darwin/libengage-static.a lib/darwin.x64
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/darwin/libengage-shared.dylib lib/darwin.x64
 
     mkdir -p lib/linux.x64
-    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/linux.x64/libengage-static.a lib/linux.x64
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/linux.x64/libengage-shared.so lib/linux.x64
 
-    mkdir -p lib/win.x64
-    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.x64/engage-static.lib lib/win.x64
+    mkdir -p lib/win32.x64
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.x64/engage-shared.dll lib/win32.x64
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.x64/engage-shared.lib lib/win32.x64
 
-    mkdir -p lib/win.ia32
-    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.ia32/engage-static.lib lib/win.ia32
+    mkdir -p lib/win32.ia32
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.ia32/engage-shared.dll lib/win32.ia32
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.ia32/engage-shared.lib lib/win32.ia32
 
-    npm version ${LATEST_BIN_VERSION}
+    npm version ${LATEST_BIN_VERSION}${VERSION_EXTENSION}
     npm publish
 
     cd ${CURRDIR}
@@ -54,6 +57,6 @@ function publish_it()
 }
 
 determine_latest_bin_version
-echo "Publishing for version ${LATEST_BIN_VERSION} ..."
+echo "Publishing for version ${LATEST_BIN_VERSION}${VERSION_EXTENSION} ..."
 
 publish_it

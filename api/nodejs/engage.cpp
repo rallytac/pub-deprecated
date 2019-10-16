@@ -9,6 +9,7 @@
 //
 
 #include <nan.h>
+#include <node_buffer.h>
 #include <string>
 #include <iostream>
 #include <thread>
@@ -667,8 +668,12 @@ NAN_METHOD(updatePresenceDescriptor)
 //--------------------------------------------------------
 NAN_METHOD(encrypt)
 {
-    Isolate* isolate = info.GetIsolate();
-    uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject(isolate));
+    #if V8_BUILD_NUMBER <= 288
+        uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject(info.GetIsolate()));
+    #else
+        uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject());
+    #endif
+
     size_t inputOfs = INTVAL(1);
     size_t inputLen = INTVAL(2);
 
@@ -688,8 +693,12 @@ NAN_METHOD(encrypt)
 //--------------------------------------------------------
 NAN_METHOD(decrypt)
 {
-    Isolate* isolate = info.GetIsolate();
-    uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject(isolate));
+    #if V8_BUILD_NUMBER <= 288
+        uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject(info.GetIsolate()));
+    #else
+        uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject());
+    #endif
+
     size_t inputOfs = INTVAL(1);
     size_t inputLen = INTVAL(2);
 

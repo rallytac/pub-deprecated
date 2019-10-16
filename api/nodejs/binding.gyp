@@ -13,7 +13,7 @@
 
       "link_settings": 
       {
-        "libraries": ["-lengage-static"],
+        "libraries": ["-lengage-shared"],
         "library_dirs": ["<(module_root_dir)/lib/<!(node -p process.platform).<!(node -p process.arch)"]
       }
     }
