@@ -267,6 +267,69 @@ namespace ConfigurationObjects
     };    
 
     //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(NetworkInterfaceDevice)
+    class NetworkInterfaceDevice : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(NetworkInterfaceDevice)
+        
+    public:
+        std::string                 name;
+        int                         family;
+        std::string                 address;
+        bool                        available;
+        bool                        isLoopback;
+        bool                        supportsMulticast;
+
+        NetworkInterfaceDevice()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            name.clear();
+            family = -1;
+            address.clear();
+            available = false;
+            isLoopback = false;
+            supportsMulticast = false;
+        }
+
+        virtual void initForDocumenting()
+        {
+            clear();
+            family = 1;
+            address = "127.0.0.1";
+            available = true;
+            isLoopback = true;
+            supportsMulticast = false;
+        }
+    };
+    
+    static void to_json(nlohmann::json& j, const NetworkInterfaceDevice& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(name),
+            TOJSON_IMPL(family),
+            TOJSON_IMPL(address),
+            TOJSON_IMPL(available),
+            TOJSON_IMPL(isLoopback),
+            TOJSON_IMPL(supportsMulticast)
+        };
+    }
+    static void from_json(const nlohmann::json& j, NetworkInterfaceDevice& p)
+    {
+        p.clear();
+        getOptional("name", p.name, j);
+        getOptional("family", p.family, j, -1);
+        getOptional("address", p.address, j);
+        getOptional("available", p.available, j, false);
+        getOptional("isLoopback", p.isLoopback, j, false);
+        getOptional("supportsMulticast", p.supportsMulticast, j, false);
+    }    
+
+    //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RtpHeader)
     class RtpHeader : public ConfigurationObjectBase
     {
