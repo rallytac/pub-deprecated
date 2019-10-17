@@ -19,14 +19,15 @@ import android.preference.SwitchPreference;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.view.MenuItem;
-import android.widget.Toast;
 
+
+import com.rallytac.engage.engine.Engine;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.net.NetworkInterface;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class SettingsActivity extends AppCompatPreferenceActivity
 {
@@ -245,50 +246,39 @@ public class SettingsActivity extends AppCompatPreferenceActivity
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_PTT_EVERY_TIME));
 
             {
-                // We're going to store our list of nics here
-                ArrayList<JSONObject> filteredNics = new ArrayList<JSONObject>();
-
-                // Ask the Engine for the NICs
+                HashSet<String> uniqueNicNames = new HashSet<>();
                 String nicArrayJsonString = Globals.getEngageApplication().getEngine().engageGetNetworkInterfaceDevices();
-
                 JSONArray ar;
 
                 try
                 {
-                    // Filter out only nics that are IPv4 and available
                     ar = new JSONArray(nicArrayJsonString);
 
                     for(int idx = 0; idx < ar.length(); idx++)
                     {
                         JSONObject nic = ar.getJSONObject(idx);
 
-                        Log.e(TAG, nic.toString());
-
-                        if(!Utils.isEmptyString(nic.optString("name", null)) &&
-                           nic.optInt("family", -1) == 2 &&
-                           nic.optBoolean("available", false) == true &&
-                           !Utils.isEmptyString(nic.optString("address", null)))
+                        if(!Utils.isEmptyString(nic.optString(Engine.JsonFields.NetworkInterfaceDevice.name, null)))
                         {
-                            filteredNics.add(nic);
+                            uniqueNicNames.add(nic.optString(Engine.JsonFields.NetworkInterfaceDevice.name));
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    filteredNics.clear();
+                    uniqueNicNames.clear();
                 }
-
-
-                if(filteredNics.size() > 0)
+                
+                if(uniqueNicNames.size() > 0)
                 {
-                    final CharSequence[] entries = new CharSequence[filteredNics.size()];
-                    final CharSequence[] entryValues = new CharSequence[filteredNics.size()];
+                    final CharSequence[] entries = new CharSequence[uniqueNicNames.size()];
+                    final CharSequence[] entryValues = new CharSequence[uniqueNicNames.size()];
 
                     int index = 0;
-                    for (JSONObject obj : filteredNics)
+                    for (String s : uniqueNicNames)
                     {
-                        entries[index] = obj.optString("name", "?") + " (" + obj.optString("address", "?") + ")";
-                        entryValues[index] = obj.optString("name");
+                        entries[index] = s;
+                        entryValues[index] = s;
                         index++;
                     }
 
