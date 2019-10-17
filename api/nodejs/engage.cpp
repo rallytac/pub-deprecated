@@ -722,6 +722,33 @@ NAN_METHOD(updateLicense)
 }
 
 //--------------------------------------------------------
+NAN_METHOD(getVersion)
+{
+    const char *rc = engageGetVersion();
+
+    if(rc == nullptr)
+    {
+        rc = "";
+    }
+
+    info.GetReturnValue().Set(New(rc).ToLocalChecked());
+}
+
+//--------------------------------------------------------
+NAN_METHOD(getNetworkInterfaceDevices)
+{
+    const char *rc = engageGetNetworkInterfaceDevices();
+
+    if(rc == nullptr)
+    {
+        rc = "";
+    }
+
+    info.GetReturnValue().Set(New(rc).ToLocalChecked());
+}
+
+
+//--------------------------------------------------------
 NAN_MODULE_INIT(Init) 
 {    
     ENGAGE_BINDING(on);
@@ -760,6 +787,8 @@ NAN_MODULE_INIT(Init)
     ENGAGE_BINDING(decrypt);
 
     ENGAGE_BINDING(updateLicense);
+    ENGAGE_BINDING(getVersion);
+    ENGAGE_BINDING(getNetworkInterfaceDevices);    
 }
 
 NODE_MODULE(engage, Init)
