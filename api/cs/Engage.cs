@@ -317,7 +317,11 @@ public class Engage
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageLogMsg(int level,
                                            string tag,
-                                           string msg);                                                                                                
+                                           string msg);          
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr engageGetNetworkInterfaceDevices();
+
     #endregion
 
     #region Internal functions
@@ -1256,6 +1260,20 @@ public class Engage
     public int updateLicense(string entitlement, string key, string activationCode)
     {
         return engageUpdateLicense(entitlement, key, activationCode);
+    }
+
+    public String getNetworkInterfaceDevices()
+    {
+        IntPtr ptr = engageGetNetworkInterfaceDevices();
+
+        if (ptr == IntPtr.Zero)
+        {
+            return null;
+        }
+        else
+        {
+            return Marshal.PtrToStringAnsi(ptr);
+        }
     }
 
     #endregion
