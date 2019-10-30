@@ -322,6 +322,9 @@ public class Engage
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr engageGetNetworkInterfaceDevices();
 
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr engageGetAudioDevices();    
+
     #endregion
 
     #region Internal functions
