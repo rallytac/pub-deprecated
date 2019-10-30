@@ -330,6 +330,40 @@ namespace ConfigurationObjects
     }    
 
     //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(ListOfNetworkInterfaceDevice)
+    class ListOfNetworkInterfaceDevice : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(ListOfNetworkInterfaceDevice)
+        
+    public:
+        std::vector<NetworkInterfaceDevice> list;
+
+        ListOfNetworkInterfaceDevice()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            list.clear();
+        }
+    };
+    
+    static void to_json(nlohmann::json& j, const ListOfNetworkInterfaceDevice& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(list)
+        };
+    }
+    static void from_json(const nlohmann::json& j, ListOfNetworkInterfaceDevice& p)
+    {
+        p.clear();
+        getOptional<std::vector<NetworkInterfaceDevice>>("list", p.list, j);
+    }
+
+
+    //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RtpHeader)
     class RtpHeader : public ConfigurationObjectBase
     {
@@ -1154,8 +1188,7 @@ namespace ConfigurationObjects
         {
             dirUnknown = 0, 
             dirInput, 
-            dirOutput, 
-            dirBoth
+            dirOutput
         } Direction_t;
 
         int             deviceId;
@@ -1163,6 +1196,15 @@ namespace ConfigurationObjects
         int             channels;
         Direction_t     direction;
         int             boostPercentage;
+        int             msPerBuffer;
+
+        bool            isAdad;
+        std::string     name;
+        std::string     manufacturer;
+        std::string     model;
+        std::string     hardwareId;
+        std::string     serialNumber;
+        bool            isDefault;
         
         AudioDeviceDescriptor()
         {
@@ -1176,6 +1218,15 @@ namespace ConfigurationObjects
             channels = 0;
             direction = dirUnknown;
             boostPercentage = 0;
+            isAdad = false;
+            isDefault = false;
+            msPerBuffer = 0;
+
+            name.clear();
+            manufacturer.clear();
+            model.clear();
+            hardwareId.clear();
+            serialNumber.clear();
         }
     };
     
@@ -1184,9 +1235,17 @@ namespace ConfigurationObjects
         j = nlohmann::json{
             TOJSON_IMPL(deviceId),
             TOJSON_IMPL(samplingRate),
+            TOJSON_IMPL(msPerBuffer),
             TOJSON_IMPL(channels),
             TOJSON_IMPL(direction),
-            TOJSON_IMPL(boostPercentage)
+            TOJSON_IMPL(boostPercentage),
+            TOJSON_IMPL(isAdad),
+            TOJSON_IMPL(name),
+            TOJSON_IMPL(manufacturer),
+            TOJSON_IMPL(model),
+            TOJSON_IMPL(hardwareId),
+            TOJSON_IMPL(serialNumber),
+            TOJSON_IMPL(isDefault)
         };
     }
     static void from_json(const nlohmann::json& j, AudioDeviceDescriptor& p)
@@ -1194,10 +1253,52 @@ namespace ConfigurationObjects
         p.clear();
         getOptional<int>("deviceId", p.deviceId, j, 0);
         getOptional<int>("samplingRate", p.samplingRate, j, 0);
+        getOptional<int>("msPerBuffer", p.msPerBuffer, j, 0);
         getOptional<int>("channels", p.channels, j, 0);
         getOptional<AudioDeviceDescriptor::Direction_t>("direction", p.direction, j, 
                         AudioDeviceDescriptor::Direction_t::dirUnknown);
         getOptional<int>("boostPercentage", p.boostPercentage, j, 0);
+
+        getOptional<bool>("isAdad", p.isAdad, j, false);
+        getOptional("name", p.name, j);
+        getOptional("manufacturer", p.manufacturer, j);
+        getOptional("model", p.model, j);
+        getOptional("hardwareId", p.hardwareId, j);
+        getOptional("serialNumber", p.serialNumber, j);
+        getOptional("isDefault", p.isDefault, j);
+    }
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(ListOfAudioDeviceDescriptor)
+    class ListOfAudioDeviceDescriptor : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(ListOfAudioDeviceDescriptor)
+        
+    public:
+        std::vector<AudioDeviceDescriptor> list;
+
+        ListOfAudioDeviceDescriptor()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            list.clear();
+        }
+    };
+    
+    static void to_json(nlohmann::json& j, const ListOfAudioDeviceDescriptor& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(list)
+        };
+    }
+    static void from_json(const nlohmann::json& j, ListOfAudioDeviceDescriptor& p)
+    {
+        p.clear();
+        getOptional<std::vector<AudioDeviceDescriptor>>("list", p.list, j);
     }
 
     //-----------------------------------------------------------
@@ -1721,6 +1822,7 @@ namespace ConfigurationObjects
         int                 reconnectFailurePauseIncrementMs;
         int                 sendFailurePauseMs;
         int                 rallypointRtTestIntervalMs;
+        bool                logRtpJitterBufferStats;
 
         EnginePolicyNetworking()
         {
@@ -1742,6 +1844,7 @@ namespace ConfigurationObjects
             reconnectFailurePauseIncrementMs = 500;
             sendFailurePauseMs = 1000;
             rallypointRtTestIntervalMs = 60000;
+            logRtpJitterBufferStats = false;
         }
     };
 
@@ -1760,7 +1863,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(maxReconnectPauseMs),
             TOJSON_IMPL(reconnectFailurePauseIncrementMs),
             TOJSON_IMPL(sendFailurePauseMs),
-            TOJSON_IMPL(rallypointRtTestIntervalMs)
+            TOJSON_IMPL(rallypointRtTestIntervalMs),
+            TOJSON_IMPL(logRtpJitterBufferStats)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyNetworking& p)
@@ -1779,6 +1883,7 @@ namespace ConfigurationObjects
         FROMJSON_IMPL(reconnectFailurePauseIncrementMs, int, 500);
         FROMJSON_IMPL(sendFailurePauseMs, int, 1000);
         FROMJSON_IMPL(rallypointRtTestIntervalMs, int, 60000);
+        FROMJSON_IMPL(logRtpJitterBufferStats, bool, false);
     }           
 
 
@@ -1790,13 +1895,17 @@ namespace ConfigurationObjects
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyAudio)
         
     public:
-        int                 speakerQueueMs;
-        int                 microphoneQueueMs;
-        int                 pcmSamplingRate;
-        int                 pcmMinPlatformSampleCount;
-        int                 pcmMaxSamplesInQueue;
-        int                 pcmSpeakerBuffers;
+        int                 internalRate;
+        int                 internalChannels;
+
+        int                 inputBufferMs;
+        int                 inputChannels;
+        int                 inputRate;
+
+        int                 outputBufferMs;
         int                 outputChannels;
+        int                 outputRate;
+
         int                 outputGainPercentage;
         bool                allowOutputOnTransmit;
 
@@ -1808,13 +1917,17 @@ namespace ConfigurationObjects
 
         void clear()
         {
-            speakerQueueMs = 250;
-            microphoneQueueMs = 60;
-            pcmSamplingRate = 16000;
-            pcmMinPlatformSampleCount = 250;
-            pcmMaxSamplesInQueue = 1000;
-            pcmSpeakerBuffers = 5;
+            internalRate = 16000;
+            internalChannels = 1;
+
+            inputBufferMs = 60;
+            inputChannels = 1;
+            inputRate = 16000;
+
+            outputBufferMs = 60;
             outputChannels = 2;
+            outputRate = 16000;
+
             outputGainPercentage = 0;
             allowOutputOnTransmit = false;
         }
@@ -1823,12 +1936,14 @@ namespace ConfigurationObjects
     static void to_json(nlohmann::json& j, const EnginePolicyAudio& p)
     {
         j = nlohmann::json{
-            TOJSON_IMPL(speakerQueueMs),
-            TOJSON_IMPL(microphoneQueueMs),
-            TOJSON_IMPL(pcmSamplingRate),
-            TOJSON_IMPL(pcmMinPlatformSampleCount),
-            TOJSON_IMPL(pcmMaxSamplesInQueue),
-            TOJSON_IMPL(pcmSpeakerBuffers),
+            TOJSON_IMPL(internalRate),
+            TOJSON_IMPL(internalChannels),            
+            TOJSON_IMPL(inputBufferMs),
+            TOJSON_IMPL(inputChannels),
+            TOJSON_IMPL(inputRate),
+            TOJSON_IMPL(outputBufferMs),
+            TOJSON_IMPL(outputChannels),
+            TOJSON_IMPL(outputRate),
             TOJSON_IMPL(outputChannels),
             TOJSON_IMPL(outputGainPercentage),
             TOJSON_IMPL(allowOutputOnTransmit)
@@ -1837,13 +1952,17 @@ namespace ConfigurationObjects
     static void from_json(const nlohmann::json& j, EnginePolicyAudio& p)
     {
         p.clear();
-        FROMJSON_IMPL(speakerQueueMs, int, 250);
-        FROMJSON_IMPL(microphoneQueueMs, int, 60);
-        FROMJSON_IMPL(pcmSamplingRate, int, 16000);
-        FROMJSON_IMPL(pcmMinPlatformSampleCount, int, 250);
-        FROMJSON_IMPL(pcmMaxSamplesInQueue, int, 1000);
-        FROMJSON_IMPL(pcmSpeakerBuffers, int, 5);
+        FROMJSON_IMPL(internalRate, int, 16000);
+        FROMJSON_IMPL(internalChannels, int, 1);
+
+        FROMJSON_IMPL(inputBufferMs, int, 60);
+        FROMJSON_IMPL(inputChannels, int, 1);
+        FROMJSON_IMPL(inputRate, int, 16000);
+
+        FROMJSON_IMPL(outputBufferMs, int, 60);
         FROMJSON_IMPL(outputChannels, int, 2);
+        FROMJSON_IMPL(outputRate, int, 16000);
+
         FROMJSON_IMPL(outputGainPercentage, int, 0);
         FROMJSON_IMPL(allowOutputOnTransmit, bool, false);
     }           
