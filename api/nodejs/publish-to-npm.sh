@@ -36,18 +36,18 @@ function publish_it()
     cp ${API_ROOT}/c/include/* include
 
     mkdir -p lib/darwin.x64
-    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/darwin/libengage-shared.dylib lib/darwin.x64
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/darwin_x64/libengage-shared.dylib lib/darwin.x64
 
     mkdir -p lib/linux.x64
-    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/linux.x64/libengage-shared.so lib/linux.x64
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/linux_centos_x64/libengage-shared.so lib/linux.x64
 
     mkdir -p lib/win32.x64
-    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.x64/engage-shared.dll lib/win32.x64
-    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.x64/engage-shared.lib lib/win32.x64
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win_x64/engage-shared.dll lib/win32.x64
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win_x64/engage-shared.lib lib/win32.x64
 
     mkdir -p lib/win32.ia32
-    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.ia32/engage-shared.dll lib/win32.ia32
-    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win.ia32/engage-shared.lib lib/win32.ia32
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win_ia32/engage-shared.dll lib/win32.ia32
+    cp ${BIN_ROOT}/${LATEST_BIN_VERSION}/win_ia32/engage-shared.lib lib/win32.ia32
 
     npm version ${LATEST_BIN_VERSION}${VERSION_EXTENSION}
     npm publish
