@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2018 Rally Tactical Systems, Inc.
+//  Copyright (c) 2019 Rally Tactical Systems, Inc.
 //  All rights reserved.
 //
 
@@ -747,6 +747,44 @@ NAN_METHOD(getNetworkInterfaceDevices)
     info.GetReturnValue().Set(New(rc).ToLocalChecked());
 }
 
+//--------------------------------------------------------
+NAN_METHOD(getAudioDevices)
+{
+    const char *rc = engageGetAudioDevices();
+
+    if(rc == nullptr)
+    {
+        rc = "";
+    }
+
+    info.GetReturnValue().Set(New(rc).ToLocalChecked());
+}
+
+//--------------------------------------------------------
+NAN_METHOD(getActiveLicenseDescriptor)
+{
+    const char *rc = engageGetActiveLicenseDescriptor();
+
+    if(rc == nullptr)
+    {
+        rc = "";
+    }
+
+    info.GetReturnValue().Set(New(rc).ToLocalChecked());
+}
+
+//--------------------------------------------------------
+NAN_METHOD(getLicenseDescriptor)
+{
+    const char *rc = engageGetLicenseDescriptor(STRVAL(0), STRVAL(1), STRVAL(2));
+
+    if(rc == nullptr)
+    {
+        rc = "";
+    }
+
+    info.GetReturnValue().Set(New(rc).ToLocalChecked());
+}
 
 //--------------------------------------------------------
 NAN_MODULE_INIT(Init) 
@@ -788,7 +826,11 @@ NAN_MODULE_INIT(Init)
 
     ENGAGE_BINDING(updateLicense);
     ENGAGE_BINDING(getVersion);
-    ENGAGE_BINDING(getNetworkInterfaceDevices);    
+    ENGAGE_BINDING(getNetworkInterfaceDevices);
+    ENGAGE_BINDING(getAudioDevices);
+
+    ENGAGE_BINDING(getActiveLicenseDescriptor);
+    ENGAGE_BINDING(getLicenseDescriptor);    
 }
 
 NODE_MODULE(engage, Init)
