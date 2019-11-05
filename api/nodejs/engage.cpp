@@ -3,11 +3,6 @@
 //  All rights reserved.
 //
 
-// TODO:
-//  :engageGetActiveLicenceDescriptor(void)
-//  :engageGetLicenseDescriptor(str*, str*)
-//
-
 #include <nan.h>
 #include <node_buffer.h>
 #include <string>
