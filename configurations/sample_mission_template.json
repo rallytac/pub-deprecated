@@ -86,10 +86,16 @@
          "maxTxSecs":0,
          "noHdrExt":false
        },
-       "audioRecording":{
-          "enabled":false,
-          "maxTimeMs": 30000
-       }
+       "audio":{
+        "inputId":0,
+        "inputGain":0,
+        "outputId":0,
+        "outputGain":0
+      },
+      "timeline":{
+         "enabled":false,
+         "maxAudioTimeMs":0
+      }
      },
 
      {
@@ -113,10 +119,16 @@
          "maxTxSecs":0,
          "noHdrExt":false
        },
-       "audioRecording":{
-          "enabled":false,
-          "maxTimeMs": 30000
-       }
+       "audio":{
+        "inputId":0,
+        "inputGain":0,
+        "outputId":0,
+        "outputGain":0
+      },
+      "timeline":{
+         "enabled":false,
+         "maxAudioTimeMs":0
+      }
      },
      
      {
@@ -139,10 +151,16 @@
          "maxTxSecs":0,
          "noHdrExt":true
        },
-       "audioRecording":{
-          "enabled":false,
-          "maxTimeMs": 30000
-       }
+       "audio":{
+        "inputId":0,
+        "inputGain":0,
+        "outputId":0,
+        "outputGain":0
+      },
+      "timeline":{
+         "enabled":false,
+         "maxAudioTimeMs":0
+      }
      }
    ]
  }
