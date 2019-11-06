@@ -21,7 +21,9 @@ fi
 
 # Configurations
 wget ${GITHUB_BASE}/configurations/sample_engine_policy.json
+cat sample_engine_policy.json | sed 's/@..\/certificates\//@.\//g' > sample_engine_policy.json
 wget ${GITHUB_BASE}/configurations/sample_mission_template.json
+cat sample_mission_template.json | sed 's/@..\/certificates\//@.\//g' > sample_mission_template.json
 
 # Certificates
 wget ${GITHUB_BASE}/certificates/rtsCA.pem
