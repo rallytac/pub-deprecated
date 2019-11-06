@@ -20,20 +20,20 @@ if [[ "${VERSION}" == "" ]]; then
 fi
 
 # Configurations
-wget ${GITHUB_BASE}/configurations/sample_engine_policy.json
-cat sample_engine_policy.json | sed 's/@..\/certificates\//@.\//g' > sample_engine_policy.json
-wget ${GITHUB_BASE}/configurations/sample_mission_template.json
-cat sample_mission_template.json | sed 's/@..\/certificates\//@.\//g' > sample_mission_template.json
+wget -O sample_engine_policy.json ${GITHUB_BASE}/configurations/sample_engine_policy.json
+sed -i 's/@..\/certificates\//@.\//g' sample_engine_policy.json
+wget -O sample_mission_template.json ${GITHUB_BASE}/configurations/sample_mission_template.json
+sed -i 's/@..\/certificates\//@.\//g' sample_mission_template.json
 
 # Certificates
-wget ${GITHUB_BASE}/certificates/rtsCA.pem
-wget ${GITHUB_BASE}/certificates/rtsFactoryDefaultEngage.pem
-wget ${GITHUB_BASE}/certificates/rtsFactoryDefaultEngage.key
+wget -O rtsCA.pem ${GITHUB_BASE}/certificates/rtsCA.pem
+wget -O rtsFactoryDefaultEngage.pem ${GITHUB_BASE}/certificates/rtsFactoryDefaultEngage.pem
+wget -O rtsFactoryDefaultEngage.key ${GITHUB_BASE}/certificates/rtsFactoryDefaultEngage.key
 
 # Binaries
-wget ${GITHUB_BASE}/bin/${VERSION}/${PLATFORM}/engage-cmd
+wget -O engage-cmd ${GITHUB_BASE}/bin/${VERSION}/${PLATFORM}/engage-cmd
 chmod +x engage-cmd
-wget ${GITHUB_BASE}/bin/${VERSION}/${PLATFORM}/libengage-shared.so
+wget -O libengage-shared.so ${GITHUB_BASE}/bin/${VERSION}/${PLATFORM}/libengage-shared.so
 chmod +x libengage-shared.so
 
 echo "Dont forget to run 'export LD_LIBRARY_PATH=./' in your terminal!"
