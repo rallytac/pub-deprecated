@@ -56,8 +56,8 @@
 
     "security":{
         "certificate":{
-            "certificate":"@../certificates/rtsFactoryDefaultRpClt.pem",
-            "key":"@../certificates/rtsFactoryDefaultRpClt.key"
+            "certificate":"@../certificates/rtsFactoryDefaultEngage.pem",
+            "key":"@../certificates/rtsFactoryDefaultEngage.key"
         }
     },
 
