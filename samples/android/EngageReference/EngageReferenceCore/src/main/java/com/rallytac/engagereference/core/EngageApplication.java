@@ -1340,10 +1340,13 @@ public class EngageApplication
                     identityJson,
                     tempDirectory);
 
-            String sIn = onPlatformGetAudioDeviceList(true);
-            String sOut = onPlatformGetAudioDeviceList(false);
-            Log.e(TAG, sIn);
-            Log.e(TAG, sOut);
+            //String sIn = onPlatformGetAudioDeviceList(true);
+            //String sOut = onPlatformGetAudioDeviceList(false);
+            //Log.e(TAG, sIn);
+            //Log.e(TAG, sOut);
+
+            String s = getEngine().engageGetAudioDevices();
+            Log.e(TAG, s);
 
             getEngine().engageStart();
         }
