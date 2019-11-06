@@ -2580,6 +2580,7 @@ namespace ConfigurationObjects
         
     public:
         std::string     id;
+        int             type;
         NetworkAddress  rx;
         NetworkAddress  tx;
 
@@ -2591,6 +2592,7 @@ namespace ConfigurationObjects
         void clear()
         {
             id.clear();
+            type = 0;
             rx.clear();
             tx.clear();
         }
@@ -2600,6 +2602,7 @@ namespace ConfigurationObjects
     {
         j = nlohmann::json{
             TOJSON_IMPL(id),
+            TOJSON_IMPL(type),
             TOJSON_IMPL(rx),
             TOJSON_IMPL(tx)
         };
@@ -2608,6 +2611,7 @@ namespace ConfigurationObjects
     {
         p.clear();
         getOptional<std::string>("id", p.id, j);
+        getOptional<int>("type", p.type, j, 0);
         getOptional<NetworkAddress>("rx", p.rx, j);
         getOptional<NetworkAddress>("tx", p.tx, j);
     }
