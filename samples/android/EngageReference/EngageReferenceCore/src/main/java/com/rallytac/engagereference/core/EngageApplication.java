@@ -1340,33 +1340,10 @@ public class EngageApplication
                     identityJson,
                     tempDirectory);
 
-            /*
-            String s = getEngine().engageGetAudioDevices();
-            Log.e(TAG, s);
-
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M)
-            {
-                AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-                if(audioManager != null)
-                {
-                    final AudioDeviceInfo[] devices = audioManager.getDevices(AudioManager.GET_DEVICES_ALL);
-
-                    for(AudioDeviceInfo d : devices)
-                    {
-
-                        AudioDeviceInfo.TYPE_WIRED_HEADSET
-                        Log.e(TAG,
-                                "id=" + d.getId() +
-                                ", pn=" + d.getProductName() +
-                                ", type=" + d.getType());
-                    }
-                }
-                else
-                {
-                    Log.e(TAG, "enableBluetoothRecording: failed to acquire audio manager");
-                }
-            }
-            */
+            String sIn = onPlatformGetAudioDeviceList(true);
+            String sOut = onPlatformGetAudioDeviceList(false);
+            Log.e(TAG, sIn);
+            Log.e(TAG, sOut);
 
             getEngine().engageStart();
         }
