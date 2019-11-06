@@ -818,7 +818,7 @@ public class LcarsActivity
             @Override
             public void run()
             {
-                Toast.makeText(LcarsActivity.this, "TODO: Event started for " + gd.name, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(LcarsActivity.this, "TODO: Event started for " + gd.name, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -831,7 +831,7 @@ public class LcarsActivity
             @Override
             public void run()
             {
-                Toast.makeText(LcarsActivity.this, "TODO: Event updated for " + gd.name, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(LcarsActivity.this, "TODO: Event updated for " + gd.name, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -844,7 +844,7 @@ public class LcarsActivity
             @Override
             public void run()
             {
-                Toast.makeText(LcarsActivity.this, "TODO: Event ended for " + gd.name, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(LcarsActivity.this, "TODO: Event ended for " + gd.name, Toast.LENGTH_SHORT).show();
             }
         });
     }

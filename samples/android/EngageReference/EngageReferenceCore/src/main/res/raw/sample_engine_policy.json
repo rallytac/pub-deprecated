@@ -15,7 +15,7 @@
   },
 
   "timelines": {
-    "enabled":true,
+    "enabled":false,
     "storageRoot":"",
     "maxStorageQuotaMb":128,
     "maxEventAgeSecs":2592000,
@@ -40,15 +40,16 @@
   },
 
   "audio":{
-    "speakerQueueMs":250,
-    "microphoneQueueMs":60,
-    "pcmSamplingRate":16000,
-    "pcmMinPlatformSampleCount":250,
-    "pcmMaxSamplesInQueue":1000,
-    "pcmSpeakerBuffers":5,
+    "internalRate":16000,
+    "internalChannels":1,
+    "inputRate":16000,
+    "inputChannels":1,
+    "inputBufferMs":20,
+    "outputRate":16000,
     "outputChannels":2,
+    "outputBufferMs":20,
     "outputGainPercentage":0,
-    "allowOutputOnTransmit": false
+    "allowOutputOnTransmit":false
   },
 
   "security":{

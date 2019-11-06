@@ -15,7 +15,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
@@ -950,7 +953,7 @@ public class EngageApplication
 
             rc = obj.toString();
 
-            Log.e(TAG, rc);
+            //Log.e(TAG, rc);
         }
         catch (Exception e)
         {
@@ -983,6 +986,7 @@ public class EngageApplication
             {
                 JSONObject audio = new JSONObject();
 
+                audio.put("outputId", 3);
                 audio.put("outputGain", (_activeConfiguration.getSpeakerOutputBoostFactor() * 100));
 
                 group.put("audio", audio);
@@ -1335,6 +1339,34 @@ public class EngageApplication
             getEngine().engageInitialize(enginePolicyJson,
                     identityJson,
                     tempDirectory);
+
+            /*
+            String s = getEngine().engageGetAudioDevices();
+            Log.e(TAG, s);
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M)
+            {
+                AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+                if(audioManager != null)
+                {
+                    final AudioDeviceInfo[] devices = audioManager.getDevices(AudioManager.GET_DEVICES_ALL);
+
+                    for(AudioDeviceInfo d : devices)
+                    {
+
+                        AudioDeviceInfo.TYPE_WIRED_HEADSET
+                        Log.e(TAG,
+                                "id=" + d.getId() +
+                                ", pn=" + d.getProductName() +
+                                ", type=" + d.getType());
+                    }
+                }
+                else
+                {
+                    Log.e(TAG, "enableBluetoothRecording: failed to acquire audio manager");
+                }
+            }
+            */
 
             getEngine().engageStart();
         }
@@ -1716,10 +1748,12 @@ public class EngageApplication
             {
                 if(!_groupsSelectedForTx.contains(testGroup))
                 {
+                    /*
                     if (testGroup.tx || testGroup.txPending)
                     {
                         Log.wtf(TAG, "data model says group is tx or txPending but the group is not in the tx set!!");
                     }
+                    */
 
                     testGroup.tx = false;
                     testGroup.txPending = false;
