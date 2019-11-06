@@ -2,7 +2,7 @@
 
 function show_usage()
 {
-    echo "usage: configure <platform> <binary_version>"    
+    echo "usage: setup <platform> <binary_version>"    
 }
 
 PLATFORM=${1}
