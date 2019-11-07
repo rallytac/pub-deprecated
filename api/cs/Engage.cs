@@ -3,6 +3,7 @@
 //  All rights reserved.
 //
 
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -87,7 +88,12 @@ public class Engage
         void onGroupTimelineEventEnded(string id, string eventJson);
         void onGroupTimelineReport(string id, string reportJson);
         void onGroupTimelineReportFailed(string id);
-    }
+    }	
+
+    public interface IHumanBiometricsNotifications
+    {
+        void onHumanBiometricsReceived(string groupId, string nodeId, string hbmJson);
+	}	
     #endregion
 
 
@@ -120,6 +126,23 @@ public class Engage
         ERR_NOT_INITIALIZED = -8,
         ERR_REQUIRES_ACTIVATION = -9
     }
+
+    // Blob payload types
+    public const byte ENGAGE_BLOB_PT_UNDEFINED = 0;
+    public const byte ENGAGE_BLOB_PT_APP_TEXT_UTF8 = 1;
+    public const byte ENGAGE_BLOB_PT_JSON_TEXT_UTF8 = 2;
+    public const byte ENGAGE_BLOB_PT_APP_BINARY = 3;
+    public const byte ENGAGE_BLOB_PT_ENGAGE_BINARY_HUMAN_BIOMETRICS = 4;
+
+    // Human biometrics types
+    public const byte ENGAGE_HBM_HEART_RATE = 1;
+    public const byte ENGAGE_HBM_SKIN_TEMP = 2;
+    public const byte ENGAGE_HBM_CORE_TEMP = 3;
+    public const byte ENGAGE_HBM_HYDRATION = 4;
+    public const byte ENGAGE_HBM_BLOOD_OXYGENATION = 5;
+    public const byte ENGAGE_HBM_FATIGUE_LEVEL = 6;
+    public const byte ENGAGE_HBM_TASK_EFFECTIVENESS = 7;
+
 
     #region Callback delegate types
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -160,7 +183,7 @@ public class Engage
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    private struct EngageCallbacks_t
+    private struct EngageEvents_t
     {
         public EngageVoidCallback PFN_ENGAGE_ENGINE_STARTED;
         public EngageVoidCallback PFN_ENGAGE_ENGINE_STOPPED;
@@ -227,11 +250,73 @@ public class Engage
         public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_REPORT;
         public EngageStringCallback PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
     }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]     // 9 bytes
+    public struct DataSeriesHeader
+    {
+        [MarshalAs(UnmanagedType.U1)]
+        public byte t;
+
+        [MarshalAs(UnmanagedType.U4)]
+        public uint ts;
+
+        [MarshalAs(UnmanagedType.U1)]
+        public byte it;
+
+        [MarshalAs(UnmanagedType.U1)]
+        public byte im;
+
+        [MarshalAs(UnmanagedType.U1)]
+        public byte vt;
+
+        [MarshalAs(UnmanagedType.U1)]
+        public byte ss;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)] // 2 bytes
+    public struct DataElementUint8
+    {
+        [MarshalAs(UnmanagedType.U1)]
+        public byte ofs;
+
+        [MarshalAs(UnmanagedType.U1)]
+        public byte val;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)] // 3 bytes
+    public struct DataElementUint16
+    {
+        [MarshalAs(UnmanagedType.U1)]
+        public byte ofs;
+
+        [MarshalAs(UnmanagedType.U2)]
+        public ushort val;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)] // 5 bytes
+    public struct DataElementUint32
+    {
+        [MarshalAs(UnmanagedType.U1)]
+        public byte ofs;
+
+        [MarshalAs(UnmanagedType.U4)]
+        public uint val;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)] // 9 bytes
+    public struct DataElementUint64
+    {
+        [MarshalAs(UnmanagedType.U1)]
+        public byte ofs;
+
+        [MarshalAs(UnmanagedType.U8)]
+        public ulong val;
+    }
     #endregion
 
     #region Library functions
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int engageRegisterCallbacks(ref EngageCallbacks_t callbacks);
+    private static extern int engageRegisterEventCallbacks(ref EngageEvents_t callbacks);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageInitialize(string enginePolicyConfiguration, 
@@ -374,9 +459,9 @@ public class Engage
         return rc;
     }
 
-    private int registerCallbacks()
+    private int registerEventCallbacks()
     {
-        EngageCallbacks_t cb = new EngageCallbacks_t();
+        EngageEvents_t cb = new EngageEvents_t();
 
         cb.PFN_ENGAGE_ENGINE_STARTED = on_ENGAGE_ENGINE_STARTED;
         cb.PFN_ENGAGE_ENGINE_STOPPED = on_ENGAGE_ENGINE_STOPPED;
@@ -448,7 +533,7 @@ public class Engage
         cb.PFN_ENGAGE_GROUP_TIMELINE_REPORT = on_ENGAGE_GROUP_TIMELINE_REPORT;
         cb.PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED = on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
 
-        return engageRegisterCallbacks(ref cb);
+        return engageRegisterEventCallbacks(ref cb);
     }
 
     private string makeUserJsonConfiguration(string alias, string displayName, int txPriority)
@@ -497,6 +582,7 @@ public class Engage
     private static List<IRallypointNotifications> _rallypointNotificationSubscribers = new List<IRallypointNotifications>();
     private static List<IGroupNotifications> _groupNotificationSubscribers = new List<IGroupNotifications>();
     private static List<ILicenseNotifications> _licenseNotificationSubscribers = new List<ILicenseNotifications>();
+    private static List<IHumanBiometricsNotifications> _humanBiometricsNotifications = new List<IHumanBiometricsNotifications>();
     #endregion
 
     #region Callback delegates
@@ -920,14 +1006,43 @@ public class Engage
 
     private EngageString2AndBlobCallback on_ENGAGE_GROUP_BLOB_RECEIVED = (string id, string blobInfoJson, IntPtr blob, int blobSize) =>
     {
+        byte[] csBlob = new byte[blobSize];
+        Marshal.Copy(blob, csBlob, 0, blobSize);
+
         lock (_groupNotificationSubscribers)
         {
-            byte[] csBlob = new byte[blobSize];
-            Marshal.Copy(blob, csBlob, 0, blobSize);
-
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
                 n.onGroupBlobReceived(id, blobInfoJson, csBlob, blobSize);
+            }
+        }
+
+        // Fire some additional goodies based on the blob info payload type
+        JObject blobInfo = JObject.Parse(blobInfoJson);
+        if(blobInfo != null)
+        {
+            int payloadType = (int)blobInfo["payloadType"];
+            string nodeId = (string)blobInfo["source"];
+
+            // Human biometrics ... ?
+            if (payloadType == Engage.ENGAGE_BLOB_PT_ENGAGE_BINARY_HUMAN_BIOMETRICS)
+            {
+                lock (_humanBiometricsNotifications)
+                {
+                    if (_humanBiometricsNotifications.Count > 0)
+                    {
+                        // Get the array of biometrics items from the blob
+                        string hbmJson = humanBiometricsFromBlob(csBlob);
+
+                        if (hbmJson != null)
+                        {
+                            foreach (IHumanBiometricsNotifications n in _humanBiometricsNotifications)
+                            {
+                                n.onHumanBiometricsReceived(id, nodeId, hbmJson);
+                            }
+                        }
+                    }
+                }
             }
         }
     };
@@ -1125,11 +1240,27 @@ public class Engage
         }
     }
 
+    public void subscribe(IHumanBiometricsNotifications n)
+    {
+        lock (_humanBiometricsNotifications)
+        {
+            _humanBiometricsNotifications.Add(n);
+        }
+    }
+
+    public void unsubscribe(IHumanBiometricsNotifications n)
+    {
+        lock (_humanBiometricsNotifications)
+        {
+            _humanBiometricsNotifications.Remove(n);
+        }
+    }    
+
     public int initialize(string enginePolicyConfiguration, string userIdentity, string tempStoragePath)
     {
         int rc;
 
-        rc = registerCallbacks();
+        rc = registerEventCallbacks();
         if(rc != ENGAGE_RESULT_OK)
         {
             return rc;
@@ -1277,6 +1408,122 @@ public class Engage
         {
             return Marshal.PtrToStringAnsi(ptr);
         }
+    }
+
+    #endregion
+
+    #region Helpers
+
+    public static uint swapEndianness(uint x)
+    {
+        return ((x & 0x000000ff) << 24) +  // First byte
+               ((x & 0x0000ff00) << 8) +   // Second byte
+               ((x & 0x00ff0000) >> 8) +   // Third byte
+               ((x & 0xff000000) >> 24);   // Fourth byte
+    }
+
+    public static string humanBiometricsFromBlob(byte[] blob)
+    {
+        JArray dataSeriesArray;
+
+        try
+        {
+            // Create our enclosing human biometrics object - its a JSON array
+            dataSeriesArray = new JArray();
+
+            //  The total number of bytes we have available to us
+            int bytesLeftInTheBlob = blob.Length;
+
+            // Lock down the blob's memory
+            GCHandle pinnedBlob = GCHandle.Alloc(blob, GCHandleType.Pinned);
+
+            // Get the pointer to the start of the byte array
+            IntPtr ptr = pinnedBlob.AddrOfPinnedObject();
+
+            // Our blob may have multiple elements, so we'll loop
+            while(bytesLeftInTheBlob > 0)
+            {
+                // Marshal in the header
+                DataSeriesHeader hdr = (DataSeriesHeader)Marshal.PtrToStructure(ptr, typeof(DataSeriesHeader));
+
+                // On little endian CPUs we need to swap from big endian (network byte order)
+                if (BitConverter.IsLittleEndian)
+                {
+                    hdr.ts = swapEndianness(hdr.ts);
+                }
+
+                // Make a series element
+                JObject se = new JObject();
+
+                // Fill out its basic data
+                se["t"] = (int)hdr.t;
+                se["ts"] = hdr.ts;
+                se["it"] = (int)hdr.it;
+                se["im"] = (int)hdr.im;
+                se["vt"] = (int)hdr.vt;
+
+                // Jump forward by the size of the header (9 bytes) to point at the beginning of the data
+                ptr = IntPtr.Add(ptr, 9);
+                bytesLeftInTheBlob -= 9;
+
+                // Now go through the data if we have any
+                if (hdr.ss > 0)
+                {
+                    JArray s = new JArray();
+                    
+                    if (hdr.vt == 1)
+                    {
+                        for (byte x = 0; x < hdr.ss; x++)
+                        {
+                            DataElementUint8 de = (DataElementUint8)Marshal.PtrToStructure(ptr, typeof(DataElementUint8));
+
+                            s.Add((int)de.ofs);
+                            s.Add((int)de.val);
+
+                            ptr = IntPtr.Add(ptr, 2);
+                            bytesLeftInTheBlob -= 2;
+                        }
+                    }
+                    else if (hdr.vt == 2)
+                    {
+                        // TODO : process 16-bit numbers
+                    }
+                    else if (hdr.vt == 3)
+                    {
+                        // TODO : process 32-bit numbers
+                    }
+                    else if (hdr.vt == 4)
+                    {
+                        // TODO : process 64-bit numbers
+                    }
+
+
+                    // Plug the series array into the current seriesElement
+                    se["s"] = s;
+                }                
+
+                // Add the series elemement
+                dataSeriesArray.Add(se);
+            }
+
+            pinnedBlob.Free();
+        }
+        catch(Exception e)
+        {
+            dataSeriesArray = null;
+            Console.WriteLine(e.StackTrace);
+        }  
+
+        string rc = null;
+
+        if(dataSeriesArray != null)
+        {
+            JObject hbmData = new JObject();
+            hbmData["data"] = dataSeriesArray;
+            rc = hbmData.ToString();
+        }      
+
+        return rc;
     }
 
     #endregion
