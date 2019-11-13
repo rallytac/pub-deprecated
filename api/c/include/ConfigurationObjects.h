@@ -275,6 +275,7 @@ namespace ConfigurationObjects
         
     public:
         std::string                 name;
+        std::string                 friendlyName;
         int                         family;
         std::string                 address;
         bool                        available;
@@ -289,6 +290,7 @@ namespace ConfigurationObjects
         void clear()
         {
             name.clear();
+            friendlyName.clear();
             family = -1;
             address.clear();
             available = false;
@@ -299,6 +301,8 @@ namespace ConfigurationObjects
         virtual void initForDocumenting()
         {
             clear();
+            name = "en0";
+            friendlyName = "Wi-Fi";
             family = 1;
             address = "127.0.0.1";
             available = true;
@@ -311,6 +315,7 @@ namespace ConfigurationObjects
     {
         j = nlohmann::json{
             TOJSON_IMPL(name),
+            TOJSON_IMPL(friendlyName),
             TOJSON_IMPL(family),
             TOJSON_IMPL(address),
             TOJSON_IMPL(available),
@@ -322,6 +327,7 @@ namespace ConfigurationObjects
     {
         p.clear();
         getOptional("name", p.name, j);
+        getOptional("friendlyName", p.friendlyName, j);
         getOptional("family", p.family, j, -1);
         getOptional("address", p.address, j);
         getOptional("available", p.available, j, false);
@@ -2092,6 +2098,54 @@ namespace ConfigurationObjects
 
 
     //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(EnginePolicyDatabase)
+    class EnginePolicyDatabase : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyDatabase)
+        
+    public:
+        typedef enum
+        {
+            dbtFixedMemory          = 0,
+            dbtPagedMemory          = 1,
+            dbtFixedFile            = 2
+        } DatabaseType_t;
+
+        bool                enabled;
+        DatabaseType_t      type;
+        std::string         fixedFileName;
+
+        EnginePolicyDatabase()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            enabled = true;
+            type = DatabaseType_t::dbtFixedMemory;
+            fixedFileName.clear();
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const EnginePolicyDatabase& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(enabled),
+            TOJSON_IMPL(type),
+            TOJSON_IMPL(fixedFileName)
+        };
+    }
+    static void from_json(const nlohmann::json& j, EnginePolicyDatabase& p)
+    {
+        p.clear();
+        FROMJSON_IMPL(enabled, bool, true);
+        FROMJSON_IMPL(type, EnginePolicyDatabase::DatabaseType_t, EnginePolicyDatabase::DatabaseType_t::dbtFixedMemory);
+        FROMJSON_IMPL(fixedFileName, std::string, EMPTY_STRING);
+    }  
+
+    //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyLicensing)
     class EnginePolicyLicensing : public ConfigurationObjectBase
     {
@@ -2375,6 +2429,7 @@ namespace ConfigurationObjects
         int                 watchdogHangDetectionMs;
         int                 housekeeperIntervalMs;
         int                 maxTxSecs;
+        int                 logTaskQueueStatsIntervalMs;
 
         EnginePolicyInternals()
         {
@@ -2387,6 +2442,7 @@ namespace ConfigurationObjects
             watchdogIntervalMs = 5000;
             watchdogHangDetectionMs = 2000;
             housekeeperIntervalMs = 1000;
+            logTaskQueueStatsIntervalMs = 0;
             maxTxSecs = 30;
         }
     };
@@ -2398,6 +2454,7 @@ namespace ConfigurationObjects
             TOJSON_IMPL(watchdogIntervalMs),
             TOJSON_IMPL(watchdogHangDetectionMs),
             TOJSON_IMPL(housekeeperIntervalMs),
+            TOJSON_IMPL(logTaskQueueStatsIntervalMs),
             TOJSON_IMPL(maxTxSecs)
         };
     }
@@ -2408,6 +2465,7 @@ namespace ConfigurationObjects
         getOptional<int>("watchdogIntervalMs", p.watchdogIntervalMs, j, 5000);
         getOptional<int>("watchdogHangDetectionMs", p.watchdogHangDetectionMs, j, 2000);
         getOptional<int>("housekeeperIntervalMs", p.housekeeperIntervalMs, j, 1000);
+        getOptional<int>("logTaskQueueStatsIntervalMs", p.logTaskQueueStatsIntervalMs, j, 0);        
         getOptional<int>("maxTxSecs", p.maxTxSecs, j, 30);
     }
 
@@ -2426,6 +2484,7 @@ namespace ConfigurationObjects
         int                                     maxEvents;
         long                                    groomingIntervalSecs;
         SecurityCertificate                     security;
+        long                                    autosaveIntervalSecs;
 
         EnginePolicyTimelines()
         {
@@ -2440,6 +2499,7 @@ namespace ConfigurationObjects
             maxEventAgeSecs = (86400 * 30);         // 30 days
             groomingIntervalSecs = (60 * 30);       // 30 minutes
             maxEvents = 1000;
+            autosaveIntervalSecs = 5;               
             security.clear();
         }
     };
@@ -2452,7 +2512,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(maxStorageMb),
             TOJSON_IMPL(maxEventAgeSecs),
             TOJSON_IMPL(maxEvents),
-            TOJSON_IMPL(groomingIntervalSecs),            
+            TOJSON_IMPL(groomingIntervalSecs),
+            TOJSON_IMPL(autosaveIntervalSecs),                        
             TOJSON_IMPL(security)
         };
     }
@@ -2464,6 +2525,7 @@ namespace ConfigurationObjects
         getOptional<int>("maxStorageMb", p.maxStorageMb, j, 128);
         getOptional<long>("maxEventAgeSecs", p.maxEventAgeSecs, j, (86400 * 30));       
         getOptional<long>("groomingIntervalSecs", p.groomingIntervalSecs, j, (60 * 30));     
+        getOptional<long>("autosaveIntervalSecs", p.autosaveIntervalSecs, j, 5);     
         getOptional<int>("maxEvents", p.maxEvents, j, 1000);
         getOptional<SecurityCertificate>("security", p.security, j);
     }
@@ -2485,6 +2547,7 @@ namespace ConfigurationObjects
         EnginePolicyLogging         logging;
         EnginePolicyInternals       internals;
         EnginePolicyTimelines       timelines;
+        EnginePolicyDatabase        database;
 
         EnginePolicy()
         {
@@ -2502,6 +2565,7 @@ namespace ConfigurationObjects
             logging.clear();
             internals.clear();
             timelines.clear();
+            database.clear();
         }
     };
 
@@ -2516,7 +2580,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(discovery),
             TOJSON_IMPL(logging),
             TOJSON_IMPL(internals),
-            TOJSON_IMPL(timelines)            
+            TOJSON_IMPL(timelines),
+            TOJSON_IMPL(database)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicy& p)
@@ -2531,6 +2596,7 @@ namespace ConfigurationObjects
         FROMJSON_IMPL_SIMPLE(logging);
         FROMJSON_IMPL_SIMPLE(internals);
         FROMJSON_IMPL_SIMPLE(timelines);
+        FROMJSON_IMPL_SIMPLE(database);
     } 
 
 
@@ -3099,10 +3165,19 @@ namespace ConfigurationObjects
     public:
         typedef enum
         {
-            etUnknown               = 0,
-            etAudioRx               = 1,
-            etAudioTx               = 2
+            etUndefined           = 0,
+            etAudio               = 1,
+            etLocation            = 2
         } EventType_t;
+
+        typedef enum 
+        {
+            dNone        = 0,
+            dInbound     = 1,
+            dOutbound    = 2,
+            dBoth        = 3,
+            dUndefined   = 4,
+        } Direction_t;
     };    
 
 
@@ -3123,6 +3198,7 @@ namespace ConfigurationObjects
         bool                    onlyCommitted;
         std::string             onlyAlias;
         std::string             onlyNodeId;
+        std::string             sql;
 
         TimelineQueryParameters()
         {
@@ -3140,6 +3216,7 @@ namespace ConfigurationObjects
             onlyCommitted = true;
             onlyAlias.clear();
             onlyNodeId.clear();
+            sql.clear();
         }
     };
 
@@ -3154,7 +3231,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(onlyType),
             TOJSON_IMPL(onlyCommitted),
             TOJSON_IMPL(onlyAlias),
-            TOJSON_IMPL(onlyNodeId)
+            TOJSON_IMPL(onlyNodeId),
+            TOJSON_IMPL(sql)
         };
     }
     static void from_json(const nlohmann::json& j, TimelineQueryParameters& p)
@@ -3168,7 +3246,8 @@ namespace ConfigurationObjects
         getOptional<int>("onlyType", p.onlyType, j, 0);
         getOptional<bool>("onlyCommitted", p.onlyCommitted, j, true);
         getOptional<std::string>("onlyAlias", p.onlyAlias, j, EMPTY_STRING);        
-        getOptional<std::string>("onlyNodeId", p.onlyNodeId, j, EMPTY_STRING);        
+        getOptional<std::string>("onlyNodeId", p.onlyNodeId, j, EMPTY_STRING);
+        getOptional<std::string>("sql", p.sql, j, EMPTY_STRING);
     }
 
     //-----------------------------------------------------------    
