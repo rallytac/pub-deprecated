@@ -276,6 +276,7 @@ namespace ConfigurationObjects
     public:
         std::string                 name;
         std::string                 friendlyName;
+        std::string                 description;
         int                         family;
         std::string                 address;
         bool                        available;
@@ -291,6 +292,7 @@ namespace ConfigurationObjects
         {
             name.clear();
             friendlyName.clear();
+            description.clear();
             family = -1;
             address.clear();
             available = false;
@@ -303,6 +305,7 @@ namespace ConfigurationObjects
             clear();
             name = "en0";
             friendlyName = "Wi-Fi";
+            description = "A wi-fi adapter";
             family = 1;
             address = "127.0.0.1";
             available = true;
@@ -316,6 +319,7 @@ namespace ConfigurationObjects
         j = nlohmann::json{
             TOJSON_IMPL(name),
             TOJSON_IMPL(friendlyName),
+            TOJSON_IMPL(description),
             TOJSON_IMPL(family),
             TOJSON_IMPL(address),
             TOJSON_IMPL(available),
@@ -328,6 +332,7 @@ namespace ConfigurationObjects
         p.clear();
         getOptional("name", p.name, j);
         getOptional("friendlyName", p.friendlyName, j);
+        getOptional("description", p.description, j);        
         getOptional("family", p.family, j, -1);
         getOptional("address", p.address, j);
         getOptional("available", p.available, j, false);
