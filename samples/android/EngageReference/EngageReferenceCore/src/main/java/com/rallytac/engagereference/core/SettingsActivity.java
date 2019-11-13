@@ -252,7 +252,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity
 
                 try
                 {
-                    ar = new JSONArray(nicArrayJsonString);
+                    JSONObject container = new JSONObject(nicArrayJsonString);
+                    ar = container.getJSONArray("list");
 
                     for(int idx = 0; idx < ar.length(); idx++)
                     {
