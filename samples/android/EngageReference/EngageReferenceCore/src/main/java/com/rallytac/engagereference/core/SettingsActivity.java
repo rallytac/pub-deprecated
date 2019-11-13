@@ -259,9 +259,17 @@ public class SettingsActivity extends AppCompatPreferenceActivity
                     {
                         JSONObject nic = ar.getJSONObject(idx);
 
-                        if(!Utils.isEmptyString(nic.optString(Engine.JsonFields.NetworkInterfaceDevice.name, null)))
+                        String theNameToUse;
+
+                        theNameToUse = nic.optString(Engine.JsonFields.NetworkInterfaceDevice.friendlyName, null);
+                        if(Utils.isEmptyString(theNameToUse))
                         {
-                            uniqueNicNames.add(nic.optString(Engine.JsonFields.NetworkInterfaceDevice.name));
+                            theNameToUse = nic.optString(Engine.JsonFields.NetworkInterfaceDevice.name, null);
+                        }
+
+                        if(!Utils.isEmptyString(theNameToUse))
+                        {
+                            uniqueNicNames.add(theNameToUse);
                         }
                     }
                 }
