@@ -166,6 +166,7 @@ public class Engage
         {
             public static String objectName = "networkInterfaceDevice";
             public static String name = "name";
+            public static String friendlyName = "friendlyName";
             public static String family = "family";
             public static String address = "address";
             public static String available = "available";
