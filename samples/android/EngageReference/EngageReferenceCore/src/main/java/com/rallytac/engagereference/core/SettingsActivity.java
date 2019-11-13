@@ -27,6 +27,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class SettingsActivity extends AppCompatPreferenceActivity
@@ -246,7 +247,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_PTT_EVERY_TIME));
 
             {
-                HashSet<String> uniqueNicNames = new HashSet<>();
+
+                HashMap<String, String> uniqueNics = new HashMap<>();
                 String nicArrayJsonString = Globals.getEngageApplication().getEngine().engageGetNetworkInterfaceDevices();
                 JSONArray ar;
 
@@ -259,35 +261,31 @@ public class SettingsActivity extends AppCompatPreferenceActivity
                     {
                         JSONObject nic = ar.getJSONObject(idx);
 
-                        String theNameToUse;
-
-                        theNameToUse = nic.optString(Engine.JsonFields.NetworkInterfaceDevice.friendlyName, null);
-                        if(Utils.isEmptyString(theNameToUse))
+                        String name = nic.optString(Engine.JsonFields.NetworkInterfaceDevice.name, null);
+                        if(!Utils.isEmptyString(name))
                         {
-                            theNameToUse = nic.optString(Engine.JsonFields.NetworkInterfaceDevice.name, null);
-                        }
-
-                        if(!Utils.isEmptyString(theNameToUse))
-                        {
-                            uniqueNicNames.add(theNameToUse);
+                            if(!uniqueNics.containsKey(name))
+                            {
+                                uniqueNics.put(name, nic.optString(Engine.JsonFields.NetworkInterfaceDevice.friendlyName, name));
+                            }
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    uniqueNicNames.clear();
+                    uniqueNics.clear();
                 }
                 
-                if(uniqueNicNames.size() > 0)
+                if(uniqueNics.size() > 0)
                 {
-                    final CharSequence[] entries = new CharSequence[uniqueNicNames.size()];
-                    final CharSequence[] entryValues = new CharSequence[uniqueNicNames.size()];
+                    final CharSequence[] entries = new CharSequence[uniqueNics.size()];
+                    final CharSequence[] entryValues = new CharSequence[uniqueNics.size()];
 
                     int index = 0;
-                    for (String s : uniqueNicNames)
+                    for (String s : uniqueNics.keySet())
                     {
-                        entries[index] = s;
                         entryValues[index] = s;
+                        entries[index] = uniqueNics.get(s);
                         index++;
                     }
 
