@@ -112,7 +112,6 @@ public class Engage
     public const int ENGAGE_RESULT_GENERAL_FAILURE = -4;
 
     // License status codes 
-
     public enum LicensingStatusCode : int
     {
         OK = 0,
@@ -143,6 +142,330 @@ public class Engage
     public const byte ENGAGE_HBM_FATIGUE_LEVEL = 6;
     public const byte ENGAGE_HBM_TASK_EFFECTIVENESS = 7;
 
+    public class JsonFields
+    {
+        public class AudioDevice
+        {
+            public static String objectName = "audioDevice";
+            public static String deviceId = "deviceId";
+            public static String samplingRate = "samplingRate";
+            public static String msPerBuffer = "msPerBuffer";
+            public static String channels = "channels";
+            public static String direction = "direction";
+            public static String boostPercentage = "boostPercentage";
+            public static String isAdad = "isAdad";
+            public static String name = "name";
+            public static String manufacturer = "manufacturer";
+            public static String model = "model";
+            public static String hardwareId = "hardwareId";
+            public static String serialNumber = "serialNumber";
+            public static String isDefault = "isDefault";
+        }
+
+        public class NetworkInterfaceDevice
+        {
+            public static String objectName = "networkInterfaceDevice";
+            public static String name = "name";
+            public static String family = "family";
+            public static String address = "address";
+            public static String available = "available";
+            public static String isLoopback = "isLoopback";
+            public static String supportsMulticast = "supportsMulticast";
+        }
+
+        public class AdvancedTxParams
+        {
+            public static String objectName = "advancedTxParams";
+            public static String flags = "flags";
+            public static String priority = "priority";
+            public static String subchannelTag = "subchannelTag";
+            public static String includeNodeId = "includeNodeId";
+            public static String alias = "alias";
+        }
+
+        public class License
+        {
+            public static String objectName = "license";
+            public static String entitlement = "entitlement";
+            public static String key = "key";
+            public static String activationCode = "activationCode";
+            public static String deviceId = "deviceId";
+            public static String type = "type";
+            public static String expires = "expires";
+            public static String expiresFormatted = "expiresFormatted";
+        }
+
+        public class TalkerInformation
+        {
+            public static String objectName = "talkerInformation";
+            public static String alias = "alias";
+            public static String nodeId = "nodeId";
+        }
+
+        public class GroupTalkers
+        {
+            public static String objectName = "GroupTalkers";
+            public static String list = "list";
+        }
+
+        public class EnginePolicy
+        {
+            public class Database
+            {
+                public static String objectName = "database";
+                public static String enabled = "enabled";
+                public static String type = "type";
+                public static String fixedFileName = "fixedFileName";
+            }
+
+            public class Internals
+            {
+                public static String objectName = "internals";
+                public static String disableWatchdog = "disableWatchdog";
+                public static String watchdogIntervalMs = "watchdogIntervalMs";
+                public static String watchdogHangDetectionMs = "watchdogHangDetectionMs";
+                public static String housekeeperIntervalMs = "housekeeperIntervalMs";
+                public static String logTaskQueueStatsIntervalMs = "logTaskQueueStatsIntervalMs";                
+                public static String maxTxSecs = "maxTxSecs";
+                public static String autosaveIntervalSecs = "autosaveIntervalSecs";
+
+            }
+
+            public class Timelines
+            {
+                public static String objectName = "timelines";
+                public static String enabled = "enabled";
+                public static String maxAttachmentQuotaMb = "maxAttachmentQuotaMb";
+                public static String maxEventAgeSecs = "maxEventAgeSecs";
+            }
+
+            public class Security
+            {
+                public static String objectName = "security";
+            }
+
+            public class Certificate
+            {
+                public static String objectName = "certificate";
+                public static String certificate = "certificate";
+                public static String key = "key";
+            }
+
+            public class Licensing
+            {
+                public static String objectName = "licensing";
+                public static String entitlement = "entitlement";
+                public static String key = "key";
+                public static String activationCode = "activationCode";
+            }
+
+            public class Networking
+            {
+                public static String objectName = "networking";
+                public static String defaultNic = "defaultNic";
+                public static String maxOutputQueuePackets = "maxOutputQueuePackets";
+                public static String rtpJitterMinMs = "rtpJitterMinMs";
+                public static String rtpJitterMaxMs = "rtpJitterMaxMs";
+                public static String rtpLatePacketSequenceRange = "rtpLatePacketSequenceRange";
+                public static String rtpLatePacketTimestampRangeMs = "rtpLatePacketTimestampRangeMs";
+                public static String rtpInboundProcessorInactivityMs = "rtpInboundProcessorInactivityMs";
+                public static String multicastRejoinSecs = "multicastRejoinSecs";
+                public static String rpLeafConnectTimeoutSecs = "rpLeafConnectTimeoutSecs";
+                public static String maxReconnectPauseMs = "maxReconnectPauseMs";
+                public static String reconnectFailurePauseIncrementMs = "reconnectFailurePauseIncrementMs";
+                public static String sendFailurePauseMs = "sendFailurePauseMs";
+            }
+
+            public class Discovery
+            {
+                public static String objectName = "discovery";
+
+                public class Ssdp
+                {
+                    public static String objectName = "ssdp";
+                    public static String enabled = "enabled";
+                    public static String ageTimeoutMs = "ageTimeoutMs";
+                    public static String address = "address";
+                }
+
+                public class Cistech
+                {
+                    public static String objectName = "cistech";
+                    public static String enabled = "enabled";
+                    public static String ageTimeoutMs = "ageTimeoutMs";
+                    public static String address = "address";
+                }
+
+                public class Trellisware
+                {
+                    public static String objectName = "trellisware";
+                    public static String enabled = "enabled";
+                }
+            }
+
+            public static String dataDirectory = "dataDirectory";
+        }
+
+        public class Mission
+        {
+            public static String id = "id";
+            public static String name = "name";
+            public static String description = "description";
+            public static String modPin = "modPin";
+        }
+
+        public class Rallypoint
+        {
+            public static String objectName = "rallypoint";
+            public static String address = "address";
+            public static String port = "port";
+        }
+
+        public class Address
+        {
+            public static String objectName = "address";
+            public static String address = "address";
+            public static String port = "port";
+        }
+
+        public class Rx
+        {
+            public static String objectName = "rx";
+            public static String address = "address";
+            public static String port = "port";
+        }
+
+        public class Tx
+        {
+            public static String objectName = "tx";
+            public static String address = "address";
+            public static String port = "port";
+        }
+
+        public class Group
+        {
+            public static String objectName = "group";
+            public static String arrayName = "groups";
+            public static String id = "id";
+            public static String name = "name";
+            public static String type = "type";
+            public static String cryptoPassword = "cryptoPassword";
+            public static String fdx = "fdx";
+        }
+
+        public class TxAudio
+        {
+            public static String objectName = "txAudio";
+            public static String fdx = "fdx";
+            public static String encoder = "encoder";
+            public static String framingMs = "framingMs";
+            public static String maxTxSecs = "maxTxSecs";
+            public static String noHdrExt = "noHdrExt";
+        }
+
+        public class Presence
+        {
+            public static String objectName = "presence";
+            public static String format = "format";
+            public static String intervalSecs = "intervalSecs";
+            public static String forceOnAudioTransmit = "forceOnAudioTransmit";
+            public static String listenOnly = "listenOnly";
+        }
+
+        public class PresenceDescriptor
+        {
+            public static String objectName = "presence";
+            public static String self = "self";
+            public static String comment = "comment";
+            public static String custom = "custom";
+
+            public class GroupAlias
+            {
+                public static String arrayName = "groupAliases";
+                public static String groupId = "groupId";
+                public static String alias = "alias";
+            }
+        }
+
+        public class Identity
+        {
+            public static String objectName = "identity";
+            public static String nodeId = "nodeId";
+            public static String userId = "userId";
+            public static String displayName = "displayName";
+            public static String type = "type";
+            public static String format = "format";
+            public static String avatar = "avatar";
+        }
+
+        public class Location
+        {
+            public static String objectName = "location";
+            public static String longitude = "longitude";
+            public static String latitude = "latitude";
+            public static String altitude = "altitude";
+            public static String direction = "direction";
+            public static String speed = "speed";
+        }
+
+        public class Connectivity
+        {
+            public static String objectName = "connectivity";
+            public static String type = "type";
+            public static String strength = "strength";
+            public static String rating = "rating";
+        }
+
+        public class Power
+        {
+            public static String objectName = "power";
+            public static String source = "source";
+            public static String state = "state";
+            public static String level = "level";
+        }
+
+        public class RtpHeader
+        {
+            public static String objectName = "rtpHeader";
+            public static String pt = "pt";
+            public static String marker = "marker";
+            public static String seq = "seq";
+            public static String ssrc = "ssrc";
+            public static String ts = "ts";
+        }
+
+        public class BlobHeader
+        {
+            public static String objectName = "blobHeader";
+            public static String source = "source";
+            public static String target = "target";
+            public static String payloadType = "payloadType";
+            public static String blobSize = "size";
+        }
+
+        public class TimelineEvent
+        {
+            public class Audio
+            {
+                public static String objectName = "audio";
+                public static String ms = "ms";
+                public static String samples = "samples";
+            }
+
+            public static String objectName = "event";
+            public static String alias = "alias";
+            public static String direction = "direction";
+            public static String ended = "ended";
+            public static String groupId = "groupId";
+            public static String id = "id";
+            public static String inProgress = "inProgress";
+            public static String nodeId = "nodeId";
+            public static String started = "started";
+            public static String thisNodeId = "thisNodeId";
+            public static String type = "type";
+            public static String uri = "uri";
+        }
+    }
 
     #region Callback delegate types
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -1496,7 +1819,6 @@ public class Engage
                     {
                         // TODO : process 64-bit numbers
                     }
-
 
                     // Plug the series array into the current seriesElement
                     se["s"] = s;
