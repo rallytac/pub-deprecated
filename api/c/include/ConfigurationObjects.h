@@ -1216,6 +1216,8 @@ namespace ConfigurationObjects
         std::string     hardwareId;
         std::string     serialNumber;
         bool            isDefault;
+        std::string     type;
+        std::string     extra;
         
         AudioDeviceDescriptor()
         {
@@ -1238,6 +1240,8 @@ namespace ConfigurationObjects
             model.clear();
             hardwareId.clear();
             serialNumber.clear();
+            type.clear();
+            extra.clear();
         }
     };
     
@@ -1256,7 +1260,9 @@ namespace ConfigurationObjects
             TOJSON_IMPL(model),
             TOJSON_IMPL(hardwareId),
             TOJSON_IMPL(serialNumber),
-            TOJSON_IMPL(isDefault)
+            TOJSON_IMPL(isDefault),
+            TOJSON_IMPL(type),
+            TOJSON_IMPL(extra)
         };
     }
     static void from_json(const nlohmann::json& j, AudioDeviceDescriptor& p)
@@ -1277,6 +1283,8 @@ namespace ConfigurationObjects
         getOptional("hardwareId", p.hardwareId, j);
         getOptional("serialNumber", p.serialNumber, j);
         getOptional("isDefault", p.isDefault, j);
+        getOptional("type", p.type, j);
+        getOptional("extra", p.extra, j);
     }
 
     //-----------------------------------------------------------
