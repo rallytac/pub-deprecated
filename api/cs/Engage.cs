@@ -160,6 +160,9 @@ public class Engage
             public static String hardwareId = "hardwareId";
             public static String serialNumber = "serialNumber";
             public static String isDefault = "isDefault";
+            public static String extra = "extra";
+            public static String type = "type";
+
         }
 
         public class NetworkInterfaceDevice
