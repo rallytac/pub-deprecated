@@ -266,7 +266,13 @@ public class SettingsActivity extends AppCompatPreferenceActivity
                         {
                             if(!uniqueNics.containsKey(name))
                             {
-                                uniqueNics.put(name, nic.optString(Engine.JsonFields.NetworkInterfaceDevice.friendlyName, name));
+                                String friendlyName = nic.optString(Engine.JsonFields.NetworkInterfaceDevice.friendlyName, null);
+                                if(Utils.isEmptyString(friendlyName))
+                                {
+                                    friendlyName = name;
+                                }
+
+                                uniqueNics.put(name, friendlyName);
                             }
                         }
                     }
