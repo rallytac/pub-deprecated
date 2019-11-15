@@ -68,8 +68,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -860,6 +858,7 @@ public class LcarsActivity
         public long ended;
         public int audioId = -1;
         public long audioLengthMs = 0;
+        public View view = null;
     }
 
     void stopSoundpoolPlayer()
@@ -871,40 +870,47 @@ public class LcarsActivity
         }
     }
 
-    void playWaveFileForEvent(TimelineEvent event)
+    void playWaveFileForEvent(final TimelineEvent event)
     {
-        if(_soundpool == null)
+        runOnUiThread(new Runnable()
         {
-            _soundpool = new SoundPool.Builder().build();
-            _soundpool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener()
+            @Override
+            public void run()
             {
-                @Override
-                public void onLoadComplete(SoundPool soundPool, int sampleId, int status)
+                if(_soundpool == null)
                 {
-                    if(sampleId > 0)
+                    _soundpool = new SoundPool.Builder().build();
+                    _soundpool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener()
                     {
-                        _soundpool.play(sampleId, 1.0f, 1.0f, 1, 0, 1);
+                        @Override
+                        public void onLoadComplete(SoundPool soundPool, int sampleId, int status)
+                        {
+                            if(sampleId > 0)
+                            {
+                                _soundpool.play(sampleId, 1.0f, 1.0f, 1, 0, 1);
+                            }
+                        }
+                    });
+                }
+
+                if(event.audioId == -1)
+                {
+                    String path = event.audioUri.substring(7);
+                    event.audioId = _soundpool.load(path, 1);
+                }
+                else
+                {
+                    if (event.audioId > 0)
+                    {
+                        _soundpool.play(event.audioId, 1.0f, 1.0f, 1, 0, 1);
+                    }
+                    else
+                    {
+                        Toast.makeText(LcarsActivity.this, "Cannot play " + event.audioUri, Toast.LENGTH_SHORT).show();
                     }
                 }
-            });
-        }
-
-        if(event.audioId == -1)
-        {
-            String path = event.audioUri.substring(7);
-            event.audioId = _soundpool.load(path, 1);
-        }
-        else
-        {
-            if (event.audioId > 0)
-            {
-                _soundpool.play(event.audioId, 1.0f, 1.0f, 1, 0, 1);
             }
-            else
-            {
-                Toast.makeText(LcarsActivity.this, "Cannot play " + event.audioUri, Toast.LENGTH_SHORT).show();
-            }
-        }
+        });
     }
 
     private class TimelineEventListAdapter extends ArrayAdapter<TimelineEvent>
@@ -927,6 +933,7 @@ public class LcarsActivity
             convertView = inflator.inflate(_resId, parent, false);
 
             final TimelineEvent item = getItem(position);
+            item.view = convertView;
 
             ((ImageView)convertView.findViewById(R.id.ivEventType)).setImageDrawable(ContextCompat.getDrawable(_ctx, item.typeIcon));
             ((TextView)convertView.findViewById(R.id.tvSourceEntity)).setText(item.sourceEntity);
