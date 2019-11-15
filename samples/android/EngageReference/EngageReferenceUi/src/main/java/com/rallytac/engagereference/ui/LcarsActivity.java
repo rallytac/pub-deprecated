@@ -1188,7 +1188,28 @@ public class LcarsActivity
     {
         if(!Utils.isEmptyString(groupId))
         {
-            Globals.getEngageApplication().getEngine().engageQueryGroupTimeline(groupId, "");
+            JSONObject obj = new JSONObject();
+
+            Engine.JsonFields.TimelineEvent
+
+            /*
+            {
+                "maxCount":3,
+                    "mostRecentFirst":true,
+                    "startedOnOrAfter":0,
+                    "endedOnOrBefore":0,
+                    "onlyDirection":0,
+                    "onlyType":0,
+                    "onlyCommitted":true,
+                    "onlyAlias":"",
+                    "onlyNodeId":"",
+                    "xxsql":"DELETE FROM timeline_events",
+                    "sql":"SELECT COUNT(*) AS count_of_records FROM timeline_events",
+                    "xxsql": "SELECT foo FROM bar;"
+            }
+            */
+
+            Globals.getEngageApplication().getEngine().engageQueryGroupTimeline(groupId, obj.toString());
         }
     }
 
