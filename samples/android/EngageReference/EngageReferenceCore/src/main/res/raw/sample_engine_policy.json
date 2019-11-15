@@ -14,15 +14,21 @@
     "maxTxSecs":30
   },
 
+  "database": {
+    "enabled": true,
+    "type": 2,
+    "fixedFileName": "engage-engine.sqlite"
+  },
+
   "timelines": {
     "enabled":true,
     "storageRoot":"",
     "maxStorageQuotaMb":128,
     "maxEventAgeSecs":604800,
     "maxEvents":500,
-    "groomingIntervalSecs":1800
+    "groomingIntervalSecs":1800,
+    "autosaveIntervalSecs":5
   },
-
 
   "networking":{
     "defaultNic":"",
