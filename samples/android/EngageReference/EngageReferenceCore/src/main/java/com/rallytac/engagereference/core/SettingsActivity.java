@@ -26,6 +26,7 @@ import com.rallytac.engage.engine.Engine;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -246,8 +247,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_VIBRATIONS));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_PTT_EVERY_TIME));
 
+            // NICs
             {
-
                 HashMap<String, String> uniqueNics = new HashMap<>();
                 String nicArrayJsonString = Globals.getEngageApplication().getEngine().engageGetNetworkInterfaceDevices();
                 JSONArray ar;
@@ -255,7 +256,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity
                 try
                 {
                     JSONObject container = new JSONObject(nicArrayJsonString);
-                    ar = container.getJSONArray("list");
+                    ar = container.getJSONArray(Engine.JsonFields.ListOfNetworkInterfaceDevice.objectName);
 
                     for(int idx = 0; idx < ar.length(); idx++)
                     {
@@ -280,6 +281,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity
                 catch (Exception e)
                 {
                     uniqueNics.clear();
+                    e.printStackTrace();
                 }
                 
                 if(uniqueNics.size() > 0)
@@ -302,6 +304,67 @@ public class SettingsActivity extends AppCompatPreferenceActivity
                 }
             }
 
+
+
+            // Audio devices
+            {
+
+                String audioDeviceArrayJsonString = Globals.getEngageApplication().getEngine().engageGetAudioDevices();
+
+                JSONArray ar;
+                ArrayList<JSONObject> inputs = new ArrayList<>();
+                ArrayList<JSONObject> outputs = new ArrayList<>();
+
+                // Split into inputs and outputs
+                try
+                {
+                    JSONObject container = new JSONObject(audioDeviceArrayJsonString);
+                    ar = container.getJSONArray(Engine.JsonFields.ListOfAudioDevice.objectName);
+
+                    for(int idx = 0; idx < ar.length(); idx++)
+                    {
+                        JSONObject ad = ar.getJSONObject(idx);
+
+                        int direction = ad.getInt(Engine.JsonFields.AudioDevice.direction);
+                        int deviceId = ad.getInt(Engine.JsonFields.AudioDevice.deviceId);
+                        String name = ad.optString(Engine.JsonFields.AudioDevice.name, null);
+                        String hardwareId = ad.optString(Engine.JsonFields.AudioDevice.hardwareId, null);
+
+                        if(deviceId >= 0 && !Utils.isEmptyString(name) && !Utils.isEmptyString(hardwareId))
+                        {
+                            if(direction == 1)      // dirInput
+                            {
+                                inputs.add(ad);
+                            }
+                            else if(direction == 2) // dirOutput
+                            {
+                                outputs.add(ad);
+                            }
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+                // Fill the input selector
+                for(JSONObject ad : inputs)
+                {
+                    Log.e(TAG, ad.toString());
+                }
+
+                // Fill the output selector
+                for(JSONObject ad : outputs)
+                {
+                    Log.e(TAG, ad.toString());
+                }
+            }
+
+
+
+
+            // Bluetooth audio device
             {
                 final ListPreference listPreference = (ListPreference) findPreference(PreferenceKeys.USER_BT_DEVICE_ADDRESS);
                 ArrayList<BluetoothDevice> btDevs = BluetoothManager.getDevices();
