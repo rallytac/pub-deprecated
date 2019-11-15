@@ -974,7 +974,7 @@ public class LcarsActivity
                     try
                     {
                         JSONObject root = new JSONObject(reportJson);
-                        JSONArray list = root.getJSONArray(Engine.JsonFields.TimelineReport.);
+                        JSONArray list = root.getJSONArray(Engine.JsonFields.TimelineReport.events);
                         if(list != null && list.length() > 0)
                         {
                             for(int x = 0; x < list.length(); x++)
@@ -997,15 +997,15 @@ public class LcarsActivity
                                     te.typeIcon = com.rallytac.engagereference.core.R.drawable.ic_event_type_error;
                                 }
 
-                                te.started = obj.getLong("started");
-                                te.ended = obj.optLong("ended", 0);
-                                te.sourceEntity = obj.optString("alias");
-                                te.audioUri = obj.optString("uri");
+                                te.started = obj.getLong(Engine.JsonFields.TimelineEvent.started);
+                                te.ended = obj.optLong(Engine.JsonFields.TimelineEvent.ended, 0);
+                                te.sourceEntity = obj.optString(Engine.JsonFields.TimelineEvent.alias);
+                                te.audioUri = obj.optString(Engine.JsonFields.TimelineEvent.uri);
 
-                                JSONObject audio = obj.optJSONObject("audio");
+                                JSONObject audio = obj.optJSONObject(Engine.JsonFields.TimelineEvent.Audio.objectName);
                                 if(audio != null)
                                 {
-                                    te.audioLengthMs = audio.getLong("ms");
+                                    te.audioLengthMs = audio.getLong(Engine.JsonFields.TimelineEvent.Audio.ms);
                                 }
 
                                 if(events == null)
@@ -1035,9 +1035,6 @@ public class LcarsActivity
                 }
                 else
                 {
-                    // Reverse the events - they come in incrementing chronological order from the Engine
-                    Collections.reverse(events);
-
                     AlertDialog.Builder builder = new AlertDialog.Builder(LcarsActivity.this);
 
                     final TimelineEventListAdapter arrayAdapter = new TimelineEventListAdapter(LcarsActivity.this, com.rallytac.engagereference.core.R.layout.timeline_event_list_entry, events);
