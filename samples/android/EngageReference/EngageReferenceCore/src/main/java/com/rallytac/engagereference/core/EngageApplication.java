@@ -986,7 +986,8 @@ public class EngageApplication
             {
                 JSONObject audio = new JSONObject();
 
-                audio.put("outputId", 3);
+                //audio.put("inputId", 1);
+                audio.put("outputId", 4);
                 audio.put("outputGain", (_activeConfiguration.getSpeakerOutputBoostFactor() * 100));
 
                 group.put("audio", audio);

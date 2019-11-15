@@ -15,11 +15,11 @@
   },
 
   "timelines": {
-    "enabled":false,
+    "enabled":true,
     "storageRoot":"",
     "maxStorageQuotaMb":128,
-    "maxEventAgeSecs":2592000,
-    "maxEvents":10000,
+    "maxEventAgeSecs":604800,
+    "maxEvents":500,
     "groomingIntervalSecs":1800
   },
 
