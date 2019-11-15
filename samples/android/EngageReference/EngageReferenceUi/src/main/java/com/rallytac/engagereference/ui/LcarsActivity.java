@@ -974,7 +974,7 @@ public class LcarsActivity
                     try
                     {
                         JSONObject root = new JSONObject(reportJson);
-                        JSONArray list = root.getJSONArray("events");
+                        JSONArray list = root.getJSONArray(Engine.JsonFields.TimelineReport.);
                         if(list != null && list.length() > 0)
                         {
                             for(int x = 0; x < list.length(); x++)
@@ -982,7 +982,7 @@ public class LcarsActivity
                                 JSONObject obj = list.getJSONObject(x);
                                 TimelineEvent te = new TimelineEvent();
 
-                                int dir = obj.getInt("direction");
+                                int dir = obj.getInt(Engine.JsonFields.TimelineEvent.direction);
 
                                 if(dir == 1)
                                 {
@@ -1188,28 +1188,20 @@ public class LcarsActivity
     {
         if(!Utils.isEmptyString(groupId))
         {
-            JSONObject obj = new JSONObject();
-
-            Engine.JsonFields.TimelineEvent
-
-            /*
+            try
             {
-                "maxCount":3,
-                    "mostRecentFirst":true,
-                    "startedOnOrAfter":0,
-                    "endedOnOrBefore":0,
-                    "onlyDirection":0,
-                    "onlyType":0,
-                    "onlyCommitted":true,
-                    "onlyAlias":"",
-                    "onlyNodeId":"",
-                    "xxsql":"DELETE FROM timeline_events",
-                    "sql":"SELECT COUNT(*) AS count_of_records FROM timeline_events",
-                    "xxsql": "SELECT foo FROM bar;"
-            }
-            */
+                JSONObject obj = new JSONObject();
 
-            Globals.getEngageApplication().getEngine().engageQueryGroupTimeline(groupId, obj.toString());
+                obj.put(Engine.JsonFields.TimelineQuery.maxCount, 10);
+                obj.put(Engine.JsonFields.TimelineQuery.mostRecentFirst, true);
+
+                Globals.getEngageApplication().getEngine().engageQueryGroupTimeline(groupId, obj.toString());
+            }
+            catch(Exception e)
+            {
+                e.printStackTrace();
+                Toast.makeText(this, "Error constructing timeline query", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
