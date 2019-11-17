@@ -1335,17 +1335,6 @@ public class EngageApplication
             String identityJson = getActiveConfiguration().makeIdentityObject().toString();
             String tempDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
 
-            /*
-            String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091e679058d6}",
-                                                                "362040F302046A6CFA0F65DA",
-                                                                "4B4E2AEE08868A0972190902");
-            */
-            String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091e679058d6}",
-                    "362040F302046A6CFA0F65DA",
-                    "");
-
-            Log.e(TAG, ld);
-
             getEngine().engageInitialize(enginePolicyJson,
                     identityJson,
                     tempDirectory);

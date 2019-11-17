@@ -44,7 +44,7 @@ public class AboutActivity extends
 
     private int OFFLINE_ACTIVATION_REQUEST_CODE = 771;
 
-    private enum KeyType {ktUnknown, ktPerpetual, ktExpires};
+    //private enum KeyType {ktUnknown, ktPerpetual, ktExpires};
     private enum ScanType {stUnknown, stLicenseKey, stActivationCode};
 
     private ImageView _ivAppLogo;
@@ -65,16 +65,18 @@ public class AboutActivity extends
 
     private class InternalDescriptor
     {
-        public KeyType _type;
+        //public KeyType _type;
+        public Engine.LicenseType _theType;
         public String _deviceId;
         public String _key;
         public String _activationCode;
         public Date _expires;
         public String _expiresFormatted = null;
+        public Engine.LicensingStatusCode _statusCode;
 
         public boolean isValid()
         {
-            return _type != KeyType.ktUnknown;
+            return (_theType != Engine.LicenseType.unknown );
         }
 
         public boolean equals(InternalDescriptor ld)
@@ -275,20 +277,32 @@ public class AboutActivity extends
         }
     }
 
+    /*
+String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091e679058d6}",
+                                                    "362040F302046A6CFA0F65DA",
+                                                    "4B4E2AEE08868A0972190902");
+    String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091e679058d6}",
+            "362040F302046A6CFA0F65DA",
+            "");
+
+            Log.e(TAG, ld);
+*/
+
+
+
     private InternalDescriptor parseIntoInternalDescriptor(String jsonData)
     {
         InternalDescriptor rc = new InternalDescriptor();
-        rc._type = KeyType.ktUnknown;
+        rc._theType = Engine.LicenseType.unknown;
 
         try
         {
             JSONObject obj = new JSONObject(jsonData);
 
-            int type = obj.optInt(Engine.JsonFields.License.type, 0);
             long unixSeconds = obj.optInt(Engine.JsonFields.License.expires, 0);
-            String expiresFormatted = obj.optString(Engine.JsonFields.License.expiresFormatted, "");
 
-            rc._type = KeyType.values()[type];
+            rc._theType = Engine.LicenseType.fromInt(obj.getInt(Engine.JsonFields.License.type);
+            rc._statusCode = Engine.LicensingStatusCode.fromInt(obj.getInt(Engine.JsonFields.License.status))
             rc._deviceId = obj.optString(Engine.JsonFields.License.deviceId, "");
             if(Utils.isEmptyString(rc._deviceId))
             {
@@ -304,7 +318,7 @@ public class AboutActivity extends
             }
             else
             {
-                if(rc._type == KeyType.ktExpires)
+                if(rc._theType == Engine.LicenseType .ktExpires)
                 {
                     rc._type = KeyType.ktUnknown;
                     rc._expires = null;
