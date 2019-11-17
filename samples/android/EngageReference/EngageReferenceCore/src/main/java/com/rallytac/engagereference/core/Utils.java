@@ -71,6 +71,18 @@ public class Utils
         return Charset.forName(Constants.CHARSET);
     }
 
+    public static String emptyAs(String s, String v)
+    {
+        if(!isEmptyString(s))
+        {
+            return s;
+        }
+        else
+        {
+            return v;
+        }
+    }
+
     public static boolean isEmptyString(String s)
     {
         return (s == null || s.isEmpty());

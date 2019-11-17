@@ -10,14 +10,10 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Html;
-import android.text.Spanned;
-import android.text.method.LinkMovementMethod;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AlphaAnimation;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -26,7 +22,6 @@ public class OfflineActivationActivity extends AppCompatActivity
 {
     private static String TAG = OfflineActivationActivity.class.getSimpleName();
 
-    private static int SETTINGS_REQUEST_CODE = 42;
     public static String EXTRA_LICENSE_KEY = "$LICENSEKEY";
     public static String EXTRA_DEVICE_ID = "$DEVICEID";
     public static String EXTRA_ACTIVATION_CODE = "$ACTIVATIONCODE";
@@ -58,6 +53,18 @@ public class OfflineActivationActivity extends AppCompatActivity
 
         buildBitmap();
         setBitmap();
+
+        AlphaAnimation animS1 = new AlphaAnimation(0.0f, 1.0f);
+        animS1.setDuration(5000);
+        animS1.setRepeatCount(0);
+        findViewById(R.id.tvStep1ExtraDescription).startAnimation(animS1);
+
+        AlphaAnimation animS2 = new AlphaAnimation(0.0f, 1.0f);
+        animS2.setDuration(10000);
+        animS2.setRepeatCount(0);
+        findViewById(R.id.tvStepTitle2).startAnimation(animS2);
+        findViewById(R.id.tvStep2Description).startAnimation(animS2);
+        findViewById(R.id.ivScanOfflineActivationQrCode).startAnimation(animS2);
     }
 
     @Override

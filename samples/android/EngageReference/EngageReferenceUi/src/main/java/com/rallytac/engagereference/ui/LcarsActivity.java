@@ -1344,6 +1344,10 @@ public class LcarsActivity
                         if(f instanceof CardFragment)
                         {
                             ((CardFragment)f).setGroupDescriptor(gd);
+
+                            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_SELECTED_GROUPS_SINGLE, gd.id);
+                            Globals.getSharedPreferencesEditor().apply();
+
                             break;
                         }
                     }

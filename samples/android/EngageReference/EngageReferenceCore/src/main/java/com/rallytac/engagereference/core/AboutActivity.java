@@ -57,22 +57,46 @@ public class AboutActivity extends
     private ScanType _scanType;
     private ProgressDialog _progressDialog = null;
     private boolean _scanning = false;
-    private String _lastSavedKey = "";
-    private String _lastSavedActivationCode = "";
+    private InternalDescriptor _activeLd = null;
+    private InternalDescriptor _newLd = null;
 
 
     private int _numberOfClicksOfAppLogo = 0;
 
     private class InternalDescriptor
     {
-        //public KeyType _type;
         public Engine.LicenseType _theType;
         public String _deviceId;
         public String _key;
         public String _activationCode;
         public Date _expires;
         public String _expiresFormatted = null;
-        public Engine.LicensingStatusCode _statusCode;
+        public Engine.LicensingStatusCode _status;
+        public boolean _needsSaving = false;
+
+        InternalDescriptor()
+        {
+            _theType = Engine.LicenseType.unknown;
+            _deviceId = null;
+            _key = null;
+            _activationCode = null;
+            _expires = null;
+            _expiresFormatted = null;
+            _status = Engine.LicensingStatusCode.generalFailure;
+            _needsSaving = false;
+        }
+
+        InternalDescriptor(InternalDescriptor ld)
+        {
+            this._theType = ld._theType;
+            this._deviceId = ld._deviceId;
+            this._key = ld._key;
+            this._activationCode = ld._activationCode;
+            this._expires = ld._expires;
+            this._expiresFormatted = ld._expiresFormatted;
+            this._status = ld._status;
+            this._needsSaving = ld._needsSaving;
+        }
 
         public boolean isValid()
         {
@@ -86,9 +110,6 @@ public class AboutActivity extends
                     Utils.stringsMatch(_activationCode, ld._activationCode);
         }
     }
-
-    private InternalDescriptor _activeLd = null;
-    private InternalDescriptor _newLd = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -137,13 +158,17 @@ public class AboutActivity extends
             });
         }
 
-        // Get the active license descriptor
+        String key = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_KEY, "");
+        String ac = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, "");
+
+        // Get the active license descriptor using the existing license key and activation code (if any)
         _activeLd = parseIntoInternalDescriptor(Globals.getEngageApplication()
                                                 .getEngine()
-                                                .engageGetActiveLicenseDescriptor());
+                                                .engageGetLicenseDescriptor(getString(R.string.licensing_entitlement), key, ac));
 
         // At this point, the new one is the same as the active one
-        _newLd = _activeLd;
+        _newLd = new InternalDescriptor(_activeLd);
+        _newLd._needsSaving = false;
 
         _tvLicenseHeader = findViewById(R.id.tvLicenseHeader);
         _tvLicensingMessage = findViewById(R.id.tvLicensingMessage);
@@ -194,12 +219,9 @@ public class AboutActivity extends
             s = "unknown";
         }
 
-        _lastSavedKey = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_KEY, "");
-        _lastSavedActivationCode = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, "");
-
         _etDeviceId.setText(s);
-        _etLicenseKey.setText(_lastSavedKey);
-        _etActivationCode.setText(_lastSavedActivationCode);
+        _etLicenseKey.setText(_activeLd._key);
+        _etActivationCode.setText(_activeLd._activationCode);
 
         String versionInfo;
 
@@ -238,33 +260,21 @@ public class AboutActivity extends
 
     private void saveLicenseData()
     {
-        if(_newLd.isValid())
+        if(_newLd.isValid() && _newLd._needsSaving)
         {
-            String key = _etLicenseKey.getText().toString();
-            String ac = _etActivationCode.getText().toString();
+            _newLd._needsSaving = false;
 
-            if (!Utils.isEmptyString(key))
-            {
-                if (Utils.isEmptyString(ac))
-                {
-                    ac = "";
-                }
+            String key = Utils.emptyAs(_newLd._key, "");
+            String ac = Utils.emptyAs(_newLd._activationCode, "");
 
-                if (key.compareTo(_lastSavedKey) != 0 || ac.compareTo(_lastSavedActivationCode) != 0)
-                {
-                    _lastSavedKey = key;
-                    _lastSavedActivationCode = ac;
+            Log.i(TAG, "saving licensing [" + getString(R.string.licensing_entitlement) + "] [" + key + "] [" + ac + "]");
 
-                    Log.i(TAG, "saving licensing [" + getString(R.string.licensing_entitlement) + "] [" + key + "] [" + ac + "]");
+            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_KEY, key);
+            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, ac);
+            Globals.getSharedPreferencesEditor().apply();
 
-                    Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_KEY, key);
-                    Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, ac);
-                    Globals.getSharedPreferencesEditor().apply();
-
-                    // Put the new license into effect
-                    Globals.getEngageApplication().getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), key, ac);
-                }
-            }
+            // Put the new license into effect
+            Globals.getEngageApplication().getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), key, ac);
         }
     }
 
@@ -277,19 +287,6 @@ public class AboutActivity extends
         }
     }
 
-    /*
-String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091e679058d6}",
-                                                    "362040F302046A6CFA0F65DA",
-                                                    "4B4E2AEE08868A0972190902");
-    String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091e679058d6}",
-            "362040F302046A6CFA0F65DA",
-            "");
-
-            Log.e(TAG, ld);
-*/
-
-
-
     private InternalDescriptor parseIntoInternalDescriptor(String jsonData)
     {
         InternalDescriptor rc = new InternalDescriptor();
@@ -301,16 +298,12 @@ String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091
 
             long unixSeconds = obj.optInt(Engine.JsonFields.License.expires, 0);
 
-            rc._theType = Engine.LicenseType.fromInt(obj.getInt(Engine.JsonFields.License.type);
-            rc._statusCode = Engine.LicensingStatusCode.fromInt(obj.getInt(Engine.JsonFields.License.status))
-            rc._deviceId = obj.optString(Engine.JsonFields.License.deviceId, "");
-            if(Utils.isEmptyString(rc._deviceId))
-            {
-                throw new Exception("invalid device id");
-            }
-
+            rc._theType = Engine.LicenseType.fromInt(obj.getInt(Engine.JsonFields.License.type));
+            rc._status = Engine.LicensingStatusCode.fromInt(obj.getInt(Engine.JsonFields.License.status));
+            rc._deviceId = obj.getString(Engine.JsonFields.License.deviceId);
             rc._key = obj.optString(Engine.JsonFields.License.key, "");
             rc._activationCode = obj.optString(Engine.JsonFields.License.activationCode, "");
+
             if(unixSeconds > 0)
             {
                 rc._expires = Utils.javaDateFromUnixSeconds(unixSeconds);
@@ -318,18 +311,14 @@ String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091
             }
             else
             {
-                if(rc._theType == Engine.LicenseType .ktExpires)
-                {
-                    rc._type = KeyType.ktUnknown;
-                    rc._expires = null;
-                    rc._expiresFormatted = null;
-                }
+                rc._expires = null;
+                rc._expiresFormatted = null;
             }
         }
         catch (Exception e)
         {
             rc = new InternalDescriptor();
-            rc._type = KeyType.ktUnknown;
+            rc._theType = Engine.LicenseType.unknown;
         }
 
         return rc;
@@ -343,7 +332,7 @@ String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091
                                 .getEngine()
                                 .engageGetLicenseDescriptor(getString(R.string.licensing_entitlement), key, ac));
 
-        return (tmp != null && tmp._type != KeyType.ktUnknown);
+        return (tmp != null && tmp.isValid());
     }
 
     private void updateNewLdFromEnteredData()
@@ -354,10 +343,13 @@ String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091
         _newLd = parseIntoInternalDescriptor(Globals.getEngageApplication()
                                                     .getEngine()
                                                     .engageGetLicenseDescriptor(getString(R.string.licensing_entitlement), key, ac));
+
+        _newLd._needsSaving = true;
     }
 
     private void updateUi()
-    { final String limitedTxMsg = "You can continue to use the application but won't be able to transmit for more than 3 seconds at a time.";
+    {
+        final String limitedTxMsg = "You can continue to use the application but won't be able to transmit for more than 3 seconds at a time.";
 
         StringBuilder sb = new StringBuilder();
 
@@ -366,7 +358,7 @@ String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091
             // If active and new are the same, we'll build from the active
             if(_activeLd.isValid())
             {
-                if(_activeLd._type == KeyType.ktExpires)
+                if(_activeLd._theType == Engine.LicenseType.expires)
                 {
                     Date dt = new Date();
                     if(_activeLd._expires.after(dt))
@@ -381,6 +373,11 @@ String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091
                 else
                 {
                     sb.append("Your existing license never expires and requires an activation code.");
+
+                    if(Utils.isEmptyString(_activeLd._activationCode))
+                    {
+                        sb.append("  You don't yet have an activation code.  " + limitedTxMsg);
+                    }
                     //tryAutoActivate = true;
                 }
             }
@@ -393,7 +390,7 @@ String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091
         {
             if(_newLd.isValid())
             {
-                if(_newLd._type == KeyType.ktExpires)
+                if(_newLd._theType == Engine.LicenseType.expires)
                 {
                     Date dt = new Date();
                     if(_newLd._expires.after(dt))
@@ -408,6 +405,11 @@ String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091
                 else
                 {
                     sb.append("This license never expires but requires an activation code.");
+
+                    if(Utils.isEmptyString(_newLd._activationCode))
+                    {
+                        sb.append("  You don't yet have an activation code.  " + limitedTxMsg);
+                    }
                     //tryAutoActivate = true;
                 }
             }
@@ -480,10 +482,13 @@ String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091
         }
         else if(requestCode == OFFLINE_ACTIVATION_REQUEST_CODE)
         {
-            String activationCode = intent.getStringExtra(OfflineActivationActivity.EXTRA_ACTIVATION_CODE);
-            if(!Utils.isEmptyString(activationCode))
+            if(intent != null)
             {
-                _etActivationCode.setText(activationCode);
+                String activationCode = intent.getStringExtra(OfflineActivationActivity.EXTRA_ACTIVATION_CODE);
+                if (!Utils.isEmptyString(activationCode))
+                {
+                    _etActivationCode.setText(activationCode);
+                }
             }
         }
     }

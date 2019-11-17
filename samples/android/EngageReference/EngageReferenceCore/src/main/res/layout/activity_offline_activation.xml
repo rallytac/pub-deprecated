@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ContactActivity">
+    tools:context=".OfflineActivationActivity">
 
     <TextView
         android:id="@+id/tvStepTitle1"
@@ -28,19 +28,7 @@
         android:textColor="@color/colorAccent"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ivQrCode" />
-
-    <TextView
-        android:id="@+id/tvStepTitle3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="24dp"
-        android:text="Step 3"
-        android:textColor="@color/colorAccent"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvStep2Description" />
+        app:layout_constraintTop_toBottomOf="@+id/tvStep1ExtraDescription" />
 
     <TextView
         android:id="@+id/tvStep1Description"
@@ -49,7 +37,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="Let's try activating using another device.  First, scan the QR code below using a device that is connected to the Internet."
+        android:text="Let's try activating using another device.\n\nFirst, scan this QR code using a device that is connected to the Internet."
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -71,39 +59,38 @@
         app:srcCompat="@drawable/ic_share" />
 
     <TextView
+        android:id="@+id/tvStep1ExtraDescription"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Your other device should display a QR code which is the activation received from the licensing server.  If it isn't, make sure the device is connected and you've allowed it to access the URL pointed to by the QR code you scanned."
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ivQrCode" />
+
+    <TextView
         android:id="@+id/tvStep2Description"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="Your other device should now be displaying a QR code which is the activation received from the licensing server.  If it isn't, make sure the device is connected and you've allowed it to access the URL pointed to by the QR code you scanned."
-        app:layout_constraintEnd_toEndOf="parent"
+        android:text="Scan the QR code displayed on the other device by tapping this camera icon."
+        app:layout_constraintEnd_toStartOf="@+id/ivScanOfflineActivationQrCode"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvStepTitle2" />
 
-    <TextView
-        android:id="@+id/tvStep3Description"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:text="Scan the QR code displayed on the other device by tapping this camera icon."
-        app:layout_constraintEnd_toStartOf="@+id/imageView2"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvStepTitle3" />
-
     <ImageView
-        android:id="@+id/imageView2"
+        android:id="@+id/ivScanOfflineActivationQrCode"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="24dp"
         android:onClick="onClickScanOfflineActivationQrCode"
-        app:layout_constraintBottom_toBottomOf="@+id/tvStep3Description"
+        app:layout_constraintBottom_toBottomOf="@+id/tvStep2Description"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/tvStep3Description"
+        app:layout_constraintTop_toTopOf="@+id/tvStep2Description"
         app:srcCompat="@drawable/ic_outline_camera_enhance_24px" />
-
 
 </android.support.constraint.ConstraintLayout>
