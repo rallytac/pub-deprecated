@@ -37,6 +37,7 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
     private String _key;
     private String _activationCode;
     private String _deviceId;
+    private String _hValue;
     private ITaskCompletionNotification _completionNotification;
 
     private int _result;
@@ -49,6 +50,7 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
                                  String key,
                                  String activationCode,
                                  String deviceId,
+                                 String hValue,
                                  ITaskCompletionNotification completionNotification)
     {
         _ctx = ctx;
@@ -57,6 +59,7 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
         _key = key;
         _activationCode = activationCode;
         _deviceId = deviceId;
+        _hValue = hValue;
         _completionNotification = completionNotification;
     }
 
@@ -118,6 +121,8 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
 
             obj.put("entitlementKey", _entitlement);
             obj.put("licenseId", _key);
+            obj.put("h", _hValue);
+
             if(!Utils.isEmptyString(_activationCode))
             {
                 obj.put("activationCode", _activationCode);

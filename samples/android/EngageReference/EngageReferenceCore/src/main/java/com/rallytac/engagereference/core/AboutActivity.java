@@ -42,6 +42,8 @@ public class AboutActivity extends
 {
     private static String TAG = AboutActivity.class.getSimpleName();
 
+    private int OFFLINE_ACTIVATION_REQUEST_CODE = 771;
+
     private enum KeyType {ktUnknown, ktPerpetual, ktExpires};
     private enum ScanType {stUnknown, stLicenseKey, stActivationCode};
 
@@ -55,6 +57,9 @@ public class AboutActivity extends
     private ScanType _scanType;
     private ProgressDialog _progressDialog = null;
     private boolean _scanning = false;
+    private String _lastSavedKey = "";
+    private String _lastSavedActivationCode = "";
+
 
     private int _numberOfClicksOfAppLogo = 0;
 
@@ -87,6 +92,8 @@ public class AboutActivity extends
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+
+        Globals.getEngageApplication().pauseLicenseActivation();
 
         _creating = true;
         setContentView(R.layout.activity_about);
@@ -185,9 +192,12 @@ public class AboutActivity extends
             s = "unknown";
         }
 
+        _lastSavedKey = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_KEY, "");
+        _lastSavedActivationCode = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, "");
+
         _etDeviceId.setText(s);
-        _etLicenseKey.setText(Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_KEY, ""));
-        _etActivationCode.setText(Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, ""));
+        _etLicenseKey.setText(_lastSavedKey);
+        _etActivationCode.setText(_lastSavedActivationCode);
 
         String versionInfo;
 
@@ -203,32 +213,57 @@ public class AboutActivity extends
     }
 
     @Override
+    protected void onResume()
+    {
+        Globals.getEngageApplication().pauseLicenseActivation();
+        super.onResume();
+    }
+
+    @Override
     protected void onStop()
     {
+        /*
         if(!_scanning)
+        {
+            saveLicenseData();
+        }
+
+        Globals.getEngageApplication().resumeLicenseActivation();
+        */
+
+        super.onStop();
+    }
+
+    private void saveLicenseData()
+    {
+        if(_newLd.isValid())
         {
             String key = _etLicenseKey.getText().toString();
             String ac = _etActivationCode.getText().toString();
 
-            if(!Utils.isEmptyString(key))
+            if (!Utils.isEmptyString(key))
             {
-                if(Utils.isEmptyString(ac))
+                if (Utils.isEmptyString(ac))
                 {
                     ac = "";
                 }
 
-                Log.i(TAG, "saving licensing [" + getString(R.string.licensing_entitlement) + "] [" + key + "] [" + ac + "]");
+                if (key.compareTo(_lastSavedKey) != 0 || ac.compareTo(_lastSavedActivationCode) != 0)
+                {
+                    _lastSavedKey = key;
+                    _lastSavedActivationCode = ac;
 
-                Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_KEY, key);
-                Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, ac);
-                Globals.getSharedPreferencesEditor().apply();
+                    Log.i(TAG, "saving licensing [" + getString(R.string.licensing_entitlement) + "] [" + key + "] [" + ac + "]");
 
-                // Put the new license into effect
-                Globals.getEngageApplication().getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), key, ac);
+                    Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_KEY, key);
+                    Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, ac);
+                    Globals.getSharedPreferencesEditor().apply();
+
+                    // Put the new license into effect
+                    Globals.getEngageApplication().getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), key, ac);
+                }
             }
         }
-
-        super.onStop();
     }
 
     private void userChangedLicensedData()
@@ -308,8 +343,7 @@ public class AboutActivity extends
     }
 
     private void updateUi()
-    {
-        final String limitedTxMsg = "You can continue to use the application but won't be able to transmit for more than 3 seconds at a time.";
+    { final String limitedTxMsg = "You can continue to use the application but won't be able to transmit for more than 3 seconds at a time.";
 
         StringBuilder sb = new StringBuilder();
 
@@ -333,6 +367,7 @@ public class AboutActivity extends
                 else
                 {
                     sb.append("Your existing license never expires and requires an activation code.");
+                    //tryAutoActivate = true;
                 }
             }
             else
@@ -358,7 +393,8 @@ public class AboutActivity extends
                 }
                 else
                 {
-                    sb.append("This license never expires but requires an activation code..");
+                    sb.append("This license never expires but requires an activation code.");
+                    //tryAutoActivate = true;
                 }
             }
             else
@@ -368,6 +404,26 @@ public class AboutActivity extends
         }
 
         _tvLicensingMessage.setText(sb.toString());
+
+        /*
+        // Should we try auto-activation?
+        if(tryAutoActivate)
+        {
+            String ac = _etActivationCode.getText().toString();
+            if(Utils.isEmptyString(ac))
+            {
+                attemptOnlineActivation();
+            }
+        }
+        */
+    }
+
+    @Override
+    public void finish()
+    {
+        saveLicenseData();
+        Globals.getEngageApplication().resumeLicenseActivation();
+        super.finish();
     }
 
     @Override
@@ -406,6 +462,14 @@ public class AboutActivity extends
                         _etActivationCode.setText(scannedString);
                     }
                 }
+            }
+        }
+        else if(requestCode == OFFLINE_ACTIVATION_REQUEST_CODE)
+        {
+            String activationCode = intent.getStringExtra(OfflineActivationActivity.EXTRA_ACTIVATION_CODE);
+            if(!Utils.isEmptyString(activationCode))
+            {
+                _etActivationCode.setText(activationCode);
             }
         }
     }
@@ -500,15 +564,17 @@ public class AboutActivity extends
         scanData(getString(R.string.scan_activation_code), ScanType.stActivationCode);
     }
 
-    public void onClickFetchActivationCode(View view)
+    public void onClickGetActivationCodeOnline(View view)
     {
-        String url = getString(R.string.licensing_activation_url);
-        String key = _etLicenseKey.getText().toString();
-        String ac = _etActivationCode.getText().toString();
-        LicenseActivationTask lat = new LicenseActivationTask(this, url, getString(R.string.licensing_entitlement), key, ac, _activeLd._deviceId, this);
+        attemptOnlineActivation();
+    }
 
-        _progressDialog = Utils.showProgressMessage(this, getString(R.string.obtaining_activation_code), _progressDialog);
-        lat.execute();
+    public void onClickGetActivationCodeOffline(View view)
+    {
+        Intent intent = new Intent(this, OfflineActivationActivity.class);
+        intent.putExtra(OfflineActivationActivity.EXTRA_DEVICE_ID, _activeLd._deviceId);
+        intent.putExtra(OfflineActivationActivity.EXTRA_LICENSE_KEY, _etLicenseKey.getText().toString());
+        startActivityForResult(intent, OFFLINE_ACTIVATION_REQUEST_CODE);
     }
 
     @Override
@@ -524,5 +590,22 @@ public class AboutActivity extends
         {
             Toast.makeText(this, resultMessage, Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void attemptOnlineActivation()
+    {
+        String url = getString(R.string.online_licensing_activation_url);
+        String key = _etLicenseKey.getText().toString();
+        String ac = _etActivationCode.getText().toString();
+
+        String entitlementKey = getString(R.string.licensing_entitlement);
+
+        String stringToHash = key + _activeLd._deviceId + entitlementKey;
+        String hValue = Utils.md5HashOfString(stringToHash);
+
+        LicenseActivationTask lat = new LicenseActivationTask(this, url, getString(R.string.licensing_entitlement), key, ac, _activeLd._deviceId, hValue, this);
+
+        _progressDialog = Utils.showProgressMessage(this, getString(R.string.obtaining_activation_code), _progressDialog);
+        lat.execute();
     }
 }

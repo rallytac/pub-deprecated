@@ -15,10 +15,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.location.Location;
-import android.media.AudioDeviceInfo;
-import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
@@ -145,6 +142,7 @@ public class EngageApplication
     private boolean _licenseExpired = false;
     private long _licenseSecondsLeft = 0;
     private Timer _licenseActivationTimer = null;
+    private boolean _licenseActivationPaused = false;
 
     private Timer _humanBiometricsReportingTimer = null;
     private int _hbmTicksSoFar = 0;
@@ -1336,6 +1334,17 @@ public class EngageApplication
             String enginePolicyJson = getActiveConfiguration().makeEnginePolicyObject(Utils.getStringResource(this, R.raw.sample_engine_policy)).toString();
             String identityJson = getActiveConfiguration().makeIdentityObject().toString();
             String tempDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
+
+            /*
+            String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091e679058d6}",
+                                                                "362040F302046A6CFA0F65DA",
+                                                                "4B4E2AEE08868A0972190902");
+            */
+            String ld = getEngine().engageGetLicenseDescriptor("{d8d689b8-7f13-48b1-94e0-091e679058d6}",
+                    "362040F302046A6CFA0F65DA",
+                    "");
+
+            Log.e(TAG, ld);
 
             getEngine().engageInitialize(enginePolicyJson,
                     identityJson,
@@ -3351,6 +3360,32 @@ public class EngageApplication
         // Stub
     }
 
+    public void pauseLicenseActivation()
+    {
+        runOnUiThread(new Runnable()
+          {
+              @Override
+              public void run()
+              {
+                  Log.d(TAG, "pauseLicenseActivation");
+                  _licenseActivationPaused = true;
+              }
+          });
+    }
+
+    public void resumeLicenseActivation()
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Log.d(TAG, "resumeLicenseActivation");
+                _licenseActivationPaused = false;
+            }
+        });
+    }
+
     private void scheduleObtainingActivationCode()
     {
         runOnUiThread(new Runnable()
@@ -3424,36 +3459,50 @@ public class EngageApplication
             @Override
             public void run()
             {
-                try
+                if(_licenseActivationPaused)
                 {
-                    Log.i(TAG, "attempting to obtain a license activation code");
+                    Log.d(TAG, "license activation paused - rescheduling");
 
-                    cancelObtainingActivationCode();
-
-                    String jsonData = getEngine().engageGetActiveLicenseDescriptor();
-                    JSONObject obj = new JSONObject(jsonData);
-                    String deviceId = obj.getString(Engine.JsonFields.License.deviceId);
-                    if(Utils.isEmptyString(deviceId))
-                    {
-                        throw new Exception("no device id available for licensing");
-                    }
-
-                    String key = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_KEY, null);
-                    if(Utils.isEmptyString(key))
-                    {
-                        throw new Exception("no license key available for licensing");
-                    }
-
-                    String url = getString(R.string.licensing_activation_url);
-                    String ac = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, null);
-                    LicenseActivationTask lat = new LicenseActivationTask(EngageApplication.this, url, getString(R.string.licensing_entitlement), key, ac, deviceId, EngageApplication.this);
-
-                    lat.execute();
-                }
-                catch (Exception e)
-                {
-                    Log.e(TAG, "obtainActivationCode: " + e.getMessage());
+                    // Schedule for another time
                     scheduleObtainingActivationCode();
+                }
+                else
+                {
+                    try
+                    {
+                        Log.i(TAG, "attempting to obtain a license activation code");
+
+                        cancelObtainingActivationCode();
+
+                        String jsonData = getEngine().engageGetActiveLicenseDescriptor();
+                        JSONObject obj = new JSONObject(jsonData);
+                        String deviceId = obj.getString(Engine.JsonFields.License.deviceId);
+                        if (Utils.isEmptyString(deviceId))
+                        {
+                            throw new Exception("no device id available for licensing");
+                        }
+
+                        String key = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_KEY, "");
+                        if (Utils.isEmptyString(key))
+                        {
+                            throw new Exception("no license key available for licensing");
+                        }
+
+                        String url = getString(R.string.online_licensing_activation_url);
+                        String ac = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, "");
+
+                        String stringToHash = key + deviceId + getString(R.string.licensing_entitlement);
+                        String hValue = Utils.md5HashOfString(stringToHash);
+
+                        LicenseActivationTask lat = new LicenseActivationTask(EngageApplication.this, url, getString(R.string.licensing_entitlement), key, ac, deviceId, hValue, EngageApplication.this);
+
+                        lat.execute();
+                    }
+                    catch (Exception e)
+                    {
+                        Log.e(TAG, "obtainActivationCode: " + e.getMessage());
+                        scheduleObtainingActivationCode();
+                    }
                 }
             }
         });
@@ -3469,33 +3518,41 @@ public class EngageApplication
             {
                 boolean needScheduling = false;
 
-                if(result == 0 && !Utils.isEmptyString(activationCode))
+                if(_licenseActivationPaused)
                 {
-                    String key = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_KEY, null);
-                    if(!Utils.isEmptyString(key))
-                    {
-                        Log.i(TAG, "onLicenseActivationTaskComplete: attempt succeeded");
-
-                        String ac = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, "");
-                        if(ac.compareTo(activationCode) == 0)
-                        {
-                            Log.w(TAG, "onLicenseActivationTaskComplete: new activation code matches existing activation code");
-                        }
-
-                        Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, activationCode);
-                        Globals.getSharedPreferencesEditor().apply();
-                        getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), key, activationCode);
-                    }
-                    else
-                    {
-                        Log.e(TAG, "onLicenseActivationTaskComplete: no license key present");
-                        needScheduling = true;
-                    }
+                    Log.d(TAG, "license activation paused - rescheduling");
+                    needScheduling = true;
                 }
                 else
                 {
-                    Log.e(TAG, "onLicenseActivationTaskComplete: attempting failed - " + resultMessage);
-                    needScheduling = true;
+                    if (result == 0 && !Utils.isEmptyString(activationCode))
+                    {
+                        String key = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_KEY, null);
+                        if (!Utils.isEmptyString(key))
+                        {
+                            Log.i(TAG, "onLicenseActivationTaskComplete: attempt succeeded");
+
+                            String ac = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, "");
+                            if (ac.compareTo(activationCode) == 0)
+                            {
+                                Log.w(TAG, "onLicenseActivationTaskComplete: new activation code matches existing activation code");
+                            }
+
+                            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, activationCode);
+                            Globals.getSharedPreferencesEditor().apply();
+                            getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), key, activationCode);
+                        }
+                        else
+                        {
+                            Log.e(TAG, "onLicenseActivationTaskComplete: no license key present");
+                            needScheduling = true;
+                        }
+                    }
+                    else
+                    {
+                        Log.e(TAG, "onLicenseActivationTaskComplete: attempting failed - " + resultMessage);
+                        needScheduling = true;
+                    }
                 }
 
                 if(needScheduling)

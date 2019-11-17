@@ -2,7 +2,14 @@
     <string name="app_name">EngageReference</string>
     <string name="copyright">Copyright (c) 2019 Rally Tactical Systems, Inc.</string>
     <string name="licensing_entitlement">{d8d689b8-7f13-48b1-94e0-091e679058d6}</string>
-    <string name="licensing_activation_url">https://licensing.rallytac.com/api/v1/activations</string>
+
+    <!--
+    <string name="online_licensing_activation_url">https://licensing.rallytac.com/api/v1/activations</string>
+    <string name="offline_licensing_activation_url">https://licensing.rallytac.com/api/v1/getactivationqrcode</string>
+    -->
+
+    <string name="online_licensing_activation_url">https://licensing.rallytac.com/api/dev/activations</string>
+    <string name="offline_licensing_activation_url">https://licensing.rallytac.com/api/dev/getactivationqrcode</string>
 
     <string name="support_email_address">support@rallytac.com</string>
     <string name="sales_email_address">sales@rallytac.com</string>

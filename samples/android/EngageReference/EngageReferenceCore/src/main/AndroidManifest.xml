@@ -39,7 +39,11 @@
             android:name=".UserNodeViewActivity"
             android:label="@string/title_activity_single_user_biometrics_view"
             android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".ContactActivity" /> <!-- Sharing out -->
+
+        <activity android:name=".ContactActivity" />
+        <activity android:name=".OfflineActivationActivity" />
+
+        <!-- Sharing out -->
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="com.rallytac.engagereference.core.provider"
