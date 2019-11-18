@@ -262,6 +262,9 @@ private:
         // The real work here is to make the callback...
         Nan::HandleScope scope;
 
+        v8::Isolate         *isolate = v8::Isolate::GetCurrent();
+        v8::Local<Context>  context = v8::Context::New(isolate);
+
         // ... which we'll do here.
         if(_pendingParameters == nullptr || _pendingParameters->size() == 0)
         {
@@ -285,14 +288,15 @@ private:
                 else if((*itr)->_type == Parameter::ptStringVector)
                 {
                     StringVectorParameter *svp = (StringVectorParameter*)(*itr);
-                    v8::Local<v8::Array> jsArray = Nan::New<v8::Array>();
+                    v8::Local<v8::Array> jsArray = Nan::New<v8::Array>(svp->_val.size());
 
                     int speakerIndex = 0;
                     for(std::vector<std::string>::iterator itrSpeakers = svp->_val.begin();
                         itrSpeakers != svp->_val.end();
                         itrSpeakers++)
                     {
-                        jsArray->Set(speakerIndex, Nan::New<v8::String>(*itrSpeakers).ToLocalChecked());
+                        jsArray->Set(context, speakerIndex, v8::String::NewFromUtf8(isolate, itrSpeakers->c_str(), NewStringType::kNormal).ToLocalChecked());
+
                         speakerIndex++;
                     }
 
@@ -545,9 +549,7 @@ NAN_METHOD(initialize)
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_ASSET_REDISCOVERED, groupAssetRediscovered);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_ASSET_UNDISCOVERED, groupAssetUndiscovered);
 
-    /*
-    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_MEMBER_COUNT_CHANGED)(const char *pId, size_t newCount);
-    */
+    //ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_MEMBER_COUNT_CHANGED)(const char *pId, size_t newCount);
 
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_LICENSE_CHANGED, licenseChanged);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_LICENSE_EXPIRED, licenseExpired);
@@ -663,11 +665,7 @@ NAN_METHOD(updatePresenceDescriptor)
 //--------------------------------------------------------
 NAN_METHOD(encrypt)
 {
-    #if V8_BUILD_NUMBER <= 288
-        uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject(info.GetIsolate()));
-    #else
-        uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject());
-    #endif
+    uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]);
 
     size_t inputOfs = INTVAL(1);
     size_t inputLen = INTVAL(2);
@@ -688,11 +686,7 @@ NAN_METHOD(encrypt)
 //--------------------------------------------------------
 NAN_METHOD(decrypt)
 {
-    #if V8_BUILD_NUMBER <= 288
-        uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject(info.GetIsolate()));
-    #else
-        uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]->ToObject());
-    #endif
+    uint8_t* inputBytes = (uint8_t*) node::Buffer::Data(info[0]);
 
     size_t inputOfs = INTVAL(1);
     size_t inputLen = INTVAL(2);
@@ -829,4 +823,3 @@ NAN_MODULE_INIT(Init)
 }
 
 NODE_MODULE(engage, Init)
-
