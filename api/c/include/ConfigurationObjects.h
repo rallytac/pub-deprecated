@@ -282,6 +282,7 @@ namespace ConfigurationObjects
         bool                        available;
         bool                        isLoopback;
         bool                        supportsMulticast;
+        std::string                 hardwareAddress;
 
         NetworkInterfaceDevice()
         {
@@ -298,6 +299,7 @@ namespace ConfigurationObjects
             available = false;
             isLoopback = false;
             supportsMulticast = false;
+            hardwareAddress.clear();
         }
 
         virtual void initForDocumenting()
@@ -311,6 +313,7 @@ namespace ConfigurationObjects
             available = true;
             isLoopback = true;
             supportsMulticast = false;
+            hardwareAddress = "DE:AD:BE:EF:01:02:03";
         }
     };
     
@@ -324,7 +327,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(address),
             TOJSON_IMPL(available),
             TOJSON_IMPL(isLoopback),
-            TOJSON_IMPL(supportsMulticast)
+            TOJSON_IMPL(supportsMulticast),
+            TOJSON_IMPL(hardwareAddress)
         };
     }
     static void from_json(const nlohmann::json& j, NetworkInterfaceDevice& p)
@@ -338,6 +342,7 @@ namespace ConfigurationObjects
         getOptional("available", p.available, j, false);
         getOptional("isLoopback", p.isLoopback, j, false);
         getOptional("supportsMulticast", p.supportsMulticast, j, false);
+        getOptional("hardwareAddress", p.hardwareAddress, j);
     }    
 
     //-----------------------------------------------------------
