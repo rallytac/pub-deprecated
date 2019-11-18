@@ -176,6 +176,7 @@ public class Engage
             public static String available = "available";
             public static String isLoopback = "isLoopback";
             public static String supportsMulticast = "supportsMulticast";
+            public static String hardwareAddress = "hardwareAddress";
         }
 
         public class AdvancedTxParams
