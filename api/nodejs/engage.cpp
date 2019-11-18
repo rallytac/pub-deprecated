@@ -295,7 +295,16 @@ private:
                         itrSpeakers != svp->_val.end();
                         itrSpeakers++)
                     {
-                        jsArray->Set(context, speakerIndex, v8::String::NewFromUtf8(isolate, itrSpeakers->c_str(), NewStringType::kNormal).ToLocalChecked());
+                        #ifndef WIN32
+                            #pragma GCC diagnostic push
+                            #pragma GCC diagnostic ignored "-Wunused-result"
+                        #endif
+                        {
+                            jsArray->Set(context, speakerIndex, v8::String::NewFromUtf8(isolate, itrSpeakers->c_str(), NewStringType::kNormal).ToLocalChecked());
+                        }
+                        #ifndef WIN32
+                            #pragma GCC diagnostic pop
+                        #endif
 
                         speakerIndex++;
                     }
