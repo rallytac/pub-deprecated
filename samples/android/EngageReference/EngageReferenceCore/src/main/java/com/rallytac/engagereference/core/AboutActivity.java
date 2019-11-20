@@ -613,7 +613,16 @@ public class AboutActivity extends
 
     private void attemptOnlineActivation()
     {
-        String url = getString(R.string.online_licensing_activation_url);
+        String url;
+        if(Globals.getSharedPreferences().getBoolean(PreferenceKeys.DEVELOPER_USE_DEV_LICENSING_SYSTEM, false))
+        {
+            url = getString(R.string.online_licensing_activation_url_dev);
+        }
+        else
+        {
+            url = getString(R.string.online_licensing_activation_url_prod);
+        }
+
         String key = _etLicenseKey.getText().toString();
         String ac = _etActivationCode.getText().toString();
 

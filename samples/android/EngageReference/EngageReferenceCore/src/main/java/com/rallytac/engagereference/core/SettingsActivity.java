@@ -6,15 +6,19 @@
 package com.rallytac.engagereference.core;
 
 import android.annotation.TargetApi;
+import android.app.Fragment;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
@@ -228,6 +232,24 @@ public class SettingsActivity extends AppCompatPreferenceActivity
         {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_general);
+
+            // Handle whether developer mode is active
+            if(Globals.getSharedPreferences().getBoolean(PreferenceKeys.DEVELOPER_MODE_ACTIVE, false))
+            {
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.DEVELOPER_USE_DEV_LICENSING_SYSTEM));
+            }
+            else
+            {
+                Preference pc = this.findPreference("prefcat_developer_options");
+                if(pc != null)
+                {
+                    PreferenceScreen ps = this.getPreferenceScreen();
+                    if(ps != null)
+                    {
+                        ps.removePreference(pc);
+                    }
+                }
+            }
 
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_ID));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_DISPLAY_NAME));

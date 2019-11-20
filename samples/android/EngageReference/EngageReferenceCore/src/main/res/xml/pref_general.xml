@@ -1,6 +1,14 @@
 <!--suppress AndroidElementNotAllowed -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:asp="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="Developer Options"
+                        android:key="prefcat_developer_options">
+        <SwitchPreference
+            android:key="developer_useDevLicensingSystem"
+            android:title="Use development licensing system"/>
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="Identity">
         <EditTextPreference
             android:key="user_id"
@@ -284,5 +292,4 @@
             android:defaultValue="true"
             android:dependency="user_experiment.hbm.simulate.enable"/>
     </PreferenceCategory>
-
 </PreferenceScreen>

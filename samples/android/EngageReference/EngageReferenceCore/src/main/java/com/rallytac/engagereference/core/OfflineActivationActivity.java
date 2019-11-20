@@ -121,7 +121,16 @@ public class OfflineActivationActivity extends AppCompatActivity
             String hValue = Utils.md5HashOfString(stringToHash);
 
             StringBuilder sb = new StringBuilder();
-            sb.append(getString(R.string.offline_licensing_activation_url));
+
+            if(Globals.getSharedPreferences().getBoolean(PreferenceKeys.DEVELOPER_USE_DEV_LICENSING_SYSTEM, false))
+            {
+                sb.append(getString(R.string.offline_licensing_activation_url_dev));
+            }
+            else
+            {
+                sb.append(getString(R.string.offline_licensing_activation_url_prod));
+            }
+
             sb.append("?");
             sb.append("licenseId=");
             sb.append(_licenseKey);

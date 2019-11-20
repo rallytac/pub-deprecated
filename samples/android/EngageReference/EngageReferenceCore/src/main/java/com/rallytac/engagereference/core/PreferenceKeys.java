@@ -88,5 +88,6 @@ public class PreferenceKeys
     public static String USER_LICENSING_KEY = "user_licensing.key";
     public static String USER_LICENSING_ACTIVATION_CODE = "user_licensing.activationCode";
 
-    public static String DEVELOPER_MODE_ACTIVE = "developer.modeActive";
+    public static String DEVELOPER_MODE_ACTIVE = "developer_modeActive";
+    public static String DEVELOPER_USE_DEV_LICENSING_SYSTEM = "developer_useDevLicensingSystem";
 }

@@ -3477,7 +3477,16 @@ public class EngageApplication
                             throw new Exception("no license key available for licensing");
                         }
 
-                        String url = getString(R.string.online_licensing_activation_url);
+                        String url;
+                        if(Globals.getSharedPreferences().getBoolean(PreferenceKeys.DEVELOPER_USE_DEV_LICENSING_SYSTEM, false))
+                        {
+                            url = getString(R.string.online_licensing_activation_url_dev);
+                        }
+                        else
+                        {
+                            url = getString(R.string.online_licensing_activation_url_prod);
+                        }
+
                         String ac = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, "");
 
                         String stringToHash = key + deviceId + getString(R.string.licensing_entitlement);
