@@ -1010,6 +1010,14 @@ public class EngageApplication
                 group.put("rallypoints", rallypoints);
             }
 
+            {
+                JSONObject timeline = new JSONObject();
+
+                timeline.put("enabled", true);
+                group.put("timeline", timeline);
+            }
+
+
             rc = group.toString();
         }
         catch (Exception e)
