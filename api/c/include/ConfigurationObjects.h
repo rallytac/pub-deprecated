@@ -1033,6 +1033,7 @@ namespace ConfigurationObjects
         bool                        verifyPeer;
         bool                        allowSelfSignedCertificate;        
         std::vector<std::string>    caCertificates;
+        int                         transactionTimeoutMs;
 
         Rallypoint()
         {
@@ -1046,6 +1047,7 @@ namespace ConfigurationObjects
             certificateKey.clear();
             caCertificates.clear();
             verifyPeer = false;
+            transactionTimeoutMs = 5000;
         }
     };
     
@@ -1057,7 +1059,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(certificateKey),                        
             TOJSON_IMPL(verifyPeer),
             TOJSON_IMPL(allowSelfSignedCertificate),
-            TOJSON_IMPL(caCertificates)
+            TOJSON_IMPL(caCertificates),
+            TOJSON_IMPL(transactionTimeoutMs)
         };
     }
     static void from_json(const nlohmann::json& j, Rallypoint& p)
@@ -1069,6 +1072,7 @@ namespace ConfigurationObjects
         getOptional<bool>("verifyPeer", p.verifyPeer, j, false);
         getOptional<bool>("allowSelfSignedCertificate", p.allowSelfSignedCertificate, j, true);
         getOptional<std::vector<std::string>>("caCertificates", p.caCertificates, j);
+        getOptional<int>("transactionTimeoutMs", p.transactionTimeoutMs, j, 5000);
 
         if(!p.certificate.empty() && p.certificate.c_str()[0] == '@')
         {
@@ -2448,6 +2452,7 @@ namespace ConfigurationObjects
         int                 housekeeperIntervalMs;
         int                 maxTxSecs;
         int                 logTaskQueueStatsIntervalMs;
+        bool                enableLazySpeakerClosure;
 
         EnginePolicyInternals()
         {
@@ -2462,6 +2467,7 @@ namespace ConfigurationObjects
             housekeeperIntervalMs = 1000;
             logTaskQueueStatsIntervalMs = 0;
             maxTxSecs = 30;
+            enableLazySpeakerClosure = false;
         }
     };
 
@@ -2473,7 +2479,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(watchdogHangDetectionMs),
             TOJSON_IMPL(housekeeperIntervalMs),
             TOJSON_IMPL(logTaskQueueStatsIntervalMs),
-            TOJSON_IMPL(maxTxSecs)
+            TOJSON_IMPL(maxTxSecs),
+            TOJSON_IMPL(enableLazySpeakerClosure)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyInternals& p)
@@ -2485,6 +2492,7 @@ namespace ConfigurationObjects
         getOptional<int>("housekeeperIntervalMs", p.housekeeperIntervalMs, j, 1000);
         getOptional<int>("logTaskQueueStatsIntervalMs", p.logTaskQueueStatsIntervalMs, j, 0);        
         getOptional<int>("maxTxSecs", p.maxTxSecs, j, 30);
+        getOptional<bool>("enableLazySpeakerClosure", p.enableLazySpeakerClosure, j, false);
     }
 
     //-----------------------------------------------------------

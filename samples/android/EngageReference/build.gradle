@@ -15,11 +15,11 @@ buildscript {
 }
 
 project.ext {
-    versionCode = 102
-    versionName = "1.102"
+    versionCode = 104
+    versionName = "1.104"
     engageRootPath = "../../../.."
     engageEngineBuild = "release"
-    engageEngineVersion = "1.102.8857"
+    engageEngineVersion = "1.104.8859"
     engageEngineAarPath = engageRootPath + "/bin/" + engageEngineVersion + "/android"
     engageEngineAarFile = "engage-engine-" + engageEngineBuild + "-" + engageEngineVersion + ".aar"
 }
