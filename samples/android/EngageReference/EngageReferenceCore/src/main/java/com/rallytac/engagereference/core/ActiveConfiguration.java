@@ -713,6 +713,11 @@ public class ActiveConfiguration
                 rc = new JSONObject();
             }
 
+            // Let's make the data directory private to this app only
+            {
+                rc.put(Engine.JsonFields.EnginePolicy.dataDirectory, Globals.getContext().getFilesDir().toString());
+            }
+
             // Security (including the default certificate)
             {
                 JSONObject security = rc.optJSONObject(Engine.JsonFields.EnginePolicy.Security.objectName);
