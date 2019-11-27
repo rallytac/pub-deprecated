@@ -12,7 +12,7 @@
         "statusReport":
         {
                 "enabled":true,
-                "fileName":"./${id}_status.json",
+                "fileName":"/tmp/${id}_status.json",
                 "intervalSecs":30,
                 "includeLinks":true,
                 "includePeerLinkDetails":true,
@@ -22,7 +22,7 @@
         "linkGraph":
         {
                 "enabled":true,
-                "fileName":"./${id}_links.dot",
+                "fileName":"/tmp/${id}_links.dot",
                 "minRefreshSecs":5,
                 "includeDigraphEnclosure":true,
                 "includeClients":false,
@@ -39,8 +39,8 @@
         
         "certificate":
         {
-                "certificate":"@../certificates/rtsFactoryDefaultRpSrv.pem",
-                "key":"@../certificates/rtsFactoryDefaultRpSrv.key"
+                "certificate":"@/etc/rallypointd/rtsFactoryDefaultRpSrv.pem",
+                "key":"@/etc/rallypointd/rtsFactoryDefaultRpSrv.key"
         },
 
         "tls":
@@ -49,7 +49,7 @@
                 "allowSelfSignedCertificates":false,
                 "caCertificates":
                 [
-                        "@../certificates/rtsCA.pem"
+                        "@/etc/rallypointd/rtsCA.pem"
                 ]
         },
 
