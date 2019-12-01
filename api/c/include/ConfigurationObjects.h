@@ -1840,7 +1840,9 @@ namespace ConfigurationObjects
         std::string         defaultNic;
         int                 maxOutputQueuePackets;
         int                 rtpJitterMinMs;
-        int                 rtpJitterMaxMs;
+        int                 rtpJitterMaxFactor;
+        int                 rtpJitterOverflowTrimPercentage;
+        int                 rtpJitterUnderrunReductionThresholdMs;
         int                 rtpLatePacketSequenceRange;
         int                 rtpLatePacketTimestampRangeMs;
         int                 rtpInboundProcessorInactivityMs;
@@ -1862,7 +1864,9 @@ namespace ConfigurationObjects
             defaultNic.clear();
             maxOutputQueuePackets = 100;
             rtpJitterMinMs = 100;
-            rtpJitterMaxMs = 1000;
+            rtpJitterMaxFactor = 8;
+            rtpJitterOverflowTrimPercentage = 10;
+            rtpJitterUnderrunReductionThresholdMs = 1500;
             rtpLatePacketSequenceRange = 5;
             rtpLatePacketTimestampRangeMs = 2000;
             rtpInboundProcessorInactivityMs = 500;
@@ -1882,7 +1886,9 @@ namespace ConfigurationObjects
             TOJSON_IMPL(defaultNic),
             TOJSON_IMPL(maxOutputQueuePackets),
             TOJSON_IMPL(rtpJitterMinMs),
-            TOJSON_IMPL(rtpJitterMaxMs),
+            TOJSON_IMPL(rtpJitterMaxFactor),
+            TOJSON_IMPL(rtpJitterOverflowTrimPercentage),
+            TOJSON_IMPL(rtpJitterUnderrunReductionThresholdMs),            
             TOJSON_IMPL(rtpLatePacketSequenceRange),
             TOJSON_IMPL(rtpLatePacketTimestampRangeMs),
             TOJSON_IMPL(rtpInboundProcessorInactivityMs),
@@ -1900,8 +1906,10 @@ namespace ConfigurationObjects
         p.clear();
         FROMJSON_IMPL(defaultNic, std::string, EMPTY_STRING);
         FROMJSON_IMPL(maxOutputQueuePackets, int, 100);
-        FROMJSON_IMPL(rtpJitterMinMs, int, 100);
-        FROMJSON_IMPL(rtpJitterMaxMs, int, 1000);
+        FROMJSON_IMPL(rtpJitterMinMs, int, 8);
+        FROMJSON_IMPL(rtpJitterMaxFactor, int, 8);
+        FROMJSON_IMPL(rtpJitterOverflowTrimPercentage, int, 10);
+        FROMJSON_IMPL(rtpJitterUnderrunReductionThresholdMs, int, 1500);
         FROMJSON_IMPL(rtpLatePacketSequenceRange, int, 5);
         FROMJSON_IMPL(rtpLatePacketTimestampRangeMs, int, 2000);
         FROMJSON_IMPL(rtpInboundProcessorInactivityMs, int, 500);
