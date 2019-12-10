@@ -42,6 +42,7 @@
 
         <activity android:name=".ContactActivity" />
         <activity android:name=".OfflineActivationActivity" />
+        <activity android:name=".OfflineDeactivationActivity" />
 
         <!-- Sharing out -->
         <provider
