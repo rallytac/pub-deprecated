@@ -6,6 +6,7 @@
 package com.rallytac.engagereference.core;
 
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -37,12 +38,14 @@ import java.util.Date;
 public class AboutActivity extends
                                 AppCompatActivity
                            implements
-                                LicenseActivationTask.ITaskCompletionNotification
+                                LicenseActivationTask.ITaskCompletionNotification,
+                                LicenseDeactivationTask.ITaskCompletionNotification
 
 {
     private static String TAG = AboutActivity.class.getSimpleName();
 
     private int OFFLINE_ACTIVATION_REQUEST_CODE = 771;
+
 
     //private enum KeyType {ktUnknown, ktPerpetual, ktExpires};
     private enum ScanType {stUnknown, stLicenseKey, stActivationCode};
@@ -596,6 +599,37 @@ public class AboutActivity extends
         startActivityForResult(intent, OFFLINE_ACTIVATION_REQUEST_CODE);
     }
 
+    public void onClickDeactivate(View view)
+    {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+
+        alertDialogBuilder.setTitle("Deactivate");
+
+        alertDialogBuilder.setMessage("This action will deactivate your license on this device.\n\nAre you really sure you want to do this?");
+        alertDialogBuilder.setCancelable(true);
+        alertDialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+                dialog.cancel();
+            }
+        });
+        alertDialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+                //attemptOnlineDeactivation();
+                doOfflineActivation();
+            }
+        });
+
+        AlertDialog dlg = alertDialogBuilder.create();
+        dlg.show();
+    }
+
+
     @Override
     public void onLicenseActivationTaskComplete(int result, String activationCode, String resultMessage)
     {
@@ -610,6 +644,7 @@ public class AboutActivity extends
             Toast.makeText(this, resultMessage, Toast.LENGTH_LONG).show();
         }
     }
+
 
     private void attemptOnlineActivation()
     {
@@ -636,4 +671,58 @@ public class AboutActivity extends
         _progressDialog = Utils.showProgressMessage(this, getString(R.string.obtaining_activation_code), _progressDialog);
         lat.execute();
     }
+
+    @Override
+    public void onLicenseDeactivationTaskComplete(int result, String resultMessage)
+    {
+        _progressDialog = Utils.hideProgressMessage(_progressDialog);
+
+        if(result == 0)
+        {
+            _etActivationCode.setText(null);
+            Toast.makeText(this, "Deactivated", Toast.LENGTH_LONG).show();
+        }
+        else
+        {
+            Toast.makeText(this, resultMessage, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void attemptOnlineDeactivation()
+    {
+        String url;
+        if(Globals.getSharedPreferences().getBoolean(PreferenceKeys.DEVELOPER_USE_DEV_LICENSING_SYSTEM, false))
+        {
+            url = getString(R.string.online_licensing_deactivation_url_dev);
+        }
+        else
+        {
+            url = getString(R.string.online_licensing_deactivation_url_prod);
+        }
+
+        String key = _etLicenseKey.getText().toString();
+
+        String entitlementKey = getString(R.string.licensing_entitlement);
+
+        String stringToHash = key + _activeLd._deviceId + entitlementKey;
+        String hValue = Utils.md5HashOfString(stringToHash);
+
+        LicenseDeactivationTask lat = new LicenseDeactivationTask(this, url, key, _activeLd._deviceId, hValue, this);
+
+        _progressDialog = Utils.showProgressMessage(this, getString(R.string.obtaining_activation_code), _progressDialog);
+        lat.execute();
+    }
+
+    private void doOfflineActivation()
+    {
+        _etActivationCode.setText(null);
+        Toast.makeText(this, "Deactivated", Toast.LENGTH_LONG).show();
+
+        Intent intent = new Intent(this, OfflineDeactivationActivity.class);
+        intent.putExtra(OfflineActivationActivity.EXTRA_DEVICE_ID, _activeLd._deviceId);
+        intent.putExtra(OfflineActivationActivity.EXTRA_LICENSE_KEY, _etLicenseKey.getText().toString());
+        startActivity(intent);
+    }
+
+
 }

@@ -21,6 +21,15 @@
     #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
+#if !defined(ENGAGE_IGNORE_COMPILER_UNUSED_WARNING)
+    #if defined(__GNUC__)
+        #define ENGAGE_IGNORE_COMPILER_UNUSED_WARNING __attribute__((unused))
+    #else
+        #define ENGAGE_IGNORE_COMPILER_UNUSED_WARNING
+    #endif
+#endif  // ENGAGE_IGNORE_COMPILER_UNUSED_WARNING
+
+
 namespace ConfigurationObjects
 {
 
@@ -1556,6 +1565,7 @@ namespace ConfigurationObjects
     public:
         bool        enabled;
         int         maxAudioTimeMs;
+        bool        recordAudio;
 
         GroupTimeline()
         {
@@ -1566,6 +1576,7 @@ namespace ConfigurationObjects
         {
             enabled = true;
             maxAudioTimeMs = 30000;
+            recordAudio = true;
         }
     };
 
@@ -1573,7 +1584,8 @@ namespace ConfigurationObjects
     {
         j = nlohmann::json{
             TOJSON_IMPL(enabled),
-            TOJSON_IMPL(maxAudioTimeMs)
+            TOJSON_IMPL(maxAudioTimeMs),
+            TOJSON_IMPL(recordAudio)
         };
     }
     static void from_json(const nlohmann::json& j, GroupTimeline& p)
@@ -1581,9 +1593,14 @@ namespace ConfigurationObjects
         p.clear();
         getOptional("enabled", p.enabled, j, true);
         getOptional<int>("maxAudioTimeMs", p.maxAudioTimeMs, j, 30000);
+        getOptional("recordAudio", p.recordAudio, j, true);
     }
 
     //-----------------------------------------------------------
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_INTERNAL = "com.rallytac.engage.internal";
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_CISTECH = "com.rallytac.engage.magellan.cistech" ;
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_TRELLISWARE = "com.rallytac.engage.magellan.trellisware";
+
     JSON_SERIALIZED_CLASS(Group)
     class Group : public ConfigurationObjectBase
     {
@@ -1616,6 +1633,7 @@ namespace ConfigurationObjects
 
         std::string                             alias;
         bool                                    blockAdvertising;
+        std::string                             source;
 
         Group()
         {
@@ -1644,6 +1662,8 @@ namespace ConfigurationObjects
             timeline.clear();
 
             blockAdvertising = false;
+
+            source.clear();
         }
     };
 
@@ -1665,7 +1685,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(alias),
             TOJSON_IMPL(audio),
             TOJSON_IMPL(timeline),
-            TOJSON_IMPL(blockAdvertising)
+            TOJSON_IMPL(blockAdvertising),
+            TOJSON_IMPL(source)
         };
     }
     static void from_json(const nlohmann::json& j, Group& p)
@@ -1686,6 +1707,7 @@ namespace ConfigurationObjects
         getOptional<Audio>("audio", p.audio, j);
         getOptional<GroupTimeline>("timeline", p.timeline, j);
         getOptional<bool>("blockAdvertising", p.blockAdvertising, j, false);
+        getOptional<std::string>("source", p.source, j);
     }
     
     
@@ -2145,6 +2167,8 @@ namespace ConfigurationObjects
         bool                enabled;
         DatabaseType_t      type;
         std::string         fixedFileName;
+        bool                forceMaintenance;
+        bool                reclaimSpace;
 
         EnginePolicyDatabase()
         {
@@ -2156,6 +2180,8 @@ namespace ConfigurationObjects
             enabled = true;
             type = DatabaseType_t::dbtFixedMemory;
             fixedFileName.clear();
+            forceMaintenance = false;
+            reclaimSpace = false;
         }
     };
 
@@ -2164,7 +2190,9 @@ namespace ConfigurationObjects
         j = nlohmann::json{
             TOJSON_IMPL(enabled),
             TOJSON_IMPL(type),
-            TOJSON_IMPL(fixedFileName)
+            TOJSON_IMPL(fixedFileName),
+            TOJSON_IMPL(forceMaintenance),
+            TOJSON_IMPL(reclaimSpace)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyDatabase& p)
@@ -2173,6 +2201,8 @@ namespace ConfigurationObjects
         FROMJSON_IMPL(enabled, bool, true);
         FROMJSON_IMPL(type, EnginePolicyDatabase::DatabaseType_t, EnginePolicyDatabase::DatabaseType_t::dbtFixedMemory);
         FROMJSON_IMPL(fixedFileName, std::string, EMPTY_STRING);
+        FROMJSON_IMPL(forceMaintenance, bool, false);
+        FROMJSON_IMPL(reclaimSpace, bool, false);
     }  
 
     //-----------------------------------------------------------
@@ -2501,6 +2531,7 @@ namespace ConfigurationObjects
         getOptional<int>("logTaskQueueStatsIntervalMs", p.logTaskQueueStatsIntervalMs, j, 0);        
         getOptional<int>("maxTxSecs", p.maxTxSecs, j, 30);
         getOptional<bool>("enableLazySpeakerClosure", p.enableLazySpeakerClosure, j, false);
+        
     }
 
     //-----------------------------------------------------------
@@ -2519,6 +2550,7 @@ namespace ConfigurationObjects
         long                                    groomingIntervalSecs;
         SecurityCertificate                     security;
         long                                    autosaveIntervalSecs;
+        bool                                    disableSigningAndVerification;
 
         EnginePolicyTimelines()
         {
@@ -2535,6 +2567,7 @@ namespace ConfigurationObjects
             maxEvents = 1000;
             autosaveIntervalSecs = 5;               
             security.clear();
+            disableSigningAndVerification = false;
         }
     };
 
@@ -2548,7 +2581,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(maxEvents),
             TOJSON_IMPL(groomingIntervalSecs),
             TOJSON_IMPL(autosaveIntervalSecs),                        
-            TOJSON_IMPL(security)
+            TOJSON_IMPL(security),
+            TOJSON_IMPL(disableSigningAndVerification)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyTimelines& p)
@@ -2562,6 +2596,7 @@ namespace ConfigurationObjects
         getOptional<long>("autosaveIntervalSecs", p.autosaveIntervalSecs, j, 5);     
         getOptional<int>("maxEvents", p.maxEvents, j, 1000);
         getOptional<SecurityCertificate>("security", p.security, j);
+        getOptional<bool>("disableSigningAndVerification", p.disableSigningAndVerification, j, false);
     }
 
     //-----------------------------------------------------------
@@ -3285,7 +3320,7 @@ namespace ConfigurationObjects
     }
 
     //-----------------------------------------------------------    
-    static void dumpExampleConfigurations(const char *path)
+    static inline void dumpExampleConfigurations(const char *path)
     {
         RtpHeader::document(path);
         BlobInfo::document(path);

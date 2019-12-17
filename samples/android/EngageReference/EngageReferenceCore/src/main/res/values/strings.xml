@@ -9,6 +9,12 @@
     <string name="online_licensing_activation_url_dev">https://licensing.rallytac.com/api/dev/activations</string>
     <string name="offline_licensing_activation_url_dev">https://licensing.rallytac.com/api/dev/getactivationqrcode</string>
 
+    <string name="online_licensing_deactivation_url_prod">https://licensing.rallytac.com/api/v1/deactivatedevice</string>
+    <string name="offline_licensing_deactivation_url_prod">https://licensing.rallytac.com/api/v1/deactivatedevice</string>
+
+    <string name="online_licensing_deactivation_url_dev">https://licensing.rallytac.com/api/dev/deactivatedevice</string>
+    <string name="offline_licensing_deactivation_url_dev">https://licensing.rallytac.com/api/dev/deactivatedevice</string>
+
     <string name="support_email_address">support@rallytac.com</string>
     <string name="sales_email_address">sales@rallytac.com</string>
     <string name="home_website_address">https://www.rallytac.com</string>
