@@ -142,6 +142,12 @@ public class Engage
     public const byte ENGAGE_HBM_FATIGUE_LEVEL = 6;
     public const byte ENGAGE_HBM_TASK_EFFECTIVENESS = 7;
 
+    // Group sources
+    public const String GROUP_SOURCE_ENGAGE_INTERNAL = "com.rallytac.engage.internal";
+    public const String GROUP_SOURCE_ENGAGE_MAGELLAN_CISTECH = "com.rallytac.engage.magellan.cistech";
+    public const String GROUP_SOURCE_ENGAGE_MAGELLAN_TRELLISWARE = "com.rallytac.engage.magellan.trellisware";
+
+
     public class JsonFields
     {
         public class AudioDevice
@@ -355,6 +361,7 @@ public class Engage
             public static String id = "id";
             public static String name = "name";
             public static String type = "type";
+            public static String source = "source";
             public static String cryptoPassword = "cryptoPassword";
             public static String fdx = "fdx";
         }
