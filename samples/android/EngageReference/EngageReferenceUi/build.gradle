@@ -16,7 +16,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             android.applicationVariants.all { variant ->
                 variant.outputs.all {
-                    outputFileName = "engage-reference-ui-${variant.name}-${defaultConfig.versionName}.apk"
+                    outputFileName = "engage-reference-uk.com.blacktree.btcomm.uk.com.blacktree.btcomm.ui-${variant.name}-${defaultConfig.versionName}.apk"
                 }
             }
         }
@@ -25,7 +25,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             android.applicationVariants.all { variant ->
                 variant.outputs.all {
-                    outputFileName = "engage-reference-ui-${variant.name}-${defaultConfig.versionName}.apk"
+                    outputFileName = "engage-reference-uk.com.blacktree.btcomm.uk.com.blacktree.btcomm.ui-${variant.name}-${defaultConfig.versionName}.apk"
                 }
             }
         }
