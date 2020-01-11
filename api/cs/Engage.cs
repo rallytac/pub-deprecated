@@ -239,6 +239,7 @@ public class Engage
                 public static String housekeeperIntervalMs = "housekeeperIntervalMs";
                 public static String logTaskQueueStatsIntervalMs = "logTaskQueueStatsIntervalMs";                
                 public static String maxTxSecs = "maxTxSecs";
+                public static String maxRxSecs = "maxRxSecs";
                 public static String autosaveIntervalSecs = "autosaveIntervalSecs";
 
             }
@@ -329,8 +330,21 @@ public class Engage
         public class Rallypoint
         {
             public static String objectName = "rallypoint";
-            public static String address = "address";
-            public static String port = "port";
+            public static String arrayName = "rallypoints";
+
+            public class Host
+            {
+                public static String objectName = "host";
+                public static String address = "address";
+                public static String port = "port";
+            }
+
+            public static String certificate = "certificate";
+            public static String certificateKey = "certificateKey";
+            public static String verifyPeer = "verifyPeer";
+            public static String allowSelfSignedCertificate = "allowSelfSignedCertificate";
+            public static String transactionTimeoutMs = "transactionTimeoutMs";
+            public static String disableMessageSigning = "disableMessageSigning";
         }
 
         public class Address
@@ -364,6 +378,7 @@ public class Engage
             public static String source = "source";
             public static String cryptoPassword = "cryptoPassword";
             public static String fdx = "fdx";
+            public static String alias = "alias";
         }
 
         public class TxAudio
