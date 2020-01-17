@@ -659,11 +659,20 @@ namespace ConfigurationObjects
         /** @brief [Optional, Default: 0] Defines a sub channel within a group. Audio will be opaque to all other clients on the same group not on the same sub channel. */
         uint16_t        subchannelTag;
 
-        /** @brief [Optional, Default: false] The Engage Engine should transmit the NodeId as part of the header extension in in the RTP packet. */
+        /** @brief [Optional, Default: false] The Engage Engine should transmit the NodeId as part of the header extension in the RTP packet. */
         bool            includeNodeId;
 
-        /** @brief [Optional, Default: empty string] The Engage Engine should transmit the users alias as part of the header extension in in the RTP packet. */
+        /** @brief [Optional, Default: empty string] The Engage Engine should transmit the user's alias as part of the header extension in the RTP packet. */
         std::string     alias;
+
+        /** @brief [Optional, Default: empty string] The Engage Engine should play the audio specified by this URI while TX is pending. */
+        std::string     pendingAudioUri;
+
+        /** @brief [Optional, Default: empty string] The Engage Engine should play the audio specified by this URI when TX is granted. */
+        std::string     grantAudioUri;
+
+        /** @brief [Optional, Default: empty string] The Engage Engine should play the audio specified by this URI when TX is denied. */
+        std::string     denyAudioUri;
 
         AdvancedTxParams()
         {
@@ -677,6 +686,9 @@ namespace ConfigurationObjects
             subchannelTag = 0;
             includeNodeId = false;
             alias.clear();
+            pendingAudioUri.clear();
+            grantAudioUri.clear();
+            denyAudioUri.clear();
         }
 
         virtual void initForDocumenting()
@@ -691,7 +703,10 @@ namespace ConfigurationObjects
             TOJSON_IMPL(priority),
             TOJSON_IMPL(subchannelTag),
             TOJSON_IMPL(includeNodeId),
-            TOJSON_IMPL(alias)
+            TOJSON_IMPL(alias),
+            TOJSON_IMPL(pendingAudioUri),
+            TOJSON_IMPL(grantAudioUri),
+            TOJSON_IMPL(denyAudioUri)
         };
     }
     static void from_json(const nlohmann::json& j, AdvancedTxParams& p)
@@ -702,6 +717,9 @@ namespace ConfigurationObjects
         getOptional<uint16_t>("subchannelTag", p.subchannelTag, j, 0);
         getOptional<bool>("includeNodeId", p.includeNodeId, j, false);
         getOptional<std::string>("alias", p.alias, j, EMPTY_STRING);
+        getOptional<std::string>("pendingAudioUri", p.pendingAudioUri, j, EMPTY_STRING);
+        getOptional<std::string>("grantAudioUri", p.grantAudioUri, j, EMPTY_STRING);
+        getOptional<std::string>("denyAudioUri", p.denyAudioUri, j, EMPTY_STRING);
     }
 
     //-----------------------------------------------------------
