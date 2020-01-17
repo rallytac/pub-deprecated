@@ -33,7 +33,7 @@ public class Engage
     {
         void onLicenseChanged();
         void onLicenseExpired();
-        void onLicenseExpiring(long secondsLeft);
+        void onLicenseExpiring(double secondsLeft);
     }
 
     public interface IRallypointNotifications
@@ -193,6 +193,9 @@ public class Engage
             public static String subchannelTag = "subchannelTag";
             public static String includeNodeId = "includeNodeId";
             public static String alias = "alias";
+            public static String pendingAudioUri = "pendingAudioUri";
+            public static String grantAudioUri = "grantAudioUri";
+            public static String denyAudioUri = "denyAudioUri";
         }
 
         public class License
@@ -1328,7 +1331,7 @@ public class Engage
         {
             foreach (ILicenseNotifications n in _licenseNotificationSubscribers)
             {
-                n.onLicenseExpiring(Int64.Parse(secondsLeft));
+                n.onLicenseExpiring(Double.Parse(secondsLeft));
             }
         }
     };
