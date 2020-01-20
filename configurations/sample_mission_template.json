@@ -28,6 +28,10 @@
          "intervalSecs":30,
          "forceOnAudioTransmit":false,
          "listenOnly":false
+       },
+       "timeline":{
+          "enabled":false,
+          "maxAudioTimeMs":0
        }
      },
 
