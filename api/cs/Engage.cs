@@ -673,9 +673,7 @@ public class Engage
     private static extern int engageRegisterEventCallbacks(ref EngageEvents_t callbacks);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int engageInitialize(string enginePolicyConfiguration, 
-                                               string userIdentity,
-                                               string tempStoragePath);
+    private static extern int engageInitialize(string enginePolicyConfiguration, string userIdentity, string tempStoragePath);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageShutdown();
@@ -732,31 +730,19 @@ public class Engage
     private static extern int engageUpdateLicense(string entitlement, string key, string activationCode);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int engageSendGroupBlob(string id, 
-                                                  byte[] blob,
-                                                  int blobSize,
-                                                  string jsonBlobParams);
+    private static extern int engageSendGroupBlob(string id, byte[] blob, int blobSize, string jsonBlobParams);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int engageSendGroupRtp(string id, 
-                                                 byte[] payload,
-                                                 int payloadSize,
-                                                 string jsonRtpHeader);
+    private static extern int engageSendGroupRtp(string id, byte[] payload, int payloadSize, string jsonRtpHeader);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int engageSendGroupRaw(string id, 
-                                                 byte[] raw,
-                                                 int rawSize,
-                                                 string jsonRtpHeader);    
+    private static extern int engageSendGroupRaw(string id, byte[] raw, int rawSize,string jsonRtpHeader);    
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int engageQueryGroupTimeline(string id,
-                                                       string jsonParams);        
+    private static extern int engageQueryGroupTimeline(string id, string jsonParams);        
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int engageLogMsg(int level,
-                                           string tag,
-                                           string msg);          
+    private static extern int engageLogMsg(int level, string tag, string msg);          
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr engageGetNetworkInterfaceDevices();
@@ -764,6 +750,8 @@ public class Engage
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr engageGetAudioDevices();    
 
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr engageGenerateMission(string keyPhrase, int audioGroupCount, string rallypointHost);
     #endregion
 
     #region Internal functions
