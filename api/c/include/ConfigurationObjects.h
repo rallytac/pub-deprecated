@@ -4286,70 +4286,77 @@ namespace ConfigurationObjects
         
     public:
 
-        /** @brief TODO: */
+        /** @brief A unqiue identifier for the Rallpoint */
         std::string                                 id;
 
-        /** @brief TODO: */
+        /** @brief TCP port to listen on.  Default is 7443. */
         int                                         listenPort;
 
-        /** @brief TODO: */
+        /** @brief Name of the NIC to bind to for listening for incoming TCP connections. */
         std::string                                 interfaceName;
 
-        /** @brief TODO: */
+        /** @brief Indicate whether FIPS140-2 mode is required for security. */
         bool                                        requireFips;
 
-        /** @brief TODO: */
+        /** @brief X.509 certificate and private key that identifies the Rallypoint.  @see SecurityCertificate*/
         SecurityCertificate                         certificate;
 
-        /** @brief TODO: */
+        /** @brief Name of a file containing a JSON array of Rallypoint peers to connect to. */
         std::string                                 peeringConfigurationFileName;
 
-        /** @brief TODO: */
+        /** @brief Number of seconds between checks to see if the peering configuration has been updated.  Default is 60.*/
         int                                         peeringConfigurationFileCheckSecs;
 
-        /** @brief TODO: */
+        /** @brief Allows traffic received on unicast links to be forwarded to the multicast network. */
         bool                                        allowMulticastForwarding;
 
-        /** @brief TODO: */
+        /** @brief Number of threading pools to create for network I/O.  Default is -1 which creates 1 I/O pool per CPU core. */
         int                                         ioPools;
 
-        /** @brief TODO: */
-        uint64_t                                    msdToken;
-
-        /** @brief TODO: */
+        /** @brief Details for producing a status report. @see RallypointServerStatusReport */
         RallypointServerStatusReport                statusReport;
 
-        /** @brief TODO: */
+        /** @brief Details for producing a Graphviz-compatible link graph. @see RallypointServerLinkGraph */
         RallypointServerLinkGraph                   linkGraph;
 
-        /** @brief TODO: */
+        /** @brief Details concerning the Rallypoint's interaction with an external heal-checker such as a load-balancer.  @see RallypointExternalHealthCheckResponder */
         RallypointExternalHealthCheckResponder      externalHealthCheckResponder;
 
-        /** @brief TODO: */
+        /** @brief Set to true to allow forwarding of packets received from other Rallypoints to all other Rallypoints.  *WARNING* Be exceptionally careful when enabling this capability! */
         bool                                        allowPeerForwarding;
 
-        /** @brief TODO: */
+        /** @brief The name of the NIC on which to send and receive multicast traffic. */
         std::string                                 multicastInterfaceName;
 
-        /** @brief TODO: */
+        /** @brief Details concerning Transport Layer Security.  @see Tls */
         Tls                                         tls;
 
-        /** @brief TODO: */
+        /** @brief Details discovery capabilities.  @see DiscoveryConfiguration */
         DiscoveryConfiguration                      discovery;
 
-        /** @brief TODO: */
+        /** @brief Enables automatic forwarding of discovered multicast traffic to peer Rallypoints. */
         bool                                        forwardDiscoveredGroups;
 
-        /** @brief TODO: */
+        /** @brief Internal - not serialized. */
         PeeringConfiguration                        peeringConfiguration;       // NOTE: This is NOT serialized
 
-        /** @brief TODO: */
+        /** @brief Indicates whether this Rallypoint is part of a core mesh or hangs off the periphery as a leaf node. */
         bool                                        isMeshLeaf;
 
+        /** @brief Disables the watchdog logic that protects against a hung process becoming non-functional.  Only use for troubleshooting purposes. */
         bool                                        disableWatchdog;
+
+        /** @brief The watchdog's check interval in milliseconds.  Only use for troubleshooting purposes. */
         int                                         watchdogIntervalMs;
+
+        /** @brief The watchdog's hung process timeout in milliseconds.  Only use for troubleshooting purposes. */
         int                                         watchdogHangDetectionMs;
+
+        /** @brief Set to true to forgo DSA signing of messages.  Doing so is is a security risk but can be useful on CPU-constrained systems on already-secure environments. */
         bool                                        disableMessageSigning;
+
+        /** @brief Indicates whether inbound peer registrations should be reciprocated.  Only applicable for a mesh leaf that has multicat forwarding enabled. */
+        bool                                        reciprocateRegistrations;
 
         RallypointServer()
         {
@@ -4368,7 +4375,6 @@ namespace ConfigurationObjects
             peeringConfigurationFileName.clear();
             peeringConfigurationFileCheckSecs = 60;
             ioPools = -1;
-            msdToken = 0;
             statusReport.clear();
             linkGraph.clear();
             externalHealthCheckResponder.clear();
@@ -4382,6 +4388,7 @@ namespace ConfigurationObjects
             watchdogIntervalMs = 5000;
             watchdogHangDetectionMs = 2000;
             disableMessageSigning = false;
+            reciprocateRegistrations = false;
         }
     };
     
@@ -4398,7 +4405,6 @@ namespace ConfigurationObjects
             TOJSON_IMPL(peeringConfigurationFileName),
             TOJSON_IMPL(peeringConfigurationFileCheckSecs),
             TOJSON_IMPL(ioPools),
-            TOJSON_IMPL(msdToken),
             TOJSON_IMPL(statusReport),
             TOJSON_IMPL(linkGraph),
             TOJSON_IMPL(externalHealthCheckResponder),
@@ -4411,7 +4417,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(disableWatchdog),
             TOJSON_IMPL(watchdogIntervalMs),
             TOJSON_IMPL(watchdogHangDetectionMs),
-            TOJSON_IMPL(disableMessageSigning)
+            TOJSON_IMPL(disableMessageSigning),
+            TOJSON_IMPL(reciprocateRegistrations)
         };
     }
     static void from_json(const nlohmann::json& j, RallypointServer& p)
@@ -4427,7 +4434,6 @@ namespace ConfigurationObjects
         getOptional<std::string>("peeringConfigurationFileName", p.peeringConfigurationFileName, j);
         getOptional<int>("peeringConfigurationFileCheckSecs", p.peeringConfigurationFileCheckSecs, j, 60);
         getOptional<int>("ioPools", p.ioPools, j, -1);
-        getOptional<uint64_t>("msdToken", p.msdToken, j, 0);
         getOptional<RallypointServerStatusReport>("statusReport", p.statusReport, j);
         getOptional<RallypointServerLinkGraph>("linkGraph", p.linkGraph, j);
         getOptional<RallypointExternalHealthCheckResponder>("externalHealthCheckResponder", p.externalHealthCheckResponder, j);
@@ -4441,6 +4447,7 @@ namespace ConfigurationObjects
         getOptional<int>("watchdogIntervalMs", p.watchdogIntervalMs, j, 5000);
         getOptional<int>("watchdogHangDetectionMs", p.watchdogHangDetectionMs, j, 2000);
         getOptional<bool>("disableMessageSigning", p.disableMessageSigning, j, false);
+        getOptional<bool>("reciprocateRegistrations", p.reciprocateRegistrations, j, false);
     }    
 
     
