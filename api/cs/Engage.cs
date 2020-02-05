@@ -751,7 +751,7 @@ public class Engage
     private static extern IntPtr engageGetAudioDevices();    
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr engageGenerateMission(string keyPhrase, int audioGroupCount, string rallypointHost);
+    private static extern IntPtr engageGenerateMission(string keyPhrase, int audioGroupCount, string rallypointHost, string missionName);
     #endregion
 
     #region Internal functions
