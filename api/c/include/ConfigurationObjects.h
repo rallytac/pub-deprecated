@@ -1389,8 +1389,8 @@ namespace ConfigurationObjects
     static void from_json(const nlohmann::json& j, NetworkAddress& p)
     {
         p.clear();
-        j.at("address").get_to(p.address);
-        j.at("port").get_to(p.port);
+        getOptional<std::string>("address", p.address, j);
+        getOptional<int>("port", p.port, j);
     }
 
 
@@ -1513,8 +1513,8 @@ namespace ConfigurationObjects
     {
         p.clear();
         j.at("host").get_to(p.host);
-        j.at("certificate").get_to(p.certificate);
-        j.at("certificateKey").get_to(p.certificateKey);
+        getOptional("certificate", p.certificate, j);
+        getOptional("certificateKey", p.certificateKey, j);
         getOptional<bool>("verifyPeer", p.verifyPeer, j, false);
         getOptional<bool>("allowSelfSignedCertificate", p.allowSelfSignedCertificate, j, true);
         getOptional<std::vector<std::string>>("caCertificates", p.caCertificates, j);
@@ -1952,6 +1952,9 @@ namespace ConfigurationObjects
         /** @brief [Optional, Default: 100] The percentage at which to set the <b>right</b> audio at.  */
         int     outputLevelRight;
 
+        /** @brief [Optional, Default: false] Mutes output audio.  */
+        bool    outputMuted;
+
         Audio()
         {
             clear();
@@ -1965,6 +1968,7 @@ namespace ConfigurationObjects
             outputGain = 0;
             outputLevelLeft = 100;
             outputLevelRight = 100;
+            outputMuted = false;
         }
     };
     
@@ -1975,7 +1979,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(inputGain),
             TOJSON_IMPL(outputId),
             TOJSON_IMPL(outputLevelLeft),
-            TOJSON_IMPL(outputLevelRight)
+            TOJSON_IMPL(outputLevelRight),
+            TOJSON_IMPL(outputMuted)
         };
     }
     static void from_json(const nlohmann::json& j, Audio& p)
@@ -1987,6 +1992,7 @@ namespace ConfigurationObjects
         getOptional<int>("outputGain", p.outputGain, j, 0);
         getOptional<int>("outputLevelLeft", p.outputLevelLeft, j, 100);
         getOptional<int>("outputLevelRight", p.outputLevelRight, j, 100);
+        getOptional<bool>("outputMuted", p.outputMuted, j, false);
     }
     
     //-----------------------------------------------------------
@@ -2323,7 +2329,7 @@ namespace ConfigurationObjects
          * @brief Unique identity for the group.
          * 
          * NOTE: Groups configured with the same multicast addresses but with different 
-         * id's will NOT be routed correctly via RallyPoints as the will be considered different streams.  
+         * id's will NOT be routed correctly via RallyPoints as they are considered different streams.  
          */
         std::string                             id;
 
@@ -2375,7 +2381,7 @@ namespace ConfigurationObjects
          /** @brief [Optional, Default: false] Set this to true if you do not want the Engine to advertise this Group on the Presence group. TODO: Shaun, please verify */
         bool                                    blockAdvertising;
 
-        /** @brief [Optional, Default: false] Indicates the source of this configuration - e.g. from the application or discovered via Magellan */
+        /** @brief [Optional, Default: null] Indicates the source of this configuration - e.g. from the application or discovered via Magellan */
         std::string                             source;
 
         /** 
