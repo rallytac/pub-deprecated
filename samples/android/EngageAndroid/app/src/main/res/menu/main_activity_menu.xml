@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="Mission">
+        <menu>
+            <item
+                android:id="@+id/action_missions"
+                android:title="List" />
+
+            <item
+                android:id="@+id/action_share"
+                android:title="Share" />
+
+            <item
+                android:id="@+id/action_scan"
+                android:title="Scan" />
+
+            <item
+                android:id="@+id/action_load"
+                android:title="Load" />
+
+            <item
+                android:id="@+id/action_download"
+                android:title="Download" />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/action_settings"
+        android:title="Settings" />
+
+    <item
+        android:id="@+id/action_about"
+        android:title="About" />
+
+    <item
+        android:id="@+id/action_contact"
+        android:title="Contact" />
+
+    <item
+        android:id="@+id/action_dev_test"
+        android:title="Developer Testing"
+        android:visible="false"/>
+
+    <item
+        android:id="@+id/action_shutdown"
+        android:title="Shutdown" />
+</menu>

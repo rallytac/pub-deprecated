@@ -1,0 +1,354 @@
+<resources>
+    <string name="app_intent_ptt_on">PTT_ON</string>
+    <string name="app_intent_ptt_off">PTT_OFF</string>
+    <string name="app_intent_next_group">NEXT_GROUP</string>
+    <string name="app_intent_prev_group">PREV_GROUP</string>
+    <string name="app_intent_mute_group">MUTE_GROUP</string>
+    <string name="app_intent_unmute_group">UNMUTE_GROUP</string>
+
+    <string name="opt_allow_multiple_channel_view">1</string>
+    <string name="opt_lock_orientation">1</string>
+    <string name="opt_ptt_latching">0</string>
+
+    <string name="license_key"></string>
+    <string name="activation_code"></string>
+
+    <string name="preload_rp_use"></string>
+    <string name="preload_rp_address"></string>
+    <string name="preload_rp_port"></string>
+
+    <string name="fmt_user_alias_id_generate">ANDR%1$08X</string>
+    <string name="fmt_user_display_name_generate">Android User - %1$s</string>
+
+    <string name="online_licensing_activation_url_prod">https://licensing.rallytac.com/api/v1/activations</string>
+    <string name="offline_licensing_activation_url_prod">https://licensing.rallytac.com/api/v1/getactivationqrcode</string>
+
+    <string name="online_licensing_activation_url_dev">https://licensing.rallytac.com/api/dev/activations</string>
+    <string name="offline_licensing_activation_url_dev">https://licensing.rallytac.com/api/dev/getactivationqrcode</string>
+
+    <string name="online_licensing_deactivation_url_prod">https://licensing.rallytac.com/api/v1/activations?action=deactivate</string>
+    <string name="offline_licensing_deactivation_url_prod">https://licensing.rallytac.com/api/v1/deactivatedevice</string>
+
+    <string name="online_licensing_deactivation_url_dev">https://licensing.rallytac.com/api/dev/activations?action=deactivate</string>
+    <string name="offline_licensing_deactivation_url_dev">https://licensing.rallytac.com/api/dev/deactivatedevice</string>
+
+    <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_missions">Available Mission</string>
+    <string name="title_activity_edit_mission">Mission</string>
+    <string name="title_activity_map">Map</string>
+    <string name="wifi_lock_name">.WifiLock</string>
+    <string name="multicast_lock_name">.MulticastLock</string>
+    <string name="wake_lock_name">.WakeLock</string>
+    <string name="android_notification_channel_id">.NotificationChannel</string>
+    <string name="android_notification_channel_name">.Notifications</string>
+    <string name="android_notitication_channel_description">%1$s is the standard for high-performance, reliable communications capabilities for secure systems</string>
+    <string name="android_notification_service_is_running">%1$s is running</string>
+    <string name="title_about">About</string>
+    <string name="title_licensing">Licensing</string>
+    <string name="qr_code_scan_button">Scan</string>
+    <string name="mission_download_button">Download</string>
+    <string name="cancel">Cancel</string>
+    <string name="qr_scan_prompt">Scan Mission QR Code</string>
+    <string name="qr_scan_cancelled">Scan cancelled</string>
+    <string name="qr_scan_decode_failed">Decoding failure</string>
+    <string name="qr_scan_decrypt_failed">Decryption failure</string>
+    <string name="qr_scan_decompress_failed">Decompression failure</string>
+    <string name="qr_scan_invalid">Invalid QR code</string>
+    <string name="qr_scn_invalid_version">Invalid QR code version</string>
+    <string name="qr_cannot_parse">Cannot parse QR code</string>
+    <string name="title_ui_launch_error">UI Launch Error</string>
+    <string name="title_startup_error">Startup Error</string>
+    <string name="startup_cannot_connect_to_engine">Cannot connect to the voice engine.  There may be a problem with this version of Android or the installation package.</string>
+    <string name="title_permissions_required">Permissions Required</string>
+    <string name="startup_one_or_more_permissions_denied">One or more required permissions have been denied.</string>
+    <string name="title_google_play_services_error">Google Play Services Error</string>
+    <string name="google_play_services_not_installed_or_out_of_date">Google Play Services are not available or out of date</string>
+    <string name="startup_error_looks_like_we_cannot_ask_for_battery_optimization">It looks like this version of the application is not able to ask Android to disable battery optimization automatically.</string>
+    <string name="startup_error_looks_like_version_of_application_cannot_ask_for_battery_optimization">It looks like this version of the application is not able to ask Android to disable battery optimization automatically.</string>
+    <string name="startup_error_older_android_version">Older Android version.</string>
+    <string name="startup_error_cannot_determine_battery_optimization_state">Cannot determine battery optimization state.</string>
+    <string name="button_ok">OK</string>
+    <string name="title_battery_optimization_issue">Battery Optimization Issue</string>
+    <string name="tap_to_open_battery_optimizations">Tap \'Battery Optimizations\' to open Android\'s battery optimizations settings.</string>
+    <string name="button_battery_optimizations">Battery Optimizations</string>
+    <string name="startup_note_about_optimization_that_performance_may_vary">Please note that due to Android optimizing battery use for this application, you may lose connectivity from time to time.</string>
+    <string name="to_ensure_best_performance_disable_battery_optimizations">To ensure the best possible performance, please disable battery optimizations for this application.</string>
+    <string name="title_map_incompatibility_issue">Incompatibility Issue</string>
+    <string name="mapping_does_not_appear_to_be_supported">Mapping does not appear to be correctly supported on this device.</string>
+    <string name="title_no_google_maps_key">No Google Maps API Key</string>
+    <string name="need_google_maps_key">Before you can use Google Maps you will need a Google Maps API key.</string>
+    <string name="title_android_version_too_old_for_maps">Android Version Too Old</string>
+    <string name="maps_not_available_on_such_and_old_android_platform">Mapping is only available on Android Lollipop (v21) and higher.</string>
+    <string name="title_map_team_1">Map : %1$d team member"</string>
+    <string name="title_map_team">Map : %1$d team members"</string>
+    <string name="map_no_team_members_found">No other team members found!</string>
+    <string name="button_map_show_all">Show All</string>
+    <string name="settings_invalid_group_type">Invalid group type</string>
+    <string name="title_new_mission">New Mission</string>
+    <string name="button_yes">Yes</string>
+    <string name="button_cancel">Cancel</string>
+    <string name="reset_to_sample_configuration">Reset to sample configuration?</string>
+    <string name="group_desc_no_format">- (no format)</string>
+    <string name="group_desc_no_encoder">- (no encoder)</string>
+    <string name="group_desc_unknown_type">(unknown type)</string>
+    <string name="title_group_no_name">(no name)</string>
+    <string name="summary_group_invalid_configuration">(invalid configuration)</string>
+    <string name="title_cat_tx_audio_specific">Tx Audio-Specific</string>
+    <string name="title_cat_presence_specific">Presence-Specific</string>
+    <string name="share_failed_to_create_configuration_package">Failed to create a shareable configuration package</string>
+    <string name="share_failed_to_encrypt_configuration_package">Failed to encrypt the configuration package</string>
+    <string name="share_failed_to_create_shareable_configuration_package">Failed to create a shareable configuration package</string>
+    <string name="about_to_share_qr">You\'re about to share your mission using a QR code. You can protect it with a password if you\'d like. You can also mislead other QR code scanners by entering a deflection URL.</string>
+    <string name="passphrase">passphrase</string>
+    <string name="rallypoint_optional">rallypoint (optional)</string>
+    <string name="mission_name_optional">mission name (optional)</string>
+    <string name="audio_group_count">number of audio groups</string>
+    <string name="generate_mission_button">Generate</string>
+    <string name="url">url</string>
+    <string name="pin">PIN</string>
+    <string name="deflection_url">deflection url</string>
+    <string name="generate_qr_code">Generate QR Code</string>
+    <string name="tap_the_qr_code_to_toggle_zoom">Tap the QR code to toggle zoom</string>
+    <string name="no_team_members_present">No team members present</string>
+    <string name="button_close">Close</string>
+    <string name="title_share_mission_share">Share Mission</string>
+    <string name="fmt_scan_this_qr_code_to_join_the_mission">Scan this QR code to join \'%1$s\'.</string>
+    <string name="fmt_scan_this_qr_code_to_join_the_mission_or_download_from">&lt;html&gt;&lt;body&gt;Scan this QR code to join \'%1$s\' or click &lt;a href=\'%2$s\'&gt;%2$s&lt;/a&gt; to download.&lt;/body&gt;&lt;/html&gt;</string>
+
+    <string name="fmt_load_this_json_file_to_join_the_mission">Load this JSON file to join \'%1$s\'.</string>
+    <string name="fmt_load_this_json_file_to_join_the_mission_or_download_from">&lt;html&gt;&lt;body&gt;Load this JSON file to join \'%1$s\' or click &lt;a href=\'%2$s\'&gt;%2$s&lt;/a&gt; to download.&lt;/body&gt;&lt;/html&gt;</string>
+
+    <string name="obtaining_activation_code">Obtaining activation code</string>
+    <string name="deactivating">Deactivating</string>
+    <string name="scan_license_key">Scan license key</string>
+    <string name="scan_activation_code">Scan activation code</string>
+
+    <string name="confirm_shutdown">This action will shutdown %1$s completely.  If you want to switch to another application instead, simply do so - the application will keep running in the background.  Do you really want to shutdown?</string>
+    <string name="button_no">No</string>
+    <string name="title_shutdown">Shutdown</string>
+    <string name="license_has_expired">No license or license expired</string>
+    <string name="title_activity_single_user_biometrics_view">SingleUserBiometricsView</string>
+    <string name="about_version_placeholder">version placeholder</string>
+    <string name="about_device_id">Device ID</string>
+    <string name="about_license_key">License Key</string>
+    <string name="about_enter_license_key">Enter your license key below or click the camera to scan a QR code.</string>
+    <string name="about_activation_code">Activation Code</string>
+    <string name="about_enter_activation_code">Enter or scan your activation code below or click the cloud icon to obtain it from the Internet licensing server.</string>
+    <string name="about_click_for_offline_activation">If you don\'t have Internet connectivity, click the double-arrow icon to perform a two-step activation using a secondary, Internet-connected, device.</string>
+    <string name="about_hint_activation_code">activation code</string>
+    <string name="about_btn_deactivate">Deactivate</string>
+    <string name="contact_friendly_message">We\'re here to help and love to hear from our customers. You can reach us by email or by visiting our web site from the links below.</string>
+    <string name="contact_web_site">Web Site</string>
+    <string name="contact_support">Support</string>
+    <string name="contact_sales">Sales</string>
+    <string name="placeholder">...</string>
+    <string name="offline_activation_step_1">Step 1</string>
+    <string name="offline_activation_step_2">Step 2</string>
+    <string name="offline_activation_scn_qr_using_another_device">Let\'s try activating using another device.  First, scan this QR code using a device that is connected to the Internet.</string>
+    <string name="offline_activation_other_device_should_display">Your other device should display a QR code which is the activation received from the licensing server. If it isn\'t, make sure the device is connected and you\'ve allowed it to access the URL pointed to by the QR code you scanned.</string>
+    <string name="offline_activation_scan_qr_code">Scan the QR code displayed on the other device by tapping this camera icon.</string>
+    <string name="offline_deactivation_scan_qr">Scan this QR code using a device that is connected to the Internet. You should get a confirmation from the licensing system telling you that your license has been deactivated.</string>
+    <string name="offline_deactivation_notification_of_deactivation">Note that, regardless of whether you get a response, your license on this device has now been deactivated.</string>
+    <string name="share_mission_share">Share</string>
+    <string name="share_mission_upload_to_mission_hub">Upload to mission hub</string>
+    <string name="share_mission_upload_header">Share ...</string>
+    <string name="share_mission_email_subject">%1$s Mission : %2$s</string>
+    <string name="share_mission_mission_uploaded">Mission uploaded</string>
+    <string name="share_mission_mission_upload_failed">Mission upload failed -</string>
+    <string name="share_title">Share</string>
+    <string name="about_deactivate_really_sure">This action will deactivate your license on this device.  Are you really sure you want to do this?</string>
+    <string name="deactivation_failed_try_offline">Online deactivation failed.  You may be able to deactivate offline using a second device that has Internet connectivity.  Would you like to try that?\n\nNOTE: This will immediately deactivate the application locally.</string>
+    <string name="about_deactivate_title">Deactivate</string>
+    <string name="about_activate_title">Activate</string>
+    <string name="activation_failed_try_offline">Online activation failed.  You may be able to activate offline using a second device that has Internet connectivity.  Would you like to try that?</string>
+    <string name="about_invalid_license_key">Invalid license key</string>
+    <string name="about_invalid_entitlement_key">Invalid entitlement key</string>
+    <string name="no_events_in_timeline_report">No events found in timeline report</string>
+    <string name="deactivated">Deactivated</string>
+    <string name="a_passphrase_is_required_to_generate">A passphrase is required to generate a mission.</string>
+    <string name="number_of_audio_groups">Number of audio groups:</string>
+    <string name="generate_passphrase_explanation">Enter a passphrase on which the mission will be based.  Then, share the mission by telling other team members to generate a mission using the exact same passphrase.\n\nNOTE: If you\'ll be using a Rallypoint, be sure to tell your team which Rallypoint.</string>
+
+    <string-array name="lp_tx_encoder_names">
+        <item>G.711 ulaw (64 kbps)</item>
+        <item>G.711 alaw (64 kbps)</item>
+        <item>GSM 6.10 (13.3 kbps)</item>
+        <item>AMR Narrowband (4.75 kbps)</item>
+        <item>AMR Narrowband (5.15 kbps)</item>
+        <item>AMR Narrowband (5.9 kbps)</item>
+        <item>AMR Narrowband (6.7 kbps)</item>
+        <item>AMR Narrowband (7.4 kbps)</item>
+        <item>AMR Narrowband (7.95 kbps)</item>
+        <item>AMR Narrowband (10.2 kbps)</item>
+        <item>AMR Narrowband (12.2 kbps)</item>
+        <item>Opus Narrowband (6 kbps)</item>
+        <item>Opus Narrowband (8 kbps)</item>
+        <item>Opus Narrowband (10 kbps)</item>
+        <item>Opus Narrowband (12 kbps)</item>
+        <item>Opus Narrowband (14 kbps)</item>
+        <item>Opus Narrowband (16 kbps)</item>
+        <item>Opus Narrowband (18 kbps)</item>
+        <item>Opus Narrowband (20 kbps)</item>
+        <item>Opus Narrowband (22 kbps)</item>
+        <item>Opus Narrowband (24 kbps)</item>
+    </string-array>
+    <string-array name="lp_tx_encoder_short_names">
+        <item>G.711 ulaw (64k)</item>
+        <item>G.711 alaw (64k)</item>
+        <item>GSM 6.10 (13.3k)</item>
+        <item>AMR NB (4.7K)</item>
+        <item>AMR NB (5.15K)</item>
+        <item>AMR NB (5.9K)</item>
+        <item>AMR NB (6.7K)</item>
+        <item>AMR NB (7.4K)</item>
+        <item>AMR NB (7.95K)</item>
+        <item>AMR NB (10.2K)</item>
+        <item>AMR NB (12.2K)</item>
+        <item>Opus NB (6K)</item>
+        <item>Opus NB (8K)</item>
+        <item>Opus NB (10K)</item>
+        <item>Opus NB (12K)</item>
+        <item>Opus NB (14K)</item>
+        <item>Opus NB (16K)</item>
+        <item>Opus NB (18K)</item>
+        <item>Opus NB (20K)</item>
+        <item>Opus NB (22K)</item>
+        <item>Opus NB (24K)</item>
+    </string-array>
+    <string-array name="lp_tx_encoder_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+        <item>13</item>
+        <item>14</item>
+        <item>15</item>
+        <item>16</item>
+        <item>17</item>
+        <item>20</item>
+        <item>21</item>
+        <item>22</item>
+        <item>23</item>
+        <item>24</item>
+        <item>25</item>
+        <item>26</item>
+        <item>27</item>
+        <item>28</item>
+        <item>29</item>
+    </string-array>
+
+    <string-array name="lp_tx_encoder_framing_names">
+        <item>20 ms</item>
+        <item>40 ms</item>
+        <item>60 ms</item>
+        <item>80 ms</item>
+    </string-array>
+    <string-array name="lp_tx_encoder_framing_values">
+        <item>20</item>
+        <item>40</item>
+        <item>60</item>
+        <item>80</item>
+    </string-array>
+
+    <string-array name="lp_presence_format_names">
+        <item>Standard</item>
+        <item>US DOD Cursor On Target</item>
+    </string-array>
+    <string-array name="lp_presence_format_values">
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="lp_group_type_names">
+        <item>Audio</item>
+        <item>Presence</item>
+        <item>Raw</item>
+    </string-array>
+    <string-array name="lp_group_type_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <string-array name="notification_tone_level_names">
+        <item>Use Android Notification level</item>
+        <item>None</item>
+        <item>Low</item>
+        <item>Medium</item>
+        <item>Loud</item>
+    </string-array>
+    <string-array name="notification_tone_level_values">
+        <item>-1.0</item>
+        <item>0.0</item>
+        <item>0.015</item>
+        <item>0.2</item>
+        <item>1.0</item>
+    </string-array>
+
+    <string-array name="location_accuracy_names">
+        <item>High</item>
+        <item>Balanced Power</item>
+        <item>Low Power</item>
+        <item>No Power</item>
+    </string-array>
+    <string-array name="location_accuracy_values">
+        <item>100</item>
+        <item>102</item>
+        <item>104</item>
+        <item>105</item>
+    </string-array>
+
+    <string-array name="location_interval_names">
+        <item>Every second</item>
+        <item>Every 5 seconds</item>
+        <item>Every 10 seconds</item>
+        <item>Every 30 seconds</item>
+        <item>Every 60 seconds</item>
+    </string-array>
+    <string-array name="location_interval_values">
+        <item>1</item>
+        <item>5</item>
+        <item>10</item>
+        <item>30</item>
+        <item>60</item>
+    </string-array>
+
+    <string-array name="location_displacement_names">
+        <item>1 meter</item>
+        <item>5 meters</item>
+        <item>10 meters</item>
+        <item>25 meters</item>
+        <item>50 meters</item>
+        <item>100 meters</item>
+    </string-array>
+    <string-array name="location_displacement_values">
+        <item>1.0</item>
+        <item>5.0</item>
+        <item>10.0</item>
+        <item>15.0</item>
+        <item>25.0</item>
+        <item>50.0</item>
+        <item>100.0</item>
+    </string-array>
+
+    <string-array name="audio_group_count">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+        <item>13</item>
+        <item>14</item>
+        <item>15</item>
+        <item>16</item>
+    </string-array>
+</resources>

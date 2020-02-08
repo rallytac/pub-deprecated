@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlack"
+    tools:context=".SimpleUiMainActivity">
+
+    <TextView
+        android:id="@+id/tvTitleBar"
+        android:layout_width="0dp"
+        android:layout_height="24dp"
+        android:gravity="center_horizontal|center_vertical"
+        android:text="@string/placeholder"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvNotificationBar"
+        android:layout_width="0dp"
+        android:layout_height="24dp"
+        android:background="@android:color/holo_red_dark"
+        android:gravity="center_horizontal|center_vertical"
+        android:text="@string/placeholder"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvTitleBar" />
+
+    <fragment
+        android:id="@+id/card1"
+        android:name="com.rallytac.engageandroid.LargeCardFragment"
+        android:layout_width="0dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/ivPtt"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ivTeam"
+        app:layout_constraintVertical_bias="0.0" />
+
+
+    <TextView
+        android:id="@+id/tvLicensingBar"
+        android:layout_width="0dp"
+        android:layout_height="24dp"
+        android:background="@android:color/holo_red_dark"
+        android:gravity="center_horizontal|center_vertical"
+        android:text="@string/placeholder"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <ImageView
+        android:id="@+id/ivNetwork"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="32dp"
+        app:layout_constraintStart_toEndOf="@+id/ivMap"
+        app:layout_constraintTop_toTopOf="@+id/ivMap"
+        app:srcCompat="@drawable/ic_net_local" />
+
+    <ImageView
+        android:id="@+id/ivTimeline"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="32dp"
+        app:layout_constraintStart_toEndOf="@+id/ivNetwork"
+        app:layout_constraintTop_toTopOf="@+id/ivNetwork"
+        app:srcCompat="@drawable/ic_history" />
+
+    <ImageView
+        android:id="@+id/ivMainScreenMenu"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/ivNetwork"
+        app:srcCompat="@drawable/ic_main_screen_menu" />
+
+    <ImageView
+        android:id="@+id/ivMap"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="32dp"
+        app:layout_constraintStart_toEndOf="@+id/ivTeam"
+        app:layout_constraintTop_toTopOf="@+id/ivTeam"
+        app:srcCompat="@drawable/ic_map" />
+
+    <ImageView
+        android:id="@+id/ivPreviousGroup"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:scaleType="fitXY"
+        app:layout_constraintTop_toTopOf="@+id/ivPtt"
+        app:layout_constraintBottom_toBottomOf="@+id/ivPtt"
+        app:layout_constraintEnd_toStartOf="@+id/ivPtt"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/ic_previous_group"
+        android:onClick="onClickPreviousGroup"/>
+
+    <ImageView
+        android:id="@+id/ivPtt"
+        android:layout_width="160dp"
+        android:layout_height="100dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:scaleType="fitXY"
+        app:layout_constraintBottom_toTopOf="@+id/tvLicensingBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/ic_ptt_idle" />
+
+    <ImageView
+        android:id="@+id/ivNextGroup"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:scaleType="fitXY"
+        app:layout_constraintTop_toTopOf="@+id/ivPtt"
+        app:layout_constraintBottom_toBottomOf="@+id/ivPtt"
+        app:layout_constraintStart_toEndOf="@+id/ivPtt"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_next_group"
+        android:onClick="onClickNextGroup"/>
+
+
+    <ImageView
+        android:id="@+id/ivTeam"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvNotificationBar"
+        app:srcCompat="@drawable/ic_team" />
+
+</android.support.constraint.ConstraintLayout>

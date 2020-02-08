@@ -1,0 +1,299 @@
+<!--suppress AndroidElementNotAllowed -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:asp="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="Developer Options"
+        android:key="prefcat_developer_options">
+        <SwitchPreference
+            android:key="developer_useDevLicensingSystem"
+            android:title="Use development licensing system"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Identity">
+        <EditTextPreference
+            android:key="user_id"
+            android:inputType="textEmailAddress"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="User Id"
+            android:hint="Email address is recommended"/>
+
+        <EditTextPreference
+            android:key="user_displayName"
+            android:inputType="textCapWords"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Display Name" />
+
+        <EditTextPreference
+            android:key="user_Alias"
+            android:inputType="textCapCharacters"
+            android:maxLines="1"
+            android:maxLength="16"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Alias"
+            android:hint="Transmission alias"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Connectivity">
+        <ListPreference
+            android:key="network_bindingNic"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="Network Interface"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Location">
+        <SwitchPreference
+            android:key="user_location.enabled"
+            android:title="Share my location"/>
+
+        <ListPreference
+            android:defaultValue="100"
+            android:entries="@array/location_accuracy_names"
+            android:entryValues="@array/location_accuracy_values"
+            android:key="user_location.accuracy"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="Accuracy"
+            android:dependency="user_location.enabled"/>
+
+        <ListPreference
+            android:defaultValue="15"
+            android:entries="@array/location_interval_names"
+            android:entryValues="@array/location_interval_values"
+            android:key="user_location.intervalSecs"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="Update Frequency"
+            android:dependency="user_location.enabled"/>
+
+        <ListPreference
+            android:defaultValue="5.0"
+            android:entries="@array/location_displacement_names"
+            android:entryValues="@array/location_displacement_values"
+            android:key="user_location.minDisplacement"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="Displacement Trigger"
+            android:dependency="user_location.enabled"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Audio">
+        <SeekBarPreference
+            android:key="user_audio.output.boostFactor"
+            android:title="Speaker Boost Factor"
+            android:defaultValue="0"
+            android:max="10"
+            asp:min="0"/>
+
+        <SwitchPreference
+            android:key="user_bt.use"
+            android:title="Use a bluetooth device"/>
+
+        <ListPreference
+            android:key="user_bt.deviceAddress"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="Bluetooth device"
+            android:dependency="user_bt.use"/>
+    </PreferenceCategory>
+
+    <SwitchPreference
+        android:key="user_notify.vibrations"
+        android:title="Enable vibrations"/>
+
+    <PreferenceCategory android:title="Notify Me ..">
+        <SwitchPreference
+            android:key="user_notify.nodeJoin"
+            android:title="When team members join"/>
+
+        <SwitchPreference
+            android:key="user_notify.nodeLeave"
+            android:title="When team members leave"/>
+
+        <SwitchPreference
+            android:key="user_notify.newAudioRx"
+            android:title="When receiving new audio"/>
+
+        <SwitchPreference
+            android:key="user_notify.networkError"
+            android:title="When there's a network error"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Tone Levels">
+        <ListPreference
+            android:defaultValue="0.015"
+            android:entries="@array/notification_tone_level_names"
+            android:entryValues="@array/notification_tone_level_values"
+            android:key="user_toneLevel.ptt"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="PTT" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="user_notify.ptt_everyTime"
+            android:title="Play the PTT tone on every TX"/>
+
+        <ListPreference
+            android:defaultValue="0.015"
+            android:entries="@array/notification_tone_level_names"
+            android:entryValues="@array/notification_tone_level_values"
+            android:key="user_toneLevel.notification"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="Notifications \&amp; Warnings" />
+        <ListPreference
+            android:defaultValue="0.2"
+            android:entries="@array/notification_tone_level_names"
+            android:entryValues="@array/notification_tone_level_values"
+            android:key="user_toneLevel.error"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="Errors" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="User Interface">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="user_ui.pttLatching"
+            android:title="Latch/unlatch the PTT button"/>
+    </PreferenceCategory>
+
+
+    <PreferenceCategory android:title="Experimental Features">
+        <SwitchPreference
+            android:key="user_experiment.discovery.ssdp.enable"
+            android:title="Discover SSDP Assets"
+            android:defaultValue="false"
+            android:enabled="false"/>
+
+        <!-- CISTECH -->
+        <SwitchPreference
+            android:key="user_experiment.discovery.cistech.gv1.enable"
+            android:title="Discover CISTECH GV1 LMR Assets"
+            android:defaultValue="false"/>
+
+        <EditTextPreference
+            android:key="user_experiment.discovery.cistech.gv1.address"
+            android:title="Address"
+            android:inputType="text"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:defaultValue="239.192.1.42"
+            android:dependency="user_experiment.discovery.cistech.gv1.enable"/>
+
+        <EditTextPreference
+            android:key="user_experiment.discovery.cistech.gv1.port"
+            android:title="Port"
+            android:inputType="number"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:defaultValue="5354"
+            android:dependency="user_experiment.discovery.cistech.gv1.enable"/>
+
+        <EditTextPreference
+            android:key="user_experiment.discovery.cistech.gv1.timeoutSecs"
+            android:title="Timeout Seconds"
+            android:inputType="number"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:defaultValue="10"
+            android:dependency="user_experiment.discovery.cistech.gv1.enable"/>
+        <!-- -->
+
+
+        <!-- Trellisware -->
+        <SwitchPreference
+            android:key="user_experiment.discovery.trellisware.enable"
+            android:title="Discover Trellisware CNR Assets"
+            android:defaultValue="false"
+            android:enabled="true"/>
+        <!-- -->
+
+
+        <!-- Connectivity -->
+        <SwitchPreference
+            android:key="user_experiment.deviceReport.connectivity.enable"
+            android:title="Report device connectivity state"
+            android:defaultValue="false"
+            android:enabled="true"/>
+        <!-- -->
+
+
+        <!-- Power -->
+        <SwitchPreference
+            android:key="user_experiment.deviceReport.power.enable"
+            android:title="Report device power state"
+            android:defaultValue="false"
+            android:enabled="true"/>
+        <!-- -->
+    </PreferenceCategory>
+
+
+    <PreferenceCategory android:title="User Human Biometrics (Experimental)">
+        <SwitchPreference
+            android:key="user_experiment.hbm.simulate.enable"
+            android:title="Simulate human biometrics readings"
+            android:defaultValue="false"/>
+
+        <EditTextPreference
+            android:key="user_experiment.hbm.simulate.intervalSecs"
+            android:title="Reporting Intervals Seconds"
+            android:inputType="number"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:defaultValue="5"
+            android:dependency="user_experiment.hbm.simulate.enable"/>
+
+        <SwitchPreference
+            android:key="user_experiment.hbm.simulate.heartRate.enable"
+            android:title="Heart Rate"
+            android:defaultValue="true"
+            android:dependency="user_experiment.hbm.simulate.enable"/>
+
+        <SwitchPreference
+            android:key="user_experiment.hbm.simulate.skinTemp.enable"
+            android:title="Skin Temperature"
+            android:defaultValue="true"
+            android:dependency="user_experiment.hbm.simulate.enable"/>
+
+        <SwitchPreference
+            android:key="user_experiment.hbm.simulate.coreTemp.enable"
+            android:title="Core Temperature"
+            android:defaultValue="true"
+            android:dependency="user_experiment.hbm.simulate.enable"/>
+
+        <SwitchPreference
+            android:key="user_experiment.hbm.simulate.bloodOxygenationPerc.enable"
+            android:title="Blood Oxygenation Percentage"
+            android:defaultValue="true"
+            android:dependency="user_experiment.hbm.simulate.enable"/>
+
+        <SwitchPreference
+            android:key="user_experiment.hbm.simulate.bloodHydrationPerc.enable"
+            android:title="Blood Hydration Level"
+            android:defaultValue="true"
+            android:dependency="user_experiment.hbm.simulate.enable"/>
+
+        <SwitchPreference
+            android:key="user_experiment.hbm.simulate.fatigueLevel.enable"
+            android:title="Fatigue Level"
+            android:defaultValue="true"
+            android:dependency="user_experiment.hbm.simulate.enable"/>
+
+        <SwitchPreference
+            android:key="user_experiment.hbm.simulate.taskEffectivenessLevel.enable"
+            android:title="Task Effectiveness Level"
+            android:defaultValue="true"
+            android:dependency="user_experiment.hbm.simulate.enable"/>
+    </PreferenceCategory>
+</PreferenceScreen>
