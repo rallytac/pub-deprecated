@@ -208,6 +208,7 @@ public class Engage
             public static String type = "type";
             public static String expires = "expires";
             public static String expiresFormatted = "expiresFormatted";
+            public static String manufacturerId = "manufacturerId";
         }
 
         public class TalkerInformation
@@ -273,6 +274,7 @@ public class Engage
                 public static String entitlement = "entitlement";
                 public static String key = "key";
                 public static String activationCode = "activationCode";
+                public static String manufacturerId = "manufacturerId";
             }
 
             public class Networking
