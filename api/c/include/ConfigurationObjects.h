@@ -1344,6 +1344,7 @@ namespace ConfigurationObjects
         getOptional<int>("ttl", p.ttl, j, 128);
     }
 
+    //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(NetworkAddress) 
     /** 
      * @brief NetworkAddress 
@@ -1394,6 +1395,55 @@ namespace ConfigurationObjects
     }
 
 
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(NetworkAddressRxTx) 
+    /** 
+     * @brief NetworkAddressRxTx 
+     * 
+     * Helper C++ class to serialize and de-serialize NetworkAddressRxTx JSON
+     * 
+     * TODO: Complete this Class
+     * 
+     * Example: @include[doc] examples/NetworkAddressRxTx.json 
+     *    
+     */    
+    class NetworkAddressRxTx : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(NetworkAddressRxTx)
+        
+    public:
+        /** @brief RX. */
+        NetworkAddress          rx;
+
+        /** @brief TX. */
+        NetworkAddress          tx;
+
+        NetworkAddressRxTx()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            rx.clear();
+            tx.clear();
+        }
+    };
+    
+    static void to_json(nlohmann::json& j, const NetworkAddressRxTx& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(rx),
+            TOJSON_IMPL(tx)
+        };
+    }
+    static void from_json(const nlohmann::json& j, NetworkAddressRxTx& p)
+    {
+        p.clear();
+        getOptional<NetworkAddress>("rx", p.rx, j);
+        getOptional<NetworkAddress>("tx", p.tx, j);
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Rallypoint)
@@ -2607,6 +2657,9 @@ namespace ConfigurationObjects
          */
         int                                     status;
 
+        /** @brief [Read only] Manufacturer ID. */
+        std::string                             manufacturerId;
+
         LicenseDescriptor()
         {
             clear();
@@ -2626,6 +2679,7 @@ namespace ConfigurationObjects
             deviceId.clear();
             refreshIntervalDays = 0;
             status = ERR_NOT_INITIALIZED;
+            manufacturerId.clear();
         }
     };
 
@@ -2643,7 +2697,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(cargo),
             TOJSON_IMPL(deviceId),
             TOJSON_IMPL(refreshIntervalDays),
-            TOJSON_IMPL(status)
+            TOJSON_IMPL(status),
+            TOJSON_IMPL(manufacturerId)
         };        
     }
 
@@ -2662,6 +2717,7 @@ namespace ConfigurationObjects
         FROMJSON_IMPL(deviceId, std::string, EMPTY_STRING);
         FROMJSON_IMPL(refreshIntervalDays, int, 0);
         FROMJSON_IMPL(status, int, LicenseDescriptor::ERR_NOT_INITIALIZED);
+        FROMJSON_IMPL(manufacturerId, std::string, EMPTY_STRING);
     }
 
 
@@ -3165,6 +3221,9 @@ namespace ConfigurationObjects
         /** @brief Device Identifier. See @ref LicenseDescriptor::deviceId for details */
         std::string         deviceId;
 
+        /** @brief Manufacturer ID to use for the product. See @ref LicenseDescriptor::manufacturerId for details */
+        std::string         manufacturerId;
+
         EnginePolicyLicensing()
         {
             clear();
@@ -3176,6 +3235,7 @@ namespace ConfigurationObjects
             key.clear();
             activationCode.clear();
             deviceId.clear();
+            manufacturerId.clear();
         }
     };
 
@@ -3185,7 +3245,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(entitlement),
             TOJSON_IMPL(key),
             TOJSON_IMPL(activationCode),
-            TOJSON_IMPL(deviceId)
+            TOJSON_IMPL(deviceId),
+            TOJSON_IMPL(manufacturerId)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyLicensing& p)
@@ -3195,6 +3256,7 @@ namespace ConfigurationObjects
         FROMJSON_IMPL(key, std::string, EMPTY_STRING);
         FROMJSON_IMPL(activationCode, std::string, EMPTY_STRING);
         FROMJSON_IMPL(deviceId, std::string, EMPTY_STRING);
+        FROMJSON_IMPL(manufacturerId, std::string, EMPTY_STRING);
     }           
 
     //-----------------------------------------------------------
@@ -4274,6 +4336,66 @@ namespace ConfigurationObjects
     }
 
     //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(IgmpSnooping)
+    /**
+    * @brief Configuration for IGMP snooping
+    * 
+    * Helper C++ class to serialize and de-serialize IgmpSnooping JSON 
+    *         
+    * @see RallypointServer 
+    */       
+    class IgmpSnooping : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(IgmpSnooping)
+        
+    public:
+
+        /** @brief Enables IGMP.  Default is false. */
+        bool                            enabled;
+
+        /** @brief TODO */ 
+        int                             queryIntervalMs;
+
+        /** @brief TODO */ 
+        int                             lastMemberQueryIntervalMs;
+
+        /** @brief TODO */ 
+        int                             lastMemberQueryCount;
+
+        IgmpSnooping()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            enabled = false;
+            queryIntervalMs = 60000;
+            lastMemberQueryIntervalMs = 1000;
+            lastMemberQueryCount = 1;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const IgmpSnooping& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(enabled),
+            TOJSON_IMPL(queryIntervalMs),
+            TOJSON_IMPL(lastMemberQueryIntervalMs),
+            TOJSON_IMPL(lastMemberQueryCount)
+        };
+    }
+    static void from_json(const nlohmann::json& j, IgmpSnooping& p)
+    {
+        p.clear();
+        getOptional<bool>("enabled", p.enabled, j);
+        getOptional<int>("queryIntervalMs", p.queryIntervalMs, j, 60000);
+        getOptional<int>("lastMemberQueryIntervalMs", p.lastMemberQueryIntervalMs, j, 1000);
+        getOptional<int>("lastMemberQueryCount", p.lastMemberQueryCount, j, 1);
+    }
+
+    //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointServer)
     /**
     * @brief Configuration for the Rallypoint server
@@ -4364,6 +4486,18 @@ namespace ConfigurationObjects
         /** @brief Indicates whether inbound peer registrations should be reciprocated.  Only applicable for a mesh leaf that has multicat forwarding enabled. */
         bool                                        reciprocateRegistrations;
 
+        /** @brief Vector of multicasts that may be reflected. */
+        std::vector<NetworkAddressRxTx>             multicastWhitelist;
+
+        /** @brief Vector of multicasts that may not be reflected. */
+        std::vector<NetworkAddressRxTx>             multicastBlacklist;
+
+        /** @brief IGMP snooping configuration. */
+        IgmpSnooping                                igmpSnooping;
+
+        /** @brief Vector of pre-configured multicasts that must always be reflected. */
+        std::vector<NetworkAddressRxTx>             requiredMulticasts;
+
         RallypointServer()
         {
             clear();
@@ -4395,6 +4529,10 @@ namespace ConfigurationObjects
             watchdogHangDetectionMs = 2000;
             disableMessageSigning = false;
             reciprocateRegistrations = false;
+            multicastWhitelist.clear();
+            multicastBlacklist.clear();
+            igmpSnooping.clear();
+            requiredMulticasts.clear();
         }
     };
     
@@ -4424,7 +4562,12 @@ namespace ConfigurationObjects
             TOJSON_IMPL(watchdogIntervalMs),
             TOJSON_IMPL(watchdogHangDetectionMs),
             TOJSON_IMPL(disableMessageSigning),
-            TOJSON_IMPL(reciprocateRegistrations)
+            TOJSON_IMPL(reciprocateRegistrations),
+            TOJSON_IMPL(multicastWhitelist),
+            TOJSON_IMPL(multicastBlacklist),
+            TOJSON_IMPL(multicastBlacklist),
+            TOJSON_IMPL(igmpSnooping),
+            TOJSON_IMPL(requiredMulticasts)
         };
     }
     static void from_json(const nlohmann::json& j, RallypointServer& p)
@@ -4454,6 +4597,10 @@ namespace ConfigurationObjects
         getOptional<int>("watchdogHangDetectionMs", p.watchdogHangDetectionMs, j, 2000);
         getOptional<bool>("disableMessageSigning", p.disableMessageSigning, j, false);
         getOptional<bool>("reciprocateRegistrations", p.reciprocateRegistrations, j, false);
+        getOptional<std::vector<NetworkAddressRxTx>>("multicastWhitelist", p.multicastWhitelist, j);
+        getOptional<std::vector<NetworkAddressRxTx>>("multicastBlacklist", p.multicastBlacklist, j);
+        getOptional<IgmpSnooping>("igmpSnooping", p.igmpSnooping, j);
+        getOptional<std::vector<NetworkAddressRxTx>>("requiredMulticasts", p.requiredMulticasts, j);
     }    
 
     
@@ -4651,6 +4798,8 @@ namespace ConfigurationObjects
         PresenceDescriptor::document(path);
         NetworkTxOptions::document(path);
         NetworkAddress::document(path);
+        NetworkAddressRxTx::document(path);
+        IgmpSnooping::document(path);
         Rallypoint::document(path);
         TxAudio::document(path);
         AudioDeviceDescriptor::document(path);
