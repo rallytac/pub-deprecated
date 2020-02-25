@@ -8,6 +8,7 @@ package com.rallytac.engageandroid;
 public class PreferenceKeys
 {
     public static String APP_FIRST_TIME_RUN = "app.firstTimeRun";
+    public static String LAUNCHER_RUN_BEFORE = "app.launcherRunBefore";
 
     public static String UI_MODE = "ui.mode";
 
@@ -18,10 +19,6 @@ public class PreferenceKeys
 
     public static String VOLUME_LEFT_FOR_GROUP_BASE_NAME = "volume.left.";
     public static String VOLUME_RIGHT_FOR_GROUP_BASE_NAME = "volume.right.";
-
-    public static String RP_USE = "rallypoint_use";
-    public static String RP_ADDRESS = "rallypoint_address";
-    public static String RP_PORT= "rallypoint_port";
 
     public static String USER_NODE_ID = "user_nodeId";
     public static String USER_ID = "user_id";

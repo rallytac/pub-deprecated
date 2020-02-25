@@ -10,19 +10,28 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.media.SoundPool;
+import android.support.annotation.ColorInt;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatDelegate;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
+import android.support.v7.widget.RecyclerView;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
@@ -48,16 +57,26 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.journeyapps.barcodescanner.Util;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.rallytac.engage.engine.Engine;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -71,7 +90,10 @@ public class SimpleUiMainActivity
                                 EngageApplication.IAssetChangeListener,
                                 EngageApplication.IConfigurationChangeListener,
                                 EngageApplication.ILicenseChangeListener,
-                                EngageApplication.IGroupTimelineListener
+                                EngageApplication.IGroupTimelineListener,
+                                OnMapReadyCallback,
+                                EngageApplication.IPresenceChangeListener,
+                                GroupSelectorAdapter.SelectionClickListener
 {
     private static String TAG = SimpleUiMainActivity.class.getSimpleName();
 
@@ -86,6 +108,7 @@ public class SimpleUiMainActivity
     private Animation _notificationBarAnimation = null;
     private Runnable _actionOnNotificationBarClick = null;
     private boolean _pttRequested = false;
+    private boolean _pttHardwareButtonDown = false;
 
     private Animation _licensingBarAnimation = null;
     private Runnable _actionOnLicensingBarClick = null;
@@ -102,6 +125,415 @@ public class SimpleUiMainActivity
 
     private boolean _optAllowMultipleChannelView = true;
 
+    private GoogleMap _map;
+    private boolean _firstCameraPositioningDone = false;
+    private HashMap<String, MapTracker> _mapTrackers = new HashMap<>();
+
+    private RecyclerView _groupSelectorView = null;
+    private GroupSelectorAdapter _groupSelectorAdapter = null;
+
+    private int _keycodePttToggle = 0;
+    private int _keycodePttOn = 0;
+    private int _keycodePttOff = 0;
+
+    @Override
+    public void onMapReady(final GoogleMap googleMap)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                _map = googleMap;
+                applySavedMapSettings();
+                positionCameraToAllNodes();
+                //onAnyPresenceModificationWhichIsVeryUnoptimizedAndNeedsFixing();
+            }
+        });
+    }
+
+    private void applySavedMapSettings()
+    {
+        _map.getUiSettings().setMyLocationButtonEnabled(true);
+        _map.getUiSettings().setAllGesturesEnabled(true);
+        _map.getUiSettings().setCompassEnabled(true);
+        _map.getUiSettings().setScrollGesturesEnabled(true);
+        _map.getUiSettings().setZoomControlsEnabled(true);
+        _map.getUiSettings().setZoomGesturesEnabled(true);
+        _map.getUiSettings().setTiltGesturesEnabled(true);
+        _map.getUiSettings().setIndoorLevelPickerEnabled(true);
+        _map.getUiSettings().setRotateGesturesEnabled(true);
+        _map.getUiSettings().setAllGesturesEnabled(true);
+        _map.getUiSettings().setMapToolbarEnabled(true);
+
+        _map.setIndoorEnabled(true);
+        _map.setBuildingsEnabled(true);
+        _map.setTrafficEnabled(true);
+
+        try
+        {
+            _map.setMyLocationEnabled(true);
+        }
+        catch (SecurityException se)
+        {
+            se.printStackTrace();
+        }
+
+        _map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+
+        float lat = Globals.getSharedPreferences().getFloat(PreferenceKeys.MAP_OPTION_CAM_LAT, Float.NaN);
+        float lon = Globals.getSharedPreferences().getFloat(PreferenceKeys.MAP_OPTION_CAM_LON, Float.NaN);
+
+        if(!Float.isNaN(lat) && !Float.isNaN(lon))
+        {
+            CameraPosition.Builder builder = new CameraPosition.Builder();
+            builder.target(new LatLng((double)lat, (double)lon));
+
+            /*
+            float v;
+
+            v = Globals.getSharedPreferences().getFloat(PreferenceKeys.MAP_OPTION_CAM_TILT, Float.NaN);
+            if(!Float.isNaN(v))
+            {
+                builder.tilt(v);
+            }
+
+            v = Globals.getSharedPreferences().getFloat(PreferenceKeys.MAP_OPTION_CAM_BEARING, Float.NaN);
+            if(!Float.isNaN(v))
+            {
+                builder.bearing(v);
+            }
+
+            v = Globals.getSharedPreferences().getFloat(PreferenceKeys.MAP_OPTION_CAM_ZOOM, Float.NaN);
+            if(!Float.isNaN(v))
+            {
+                builder.zoom(v);
+            }
+            */
+
+            CameraPosition cp = builder.build();
+            _map.animateCamera(CameraUpdateFactory.newCameraPosition(cp));
+
+            // We're positioning from here so make sure it doesn't get overriden
+            _firstCameraPositioningDone = true;
+        }
+    }
+
+    private void positionCameraToAllNodes()
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if(_map != null)
+                {
+                    try
+                    {
+                        if (_mapTrackers.size() > 0 && _map != null)
+                        {
+                            boolean found = false;
+                            LatLngBounds.Builder bld = new LatLngBounds.Builder();
+
+                            for (MapTracker t : _mapTrackers.values())
+                            {
+                                if (t._marker != null)
+                                {
+                                    bld.include(t._marker.getPosition());
+                                    found = true;
+                                }
+                            }
+
+                            if (found)
+                            {
+                                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bld.build(), 100);
+                                _map.animateCamera(cu);
+                            }
+
+                            _firstCameraPositioningDone = true;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onPresenceAdded(PresenceDescriptor pd)
+    {
+        //Log.e(TAG, "onPresenceAdded: " + pd.nodeId + ", " + pd.displayName);
+        updateMap();
+    }
+
+    @Override
+    public void onPresenceChange(PresenceDescriptor pd)
+    {
+        //Log.e(TAG, "onPresenceChange: " + pd.nodeId + ", " + pd.displayName);
+        updateMap();
+    }
+
+    @Override
+    public void onPresenceRemoved(PresenceDescriptor pd)
+    {
+        //Log.e(TAG, "onPresenceRemoved: " + pd.nodeId + ", " + pd.displayName);
+        updateMap();
+    }
+
+    private void updateTrackerTitle(MapTracker t)
+    {
+        // See what we can use as a title
+        String title = "";
+
+        if(!Utils.isEmptyString(t._pd.displayName))
+        {
+            title = t._pd.displayName;
+        }
+        else if(!Utils.isEmptyString(t._pd.userId))
+        {
+            title = t._pd.userId;
+        }
+        else
+        {
+            title = t._pd.nodeId;
+        }
+
+        if(Utils.isEmptyString(t._title))
+        {
+            t._title = title;
+            t._locationChanged = true;
+        }
+        else
+        {
+            if(t._marker != null)
+            {
+                String existingTitle = t._marker.getTitle();
+                if(existingTitle.compareTo(t._title) != 0)
+                {
+                    t._title = title;
+                    t._locationChanged = true;
+                }
+            }
+        }
+    }
+
+    public static BitmapDescriptor getBitmapFromVector(@NonNull Context context,
+                                                       @DrawableRes int vectorResourceId,
+                                                       @ColorInt int tintColor)
+    {
+
+        Drawable vectorDrawable = ResourcesCompat.getDrawable(context.getResources(), vectorResourceId, null);
+
+        if (vectorDrawable == null)
+        {
+            Log.e(TAG, "Requested vector resource was not found");
+            return BitmapDescriptorFactory.defaultMarker();
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        //Bitmap bitmap = Bitmap.createBitmap(60, 100, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        vectorDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        //DrawableCompat.setTint(vectorDrawable, tintColor);
+        vectorDrawable.draw(canvas);
+
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
+    private void updateMap()
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if(_map == null)
+                {
+                    return;
+                }
+
+                ArrayList<PresenceDescriptor> nodes = Globals.getEngageApplication().getActiveConfiguration().getMissionNodes();
+
+                if(nodes != null)
+                {
+                    // Let's assume they're all gone
+                    for(MapTracker t : _mapTrackers.values())
+                    {
+                        t._gone = true;
+                        t._removeFromMap = false;
+                    }
+
+                    for (PresenceDescriptor pd : nodes)
+                    {
+                        MapTracker t = _mapTrackers.get(pd.nodeId);
+
+                        // We found him
+                        if(t != null)
+                        {
+                            t._pd = pd;
+                            t._gone = false;
+
+                            // If he has no location, clear out our positioning for him
+                            if(pd.location == null)
+                            {
+                                if(t._marker != null)
+                                {
+                                    t._removeFromMap = true;
+                                }
+
+                                t._lastLatLng = null;
+                                t._latLng = null;
+                                t._locationChanged = false;
+                            }
+                            else
+                            {
+                                // He has a location, do our updates
+                                t._latLng = new LatLng(pd.location.getLatitude(), pd.location.getLongitude());
+
+                                // If we don't have a last position, then make it
+                                if(t._lastLatLng == null)
+                                {
+                                    t._lastLatLng = new LatLng(pd.location.getLatitude(), pd.location.getLongitude());
+                                    t._locationChanged = true;
+                                }
+                                else
+                                {
+                                    if (t._lastLatLng.latitude == t._latLng.latitude &&
+                                            t._lastLatLng.longitude == t._latLng.longitude)
+                                    {
+                                        t._locationChanged = false;
+                                    }
+                                    else
+                                    {
+                                        t._locationChanged = true;
+                                        t._lastLatLng = new LatLng(t._latLng.latitude, t._latLng.longitude);
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // This is a new guy
+                            t = new MapTracker();
+                            t._pd = pd;
+
+                            // Setup location goodies for him
+                            if (pd.location != null)
+                            {
+                                // Update the title
+                                updateTrackerTitle(t);
+
+                                t._latLng = new LatLng(pd.location.getLatitude(), pd.location.getLongitude());
+                                t._lastLatLng = new LatLng(t._latLng.latitude, t._latLng.longitude);
+                                t._locationChanged = true;
+                            }
+
+                            _mapTrackers.put(pd.nodeId, t);
+                        }
+                    }
+
+                    // Now, let's process our trackers
+                    ArrayList<MapTracker> trash = new ArrayList<>();
+                    for(MapTracker t : _mapTrackers.values())
+                    {
+                        if(t._gone)
+                        {
+                            if(_map != null && t._marker != null)
+                            {
+                                t._marker.remove();
+                            }
+
+                            trash.add(t);
+                        }
+                        else
+                        {
+                            // First, see if he needs to be removed from the map
+                            if(t._removeFromMap)
+                            {
+                                t._marker.remove();
+                                t._marker = null;
+                            }
+                            else
+                            {
+                                if(t._locationChanged)
+                                {
+                                    // We don't yet have a marker for
+                                    if(t._marker == null)
+                                    {
+                                        MarkerOptions opt = new MarkerOptions();
+                                        opt.position(t._latLng);
+                                        opt.title(t._title);
+
+                                        // TODO: custom map markers based on node type
+
+                                        // Our marker will come up in red, others in violet
+                                        if(t._pd.self)
+                                        {
+                                            opt.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                                        }
+                                        else
+                                        {
+                                            opt.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET));
+                                        }
+
+                                        t._marker = _map.addMarker(opt);
+                                    }
+                                    else
+                                    {
+                                        // We need to update the marker position
+                                        t._marker.setPosition(t._latLng);
+                                    }
+                                }
+
+                                if(t._marker != null)
+                                {
+                                    if(t._pd.self)
+                                    {
+                                        if(_anyTxActive)
+                                        {
+                                            //t._marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+                                            t._marker.setIcon(getBitmapFromVector(SimpleUiMainActivity.this, R.drawable.ic_map_marker_generic, 0));
+                                        }
+                                        else
+                                        {
+                                            t._marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
+                    // Take out the trash
+                    for(MapTracker t : trash)
+                    {
+                        _mapTrackers.remove(t);
+                    }
+                }
+                else
+                {
+                    // No nodes but we have trackers, take 'em out
+                    if (_mapTrackers.size() > 0 && _map != null)
+                    {
+                        for(MapTracker t : _mapTrackers.values())
+                        {
+                            if(t._marker != null)
+                            {
+                                t._marker.remove();
+                            }
+                        }
+                    }
+
+                    _mapTrackers.clear();
+                }
+            }
+        });
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -113,6 +545,10 @@ public class SimpleUiMainActivity
 
         _optAllowMultipleChannelView = Utils.boolOpt(getString(R.string.opt_allow_multiple_channel_view), true);
         setRequestedOrientation(Utils.intOpt(getString(R.string.opt_lock_orientation), ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+
+        _keycodePttToggle = Utils.intOpt(getString(R.string.app_keycode_ptt_toggle), 0);
+        _keycodePttOn = Utils.intOpt(getString(R.string.app_keycode_ptt_on), 0);
+        _keycodePttOff = Utils.intOpt(getString(R.string.app_keycode_ptt_off), 0);
 
         super.onCreate(savedInstanceState);
 
@@ -137,14 +573,6 @@ public class SimpleUiMainActivity
         String title;
 
         title = _ac.getMissionName();
-        if(_ac.getUseRp())
-        {
-            title += " @ " + _ac.getRpAddress();
-        }
-        else
-        {
-            title += " @ (local multicast)";
-        }
 
         title = title.toUpperCase();
 
@@ -163,6 +591,32 @@ public class SimpleUiMainActivity
         assignGroupsToFragments();
         setupMainScreen();
         redrawPttButton();
+
+        _firstCameraPositioningDone = true;
+
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        if(mapFragment != null)
+        {
+            String googleMapsApiKey = Utils.getMetaData("com.google.android.geo.API_KEY");
+            if(!Utils.isEmptyString(googleMapsApiKey))
+            {
+                mapFragment.getMapAsync(this);
+            }
+        }
+
+        // Use the group selector if we have it
+        _groupSelectorAdapter = null;
+        /*
+        _groupSelectorView = findViewById(R.id.rvGroupSelector);
+        if(_groupSelectorView != null)
+        {
+            LinearLayoutManager horizontalLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+            _groupSelectorView.setLayoutManager(horizontalLayoutManager);
+            _groupSelectorAdapter = new GroupSelectorAdapter(this, _ac.getMissionGroups());
+            _groupSelectorAdapter.setClickListener(this);
+            _groupSelectorView.setAdapter(_groupSelectorAdapter);
+        }
+        */
     }
 
     @Override
@@ -195,6 +649,7 @@ public class SimpleUiMainActivity
     {
         Log.d(TAG, "onPause");
         super.onPause();
+        stopAllTx();
         cancelTimers();
         unregisterFromApp();
     }
@@ -203,6 +658,7 @@ public class SimpleUiMainActivity
     protected void onStop()
     {
         Log.d(TAG, "onStop");
+        stopAllTx();
         cancelTimers();
         super.onStop();
     }
@@ -211,6 +667,7 @@ public class SimpleUiMainActivity
     protected void onDestroy()
     {
         Log.d(TAG, "onDestroy");
+        stopAllTx();
         cancelTimers();
         super.onDestroy();
     }
@@ -220,6 +677,7 @@ public class SimpleUiMainActivity
     {
         if(_optAllowMultipleChannelView)
         {
+            stopAllTx();
             toggleViewMode();
         }
     }
@@ -297,34 +755,69 @@ public class SimpleUiMainActivity
     {
         //Log.d(TAG, "---onKeyDown keyCode=" + keyCode + ", event=" + event.toString() + ", _lastHeadsetKeyhookDown=" + _lastHeadsetKeyhookDown);
 
-        if( keyCode == KeyEvent.KEYCODE_HEADSETHOOK )
+        if(_ac.getPttLatching() &&  _keycodePttToggle != 0)
         {
-            if(_lastHeadsetKeyhookDown == 0)
+            if (keyCode == _keycodePttToggle && !_pttHardwareButtonDown)
             {
-                _lastHeadsetKeyhookDown = event.getDownTime();
-            }
-            else
-            {
-                long diffTime = (event.getDownTime() - _lastHeadsetKeyhookDown);
-                if(diffTime <= 500)
+                _pttRequested = !_pttRequested;
+                _pttHardwareButtonDown = true;
+
+                if (_pttRequested)
                 {
-                    _lastHeadsetKeyhookDown = 0;
-
-                    _pttRequested = !_pttRequested;
-
-                    if(_pttRequested)
+                    Log.d(TAG, "---onKeyDown requesting startTx due to ptt keycode toggle");
+                    Globals.getEngageApplication().startTx(0, 0);
+                }
+                else
+                {
+                    Log.d(TAG, "---onKeyDown requesting endTx due to ptt keycode toggle");
+                    Globals.getEngageApplication().endTx();
+                }
+            }
+        }
+        else if(!_ac.getPttLatching() && _keycodePttOn != 0)
+        {
+            if (keyCode == _keycodePttOn)
+            {
+                if (!_pttRequested)
+                {
+                    _pttRequested = true;
+                    Log.d(TAG, "---onKeyDown requesting startTx due to ptt keycode on");
+                    Globals.getEngageApplication().startTx(0, 0);
+                }
+            }
+        }
+        else
+        {
+            if (keyCode == KeyEvent.KEYCODE_HEADSETHOOK)
+            {
+                if (_lastHeadsetKeyhookDown == 0)
+                {
+                    _lastHeadsetKeyhookDown = event.getDownTime();
+                }
+                else
+                {
+                    long diffTime = (event.getDownTime() - _lastHeadsetKeyhookDown);
+                    if (diffTime <= 500)
                     {
-                        Log.d(TAG, "---onKeyDown requesting startTx due to media button double-push");
-                        Globals.getEngageApplication().startTx(0, 0);
-                    }
-                    else
-                    {
-                        Log.d(TAG, "---onKeyDown requesting endTx due to media button double-push");
-                        Globals.getEngageApplication().endTx();
+                        _lastHeadsetKeyhookDown = 0;
+
+                        _pttRequested = !_pttRequested;
+
+                        if (_pttRequested)
+                        {
+                            Log.d(TAG, "---onKeyDown requesting startTx due to media button double-push");
+                            Globals.getEngageApplication().startTx(0, 0);
+                        }
+                        else
+                        {
+                            Log.d(TAG, "---onKeyDown requesting endTx due to media button double-push");
+                            Globals.getEngageApplication().endTx();
+                        }
                     }
                 }
             }
         }
+
 
         /*
         // Handle repeat counts - for those headsets that can generate a long-push
@@ -345,41 +838,67 @@ public class SimpleUiMainActivity
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event)
     {
-        /*
         long diffTime = (event.getEventTime() - event.getDownTime());
-        Log.e(TAG, "---onKeyUp keyCode=" + keyCode + ", event=" + event.toString() + ", diff=" + diffTime);
+        //Log.d(TAG, "---onKeyUp keyCode=" + keyCode + ", event=" + event.toString() + ", diff=" + diffTime);
 
-        // Handle PTT indication via specialized key
-        if(keyCode == KeyEvent.KEYCODE_HEADSETHOOK)
+        if(_keycodePttToggle != 0 && _ac.getPttLatching())
         {
-            if (diffTime > 240 && diffTime < 260)
+            if (keyCode == _keycodePttToggle && _pttHardwareButtonDown)
             {
-                if (!_pttRequested)
-                {
-                    Log.d(TAG, "---onKeyUp requesting startTx due to media button PTT");
-                    Globals.getEngageApplication().startTx(0, 0);
-                }
-                else
-                {
-                    Log.d(TAG, "---onKeyUp requesting endTx due to media button PTT");
-                    Globals.getEngageApplication().endTx();
-                }
-
-                _pttRequested = !_pttRequested;
+                _pttHardwareButtonDown = false;
             }
-            else
+        }
+
+        if(!_ac.getPttLatching() && _keycodePttOff != 0)
+        {
+            if (keyCode == _keycodePttOff)
             {
                 if (_pttRequested)
                 {
-                    Log.d(TAG, "---onKeyUp requesting endTx due to media button release");
                     _pttRequested = false;
+                    Log.d(TAG, "---onKeyDown requesting endTx due to ptt keycode up");
                     Globals.getEngageApplication().endTx();
                 }
             }
         }
-        */
+        else
+        {
+            // Handle PTT indication via specialized key
+            if (keyCode == KeyEvent.KEYCODE_HEADSETHOOK)
+            {
+                if (diffTime > 240 && diffTime < 260)
+                {
+                    if (!_pttRequested)
+                    {
+                        Log.d(TAG, "---onKeyUp requesting startTx due to media button PTT");
+                        Globals.getEngageApplication().startTx(0, 0);
+                    }
+                    else
+                    {
+                        Log.d(TAG, "---onKeyUp requesting endTx due to media button PTT");
+                        Globals.getEngageApplication().endTx();
+                    }
+
+                    _pttRequested = !_pttRequested;
+                }
+                else
+                {
+                    if (_pttRequested)
+                    {
+                        Log.d(TAG, "---onKeyUp requesting endTx due to media button release");
+                        _pttRequested = false;
+                        Globals.getEngageApplication().endTx();
+                    }
+                }
+            }
+        }
 
         return super.onKeyUp(keyCode, event);
+    }
+
+    private void stopAllTx()
+    {
+        Globals.getEngageApplication().endTx();
     }
 
     private void showNotificationBar(final String msg)
@@ -688,6 +1207,7 @@ public class SimpleUiMainActivity
         _anyTxPending = true;
         redrawPttButton();
         redrawCardFragments();
+        updateMap();
     }
 
     @Override
@@ -704,9 +1224,11 @@ public class SimpleUiMainActivity
         _anyTxActive = false;
         _anyTxPending = false;
         _pttRequested = false;
+        _pttHardwareButtonDown = false;
         _lastHeadsetKeyhookDown = 0;
         redrawPttButton();
         redrawCardFragments();
+        updateMap();
     }
 
     @Override
@@ -811,6 +1333,7 @@ public class SimpleUiMainActivity
         Globals.getEngageApplication().addConfigurationChangeListener(this);
         Globals.getEngageApplication().addLicenseChangeListener(this);
         Globals.getEngageApplication().addGroupTimelineListener(this);
+        Globals.getEngageApplication().addPresenceChangeListener(this);
     }
 
     private void unregisterFromApp()
@@ -820,6 +1343,7 @@ public class SimpleUiMainActivity
         Globals.getEngageApplication().removeConfigurationChangeListener(this);
         Globals.getEngageApplication().removeLicenseChangeListener(this);
         Globals.getEngageApplication().removeGroupTimelineListener(this);
+        Globals.getEngageApplication().removePresenceChangeListener(this);
     }
 
     private void saveState(Bundle bundle)
@@ -878,6 +1402,17 @@ public class SimpleUiMainActivity
     }
 
     SoundPool _soundpool = null;
+
+    @Override
+    public void onGroupSelectorClick(String id)
+    {
+        String currentId = getIdOfSingleViewGroup();
+
+        if(currentId.compareTo(id) != 0)
+        {
+            showSingleView(id);
+        }
+    }
 
     private class TimelineEvent
     {
@@ -1454,8 +1989,10 @@ public class SimpleUiMainActivity
             return;
         }
 
+        _ac.setUseRp(useRp);
+
         SharedPreferences.Editor ed = Globals.getSharedPreferencesEditor();
-        ed.putBoolean(PreferenceKeys.RP_USE, useRp);
+        ed.putString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_JSON, _ac.makeTemplate().toString());
         ed.apply();
 
         onMissionChanged();

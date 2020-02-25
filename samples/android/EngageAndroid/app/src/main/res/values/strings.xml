@@ -10,6 +10,10 @@
     <string name="opt_lock_orientation">1</string>
     <string name="opt_ptt_latching">0</string>
 
+    <string name="app_keycode_ptt_toggle">0</string>
+    <string name="app_keycode_ptt_on">0</string>
+    <string name="app_keycode_ptt_off">0</string>
+
     <string name="license_key"></string>
     <string name="activation_code"></string>
 
@@ -168,6 +172,13 @@
     <string name="a_passphrase_is_required_to_generate">A passphrase is required to generate a mission.</string>
     <string name="number_of_audio_groups">Number of audio groups:</string>
     <string name="generate_passphrase_explanation">Enter a passphrase on which the mission will be based.  Then, share the mission by telling other team members to generate a mission using the exact same passphrase.\n\nNOTE: If you\'ll be using a Rallypoint, be sure to tell your team which Rallypoint.</string>
+    <string name="hint_alias">alias</string>
+    <string name="hint_display_name">display name</string>
+    <string name="hint_user_id">user id</string>
+    <string name="identity_description1">Welcome!  To identify yourself to others, you should enter some information here. If you leave any of these blank, the application will generate them for you.</string>
+    <string name="identity_description2">First, provide an identifier such as an email address that is meaningful in your organization.</string>
+    <string name="identity_description3">Next, your full name would be great as it is what\'s generally displayed to others.</string>
+    <string name="identity_description4">Finally, a short \'alias\' that is useful for displaying in constrained/small user interfaces.</string>
 
     <string-array name="lp_tx_encoder_names">
         <item>G.711 ulaw (64 kbps)</item>

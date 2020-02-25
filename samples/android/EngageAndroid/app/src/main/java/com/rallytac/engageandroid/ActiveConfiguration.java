@@ -22,6 +22,8 @@ public class ActiveConfiguration
 {
     private static String TAG = ActiveConfiguration.class.getSimpleName();
 
+    private static String JSON_FIELD_FOR_RP_USE = "use";
+
     public static class LocationConfiguration
     {
         public boolean enabled;
@@ -488,7 +490,7 @@ public class ActiveConfiguration
 
     public boolean getUseRp()
     {
-        return _useRP;
+        return _useRP && getCanUseRp();
     }
 
     public boolean getCanUseRp()
@@ -602,9 +604,10 @@ public class ActiveConfiguration
                 rc.put(Engine.JsonFields.Mission.modPin, _missionModPin);
             }
 
-            if(_useRP)
+            if(!Utils.isEmptyString(_rpAddress) && _rpPort > 0)
             {
                 JSONObject rallypoint = new JSONObject();
+                rallypoint.put(JSON_FIELD_FOR_RP_USE, _useRP);
                 rallypoint.put(Engine.JsonFields.Rallypoint.Host.address, _rpAddress);
                 rallypoint.put(Engine.JsonFields.Rallypoint.Host.port, _rpPort);
                 rc.put(Engine.JsonFields.Rallypoint.objectName, rallypoint);
@@ -646,6 +649,9 @@ public class ActiveConfiguration
         {
             JSONObject root = new JSONObject(json);
 
+            // 0 = undefined, 1 = definedAndUse, 2 = definedAndDontUse
+            int useRpFromTemplate = 0;
+
             _missionId = root.getString(Engine.JsonFields.Mission.id);
             _missionName = root.optString(Engine.JsonFields.Mission.name);
             _missionDescription = root.optString(Engine.JsonFields.Mission.description);
@@ -658,6 +664,19 @@ public class ActiveConfiguration
                 {
                     _rpAddress = rallypoint.getString(Engine.JsonFields.Rallypoint.Host.address);
                     _rpPort = rallypoint.getInt(Engine.JsonFields.Rallypoint.Host.port);
+
+                    if(rallypoint.has(JSON_FIELD_FOR_RP_USE))
+                    {
+                        boolean tmp = rallypoint.optBoolean(JSON_FIELD_FOR_RP_USE, false);
+                        if(tmp)
+                        {
+                            useRpFromTemplate = 1;
+                        }
+                        else
+                        {
+                            useRpFromTemplate = 2;
+                        }
+                    }
                 }
 
                 if(Utils.isEmptyString(_rpAddress))
@@ -732,9 +751,17 @@ public class ActiveConfiguration
                 }
             }
 
-            if(!Utils.isEmptyString(_rpAddress) && _rpPort > 0)
+            // undefined
+            if(useRpFromTemplate == 0 || useRpFromTemplate == 1)
             {
-                _useRP = true;
+                if (!Utils.isEmptyString(_rpAddress) && _rpPort > 0)
+                {
+                    _useRP = true;
+                }
+            }
+            else
+            {
+                _useRP = false;
             }
 
             _inputJson = json;
@@ -812,6 +839,9 @@ public class ActiveConfiguration
                 {
                     licensing = new JSONObject();
                 }
+
+                licensing.put(Engine.JsonFields.EnginePolicy.Licensing.manufacturerId,
+                            Globals.getContext().getString(R.string.licensing_manufacturerId));
 
                 licensing.put(Engine.JsonFields.EnginePolicy.Licensing.entitlement,
                         Globals.getContext().getString(R.string.licensing_entitlement));

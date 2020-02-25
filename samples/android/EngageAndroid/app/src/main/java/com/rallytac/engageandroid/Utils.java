@@ -303,7 +303,10 @@ public class Utils
 
     public static void generateSampleMission(Context ctx)
     {
-        String tmp = getStringResource(ctx, R.raw.sample_mission_template);
+        ActiveConfiguration ac = new ActiveConfiguration();
+        ac.parseTemplate(getStringResource(ctx, R.raw.sample_mission_template));
+        String tmp = ac.makeTemplate().toString();
+
         Globals.getSharedPreferencesEditor().putString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_JSON, tmp);
         Globals.getSharedPreferencesEditor().apply();
     }
@@ -518,10 +521,6 @@ public class Utils
                 rc.setSpeakerOutputBoostFactor(Globals.getSharedPreferences().getInt(PreferenceKeys.USER_SPEAKER_OUTPUT_BOOST_FACTOR, Constants.DEF_SPEAKER_OUTPUT_BOOST_FACTOR));
 
                 rc.setNetworkInterfaceName(Globals.getSharedPreferences().getString(PreferenceKeys.NETWORK_BINDING_NIC_NAME, Constants.DEF_BINDING_NIC_NAME));
-
-                rc.setUseRp(Globals.getSharedPreferences().getBoolean(PreferenceKeys.RP_USE, Constants.DEF_USE_RP));
-                rc.setRpAddress(Globals.getSharedPreferences().getString(PreferenceKeys.RP_ADDRESS, Constants.DEF_RP_ADDRESS));
-                rc.setRpPort(Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.RP_PORT, Integer.toString(Constants.DEF_RP_PORT))));
 
                 rc.setNodeId(Globals.getSharedPreferences().getString(PreferenceKeys.USER_NODE_ID, Constants.DEF_USER_NODE_ID));
                 rc.setUserId(Globals.getSharedPreferences().getString(PreferenceKeys.USER_ID, Constants.DEF_USER_ID));

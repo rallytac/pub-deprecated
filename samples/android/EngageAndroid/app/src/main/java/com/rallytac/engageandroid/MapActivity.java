@@ -5,23 +5,14 @@
 
 package com.rallytac.engageandroid;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -32,7 +23,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
@@ -46,61 +36,9 @@ public class MapActivity extends
 {
     private static String TAG = MapActivity.class.getSimpleName();
 
-    private class TrackerListAdapter extends ArrayAdapter<Tracker>
-    {
-        private Context _ctx;
-        private int _resId;
-
-        public TrackerListAdapter(Context ctx, int resId, ArrayList<Tracker> list)
-        {
-            super(ctx, resId, list);
-            _ctx = ctx;
-            _resId = resId;
-        }
-
-        @NonNull
-        @Override
-        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent)
-        {
-            LayoutInflater inflator = LayoutInflater.from(_ctx);
-            convertView = inflator.inflate(_resId, parent, false);
-
-            Tracker item = getItem(position);
-
-            ImageView iv = convertView.findViewById(R.id.ivType);
-            iv.setImageDrawable(ContextCompat.getDrawable(_ctx, R.drawable.ic_app_logo));
-
-            String displayName = item._pd.displayName;
-            if(Utils.isEmptyString(displayName))
-            {
-                displayName = item._pd.userId;
-                if(Utils.isEmptyString(displayName))
-                {
-                    displayName = item._pd.nodeId;
-                }
-            }
-
-            ((TextView)convertView.findViewById(R.id.tvDisplayName)).setText(displayName);
-
-            return convertView;
-        }
-    }
-
-    private class Tracker
-    {
-        public PresenceDescriptor  _pd = null;
-        public Marker _marker = null;
-        public boolean _gone = false;
-        public boolean _removeFromMap = false;
-        public LatLng _latLng = null;
-        public LatLng _lastLatLng = null;
-        public boolean _locationChanged = false;
-        public String _title = null;
-    }
-
     private GoogleMap _map;
     private EngageApplication _app;
-    private HashMap<String, Tracker> _trackers = new HashMap<>();
+    private HashMap<String, MapTracker> _trackers = new HashMap<>();
     private boolean _firstCameraPositioningDone = false;
 
     private int[] _views = {GoogleMap.MAP_TYPE_NORMAL, GoogleMap.MAP_TYPE_SATELLITE, GoogleMap.MAP_TYPE_TERRAIN, GoogleMap.MAP_TYPE_HYBRID};
@@ -276,7 +214,7 @@ public class MapActivity extends
         }
     }
 
-    private void updateTrackerTitle(Tracker t)
+    private void updateTrackerTitle(MapTracker t)
     {
         // See what we can use as a title
         String title = "";
@@ -327,7 +265,7 @@ public class MapActivity extends
             synchronized (_trackers)
             {
                 // Let's assume they're all gone
-                for(Tracker t : _trackers.values())
+                for(MapTracker t : _trackers.values())
                 {
                     t._gone = true;
                     t._removeFromMap = false;
@@ -335,7 +273,7 @@ public class MapActivity extends
 
                 for (PresenceDescriptor pd : nodes)
                 {
-                    Tracker t = _trackers.get(pd.nodeId);
+                    MapTracker t = _trackers.get(pd.nodeId);
 
                     // We found him
                     if(t != null)
@@ -387,7 +325,7 @@ public class MapActivity extends
                     else
                     {
                         // This is a new guy
-                        t = new Tracker();
+                        t = new MapTracker();
                         t._pd = pd;
 
                         // Setup location goodies for him
@@ -406,8 +344,8 @@ public class MapActivity extends
                 }
 
                 // Now, let's process our trackers
-                ArrayList<Tracker> trash = new ArrayList<>();
-                for(Tracker t : _trackers.values())
+                ArrayList<MapTracker> trash = new ArrayList<>();
+                for(MapTracker t : _trackers.values())
                 {
                     if(t._gone)
                     {
@@ -459,7 +397,7 @@ public class MapActivity extends
                 }
 
                 // Take out the trash
-                for(Tracker t : trash)
+                for(MapTracker t : trash)
                 {
                     _trackers.remove(t);
                 }
@@ -472,7 +410,7 @@ public class MapActivity extends
             {
                 if (_trackers.size() > 0 && _map != null)
                 {
-                    for(Tracker t : _trackers.values())
+                    for(MapTracker t : _trackers.values())
                     {
                         if(t._marker != null)
                         {
@@ -504,7 +442,7 @@ public class MapActivity extends
                     boolean found = false;
                     LatLngBounds.Builder bld = new LatLngBounds.Builder();
 
-                    for (Tracker t : _trackers.values())
+                    for (MapTracker t : _trackers.values())
                     {
                         if (t._marker != null)
                         {
@@ -529,7 +467,7 @@ public class MapActivity extends
         }
     }
 
-    private void zoomTo(Tracker t)
+    private void zoomTo(MapTracker t)
     {
         if(_map != null && t._marker != null)
         {
@@ -636,19 +574,19 @@ public class MapActivity extends
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        final ArrayList<Tracker> theList = new ArrayList<>();
-        for(Tracker t : _trackers.values())
+        final ArrayList<MapTracker> theList = new ArrayList<>();
+        for(MapTracker t : _trackers.values())
         {
             theList.add(t);
         }
 
-        final TrackerListAdapter arrayAdapter = new TrackerListAdapter(this, R.layout.team_list_row_item, theList);
+        final MapTrackerListAdapter arrayAdapter = new MapTrackerListAdapter(this, R.layout.team_list_row_item, theList);
 
         builder.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which)
             {
-                Tracker t = arrayAdapter.getItem(which);
+                MapTracker t = arrayAdapter.getItem(which);
                 zoomTo(t);
             }
         });

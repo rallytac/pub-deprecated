@@ -20,13 +20,17 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.EditText;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.journeyapps.barcodescanner.Util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,16 +47,17 @@ public class LauncherActivity extends AppCompatActivity
     private static int ACTION_MANAGE_BATTERY_OPTIMIZATION_PERMISSION_REQUEST_CODE= 4242;
     private static int ACTION_MANAGE_ANDROID_PERMISSIONS_REQUEST_CODE= 4243;
     private static int ACTION_MANAGE_ANDROID_BATTERY_STANDARD_OPT_ACTIVITY_REQUEST_CODE= 4244;
-    private static String TO_ENSURE_BEST_PERFORMANCE = "To ensure the best possible performance, please disable battery optimizations for this application.";
 
-    private static final int PERM_STEP_CHECK_SCREEN_OVERLAY = 0;
-    private static final int PERM_STEP_CHECK_DOZE = 1;
-    private static final int PERM_STEP_CHECK_ANDROID_PERMISSIONS = 2;
-    private static final int PERM_STEP_CHECK_DONE = 3;
+    private static final int LAUNCH_STEP_CHECK_SCREEN_OVERLAY = 0;
+    private static final int LAUNCH_STEP_CHECK_DOZE = 1;
+    private static final int LAUNCH_STEP_CHECK_ANDROID_PERMISSIONS = 2;
+    private static final int LAUNCH_STEP_CHECK_IDENTITY = 3;
+    private static final int LAUNCH_STEP_CHECK_DONE = 4;
 
     private long _waitStartedAt = 0;
     private Timer _waitForEngageOnlineTimer;
     private int _permissionStateMachineStep = 0;
+    private boolean _wasLauncherRunBefore;
 
 
     @Override
@@ -69,8 +74,15 @@ public class LauncherActivity extends AppCompatActivity
 
         findViewById(R.id.ivAppSplash).startAnimation(fadeInAnimation);
 
-        _permissionStateMachineStep = PERM_STEP_CHECK_DOZE;
-        permissionStateTransition();
+        // See if the launcher has been run before
+        _wasLauncherRunBefore = (Globals.getSharedPreferences().getBoolean(PreferenceKeys.LAUNCHER_RUN_BEFORE, false) == true);
+
+        // Launcher has been run before :)
+        Globals.getSharedPreferencesEditor().putBoolean(PreferenceKeys.LAUNCHER_RUN_BEFORE, true);
+        Globals.getSharedPreferencesEditor().apply();
+
+        _permissionStateMachineStep = LAUNCH_STEP_CHECK_DOZE;
+        doLaunchStateTransition();
     }
 
     private void showIssueAndFinish(final String title, final String message)
@@ -104,14 +116,14 @@ public class LauncherActivity extends AppCompatActivity
     {
         if (requestCode == ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE)
         {
-            permissionStateTransition();
+            doLaunchStateTransition();
         }
         else if (requestCode == ACTION_MANAGE_BATTERY_OPTIMIZATION_PERMISSION_REQUEST_CODE)
         {
             PowerSaverHelper.WhiteListedInBatteryOptimizations setting = PowerSaverHelper.getIfAppIsWhiteListedFromBatteryOptimizations(getApplication(), getPackageName());
             if(setting == PowerSaverHelper.WhiteListedInBatteryOptimizations.WHITE_LISTED)
             {
-                permissionStateTransition();
+                doLaunchStateTransition();
             }
             else
             {
@@ -120,34 +132,39 @@ public class LauncherActivity extends AppCompatActivity
         }
         else if (requestCode == ACTION_MANAGE_ANDROID_PERMISSIONS_REQUEST_CODE)
         {
-            permissionStateTransition();
+            doLaunchStateTransition();
         }
         else if (requestCode == ACTION_MANAGE_ANDROID_BATTERY_STANDARD_OPT_ACTIVITY_REQUEST_CODE)
         {
-            permissionStateTransition();
+            doLaunchStateTransition();
         }
     }
 
-    private void permissionStateTransition()
+    private void doLaunchStateTransition()
     {
         switch(_permissionStateMachineStep)
         {
-            case PERM_STEP_CHECK_SCREEN_OVERLAY:
+            case LAUNCH_STEP_CHECK_SCREEN_OVERLAY:
                 _permissionStateMachineStep++;
                 checkPopUpPermission();
                 break;
 
-            case PERM_STEP_CHECK_DOZE:
+            case LAUNCH_STEP_CHECK_DOZE:
                 _permissionStateMachineStep++;
                 checkDozePermission();
                 break;
 
-            case PERM_STEP_CHECK_ANDROID_PERMISSIONS:
+            case LAUNCH_STEP_CHECK_ANDROID_PERMISSIONS:
                 _permissionStateMachineStep++;
                 checkForPermissions();
                 break;
 
-            case PERM_STEP_CHECK_DONE:
+            case LAUNCH_STEP_CHECK_IDENTITY:
+                _permissionStateMachineStep++;
+                checkIdentity();
+                break;
+
+            case LAUNCH_STEP_CHECK_DONE:
                 startEngineWhenServiceIsOnline();
                 break;
         }
@@ -164,12 +181,12 @@ public class LauncherActivity extends AppCompatActivity
             }
             else
             {
-                permissionStateTransition();
+                doLaunchStateTransition();
             }
         }
         else
         {
-            permissionStateTransition();
+            doLaunchStateTransition();
         }
     }
 
@@ -187,7 +204,7 @@ public class LauncherActivity extends AppCompatActivity
             @Override
             public void onClick(DialogInterface dialogInterface, int i)
             {
-                permissionStateTransition();
+                doLaunchStateTransition();
             }
         });
 
@@ -218,7 +235,7 @@ public class LauncherActivity extends AppCompatActivity
         PowerSaverHelper.WhiteListedInBatteryOptimizations setting = PowerSaverHelper.getIfAppIsWhiteListedFromBatteryOptimizations(getApplication(), getPackageName());
         if(setting == PowerSaverHelper.WhiteListedInBatteryOptimizations.WHITE_LISTED)
         {
-            permissionStateTransition();
+            doLaunchStateTransition();
             return;
         }
 
@@ -337,7 +354,7 @@ public class LauncherActivity extends AppCompatActivity
         }
         else
         {
-            permissionStateTransition();
+            doLaunchStateTransition();
         }
     }
 
@@ -357,7 +374,7 @@ public class LauncherActivity extends AppCompatActivity
 
         if(allAllowed)
         {
-            permissionStateTransition();
+            doLaunchStateTransition();
         }
         else
         {
@@ -365,9 +382,97 @@ public class LauncherActivity extends AppCompatActivity
         }
     }
 
+    private void checkIdentity()
+    {
+        String userId;
+        String displayName;
+        String alias;
+
+        userId = Globals.getSharedPreferences().getString(PreferenceKeys.USER_ID, null);
+        displayName = Globals.getSharedPreferences().getString(PreferenceKeys.USER_DISPLAY_NAME, null);
+        alias = Globals.getSharedPreferences().getString(PreferenceKeys.USER_ALIAS_ID, null);
+
+        if(Utils.isEmptyString(alias) || Utils.isEmptyString(userId) || Utils.isEmptyString(displayName))
+        {
+            LayoutInflater layoutInflater = LayoutInflater.from(this);
+            View promptView = layoutInflater.inflate(R.layout.identity_prompt_dialog, null);
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setView(promptView);
+
+            final EditText etUserId = promptView.findViewById(R.id.etUserId);
+            final EditText etAlias = promptView.findViewById(R.id.etAlias);
+            final EditText etDisplayName = promptView.findViewById(R.id.etDisplayName);
+
+            etUserId.setText(userId);
+            etDisplayName.setText(displayName);
+            etAlias.setText(alias);
+
+            alertDialogBuilder.setCancelable(false)
+                    .setPositiveButton(R.string.button_ok, new DialogInterface.OnClickListener()
+                    {
+                        public void onClick(DialogInterface dialog, int id)
+                        {
+                            String val;
+
+                            // User ID
+                            val = etUserId.getText().toString().trim();
+                            if(Utils.isEmptyString(val))
+                            {
+                                val = Globals.getSharedPreferences().getString(PreferenceKeys.USER_ALIAS_ID, null) + getString(R.string.generated_user_id_email_domain);
+                            }
+                            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_ID, val);
+
+                            // Display Name
+                            val = etDisplayName.getText().toString().trim();
+                            if(Utils.isEmptyString(val))
+                            {
+                                val = String.format(getString(R.string.fmt_user_display_name_generate), Globals.getSharedPreferences().getString(PreferenceKeys.USER_ID, "?"));
+                            }
+                            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_DISPLAY_NAME, val);
+
+                            // Alias
+                            val = etAlias.getText().toString().trim();
+                            if(Utils.isEmptyString(val))
+                            {
+                                val = Utils.generateUserAlias(getString(R.string.fmt_user_alias_id_generate));
+                            }
+                            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_ALIAS_ID, val);
+
+                            // Save it
+                            Globals.getSharedPreferencesEditor().apply();
+
+                            // Continue with launching
+                            doLaunchStateTransition();
+                        }
+                    });
+
+            AlertDialog alert = alertDialogBuilder.create();
+            alert.show();
+        }
+        else
+        {
+            // Just keep going
+            doLaunchStateTransition();
+        }
+    }
+
     private void startEngineWhenServiceIsOnline()
     {
         Log.i(TAG, "engaging ...");
+
+        long tmrDelay;
+        long tmrPeriod;
+
+        if(_wasLauncherRunBefore)
+        {
+            tmrDelay = 500;
+            tmrPeriod = 500;
+        }
+        else
+        {
+            tmrDelay = 2000;
+            tmrPeriod = 1000;
+        }
 
         _waitStartedAt = Utils.nowMs();
         _waitForEngageOnlineTimer = new Timer();
@@ -411,6 +516,6 @@ public class LauncherActivity extends AppCompatActivity
                     Log.i(TAG, "waiting for engage service to come online");
                 }
             }
-        }, 500, 500);
+        }, tmrDelay, tmrPeriod);
     }
 }

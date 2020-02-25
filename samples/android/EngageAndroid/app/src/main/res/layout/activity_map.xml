@@ -41,7 +41,6 @@
             app:srcCompat="@drawable/ic_layers"
             android:onClick="onClickNextView"
             android:visibility="visible"/>
-
     </fragment>
 
 </android.support.constraint.ConstraintLayout>

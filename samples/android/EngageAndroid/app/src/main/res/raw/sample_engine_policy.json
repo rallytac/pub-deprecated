@@ -20,8 +20,10 @@
   },
 
   "licensing":{
+    "entitlement":"<filled in by app>",
     "key":"<filled in by app>",
-    "activationCode":""
+    "activationCode":"",
+    "manufacturerId":"<filled in by app>"
   },
 
   "networking":{

@@ -396,7 +396,7 @@ public class EngageApplication
         super.onCreate();
 
         // Its important to set this as soon as possible!
-        com.rallytac.engage.engine.Engine.setApplicationContext(this.getApplicationContext());
+         Engine.setApplicationContext(this.getApplicationContext());
 
         // Note: This is for developer gtesting only!!
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -1550,51 +1550,12 @@ public class EngageApplication
             Globals.getSharedPreferencesEditor().apply();
         }
 
-        // See if we have a alias.  If not, make one
-        val = Globals.getSharedPreferences().getString(PreferenceKeys.USER_ALIAS_ID, null);
-        if(Utils.isEmptyString(val))
-        {
-            val = Utils.generateUserAlias(getString(R.string.fmt_user_alias_id_generate));
-            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_ALIAS_ID, val);
-            Globals.getSharedPreferencesEditor().apply();
-        }
-
-        // Setup user id if we don't have one
-        val = Globals.getSharedPreferences().getString(PreferenceKeys.USER_ID, null);
-        if(Utils.isEmptyString(val))
-        {
-            val = Globals.getSharedPreferences().getString(PreferenceKeys.USER_ALIAS_ID, null) + getString(R.string.generated_user_id_email_domain);
-            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_ID, val);
-            Globals.getSharedPreferencesEditor().apply();
-        }
-
-        // Setup a display name if we don't have one
-        val = Globals.getSharedPreferences().getString(PreferenceKeys.USER_DISPLAY_NAME, null);
-        if(Utils.isEmptyString(val))
-        {
-            val = String.format(getString(R.string.fmt_user_display_name_generate), Globals.getSharedPreferences().getString(PreferenceKeys.USER_ID, "?"));
-            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_DISPLAY_NAME, val);
-            Globals.getSharedPreferencesEditor().apply();
-        }
-
         // See if we have an active configuration.  If we don't we'll make one
         val = Globals.getSharedPreferences().getString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_JSON, null);
         if(Utils.isEmptyString(val))
         {
             // Make the sample mission
             Utils.generateSampleMission(this);
-
-            boolean useRp = Utils.boolOpt(getString(R.string.preload_rp_use), false);
-            String rpAddress = Utils.stringOpt(getString(R.string.preload_rp_address), "");
-            int rpPort = Utils.intOpt(getString(R.string.preload_rp_port), 0);
-
-            if(useRp && !Utils.isEmptyString(rpAddress) && rpPort > 0)
-            {
-                Globals.getSharedPreferencesEditor().putBoolean(PreferenceKeys.RP_USE, useRp);
-                Globals.getSharedPreferencesEditor().putString(PreferenceKeys.RP_ADDRESS, rpAddress);
-                Globals.getSharedPreferencesEditor().putString(PreferenceKeys.RP_PORT, Integer.toString(rpPort));
-                Globals.getSharedPreferencesEditor().apply();
-            }
 
             // Load it
             ActiveConfiguration ac = Utils.loadConfiguration(null);
@@ -2041,12 +2002,6 @@ public class EngageApplication
             //JSONObject jMission = new JSONObject(ac.getInputJson());
             //JSONObject jGroups = jMission.get("groups")
 
-            // RP
-            Globals.getSharedPreferencesEditor().putBoolean(PreferenceKeys.RP_USE, ac.getUseRp());
-            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.RP_ADDRESS, ac.getRpAddress());
-            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.RP_PORT, Integer.toString(ac.getRpPort()));
-            Globals.getSharedPreferencesEditor().apply();
-
             // Add this guy to our mission database
             MissionDatabase database = MissionDatabase.load(Globals.getSharedPreferences(), Constants.MISSION_DATABASE_NAME);
             if(database != null)
@@ -2129,11 +2084,6 @@ public class EngageApplication
             String serializedAc = ac.makeTemplate().toString();
             SharedPreferences.Editor ed = Globals.getSharedPreferencesEditor();
             ed.putString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_JSON, serializedAc);
-
-            ed.putBoolean(PreferenceKeys.RP_USE, ac.getUseRp());
-            ed.putString(PreferenceKeys.RP_ADDRESS, ac.getRpAddress());
-            ed.putString(PreferenceKeys.RP_PORT, Integer.toString(ac.getRpPort()));
-
             ed.apply();
 
             rc = true;
