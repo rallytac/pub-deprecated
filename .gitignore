@@ -5,4 +5,5 @@ samples/cs/engage-sample-cs-console/obj/*
 samples/cs/engage-sample-cs-console/packages/*
 .cache/
 .build/
-
+.engage/
+*.o
