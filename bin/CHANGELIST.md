@@ -1,4 +1,5 @@
 # March 5, 2020 - 1.126.8887
+- Adds Engage-managed certificate stores
 - Adds tx mute/unmute for groups - including the ability to begin tx in a muted state
 - Improved handling of QoS settings for TX
 - Addition of QoS and TTL for multicast reflectors in Rallypoints
