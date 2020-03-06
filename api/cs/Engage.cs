@@ -61,6 +61,8 @@ public class Engage
         void onGroupRxEnded(string id);
         void onGroupRxMuted(string id);
         void onGroupRxUnmuted(string id);
+        void onGroupTxMuted(string id);
+        void onGroupTxUnmuted(string id);
         void onGroupRxSpeakersChanged(string id, string groupTalkerJson);
         void onGroupTxStarted(string id);
         void onGroupTxEnded(string id);
@@ -147,9 +149,34 @@ public class Engage
     public const String GROUP_SOURCE_ENGAGE_MAGELLAN_CISTECH = "com.rallytac.engage.magellan.cistech";
     public const String GROUP_SOURCE_ENGAGE_MAGELLAN_TRELLISWARE = "com.rallytac.engage.magellan.trellisware";
 
+    // NetworkTxPriority
+    public enum NetworkTxPriority : int
+    {
+        PRI_BEST_EFFORT = 0,
+        PRI_SIGNALING = 2,
+        PRI_VIDEO = 3,
+        PRI_VOICE = 4
+    }
 
     public class JsonFields
     {
+        public class CertStoreCertificateElement
+        {
+            public static String objectName = "certStoreCertificateElement";
+            public static String arrayName = "certificates";
+            public static String id = "id";
+            public static String hasPrivateKey = "hasPrivateKey";
+        }
+
+        public class CertStoreDescriptor
+        {
+            public static String objectName = "certStoreDescriptor";
+            public static String fileName = "fileName";
+            public static String version = "version";
+            public static String flags = "flags";
+            public static String certificates = "certificates";
+        }
+
         public class AudioDevice
         {
             public static String objectName = "audioDevice";
@@ -168,7 +195,6 @@ public class Engage
             public static String isDefault = "isDefault";
             public static String extra = "extra";
             public static String type = "type";
-
         }
 
         public class NetworkInterfaceDevice
@@ -193,9 +219,7 @@ public class Engage
             public static String subchannelTag = "subchannelTag";
             public static String includeNodeId = "includeNodeId";
             public static String alias = "alias";
-            public static String pendingAudioUri = "pendingAudioUri";
-            public static String grantAudioUri = "grantAudioUri";
-            public static String denyAudioUri = "denyAudioUri";
+            public static String muted = "muted";
         }
 
         public class License
@@ -244,8 +268,7 @@ public class Engage
                 public static String logTaskQueueStatsIntervalMs = "logTaskQueueStatsIntervalMs";                
                 public static String maxTxSecs = "maxTxSecs";
                 public static String maxRxSecs = "maxRxSecs";
-                public static String autosaveIntervalSecs = "autosaveIntervalSecs";
-
+                public static String enableLazySpeakerClosure = "enableLazySpeakerClosure";
             }
 
             public class Timelines
@@ -254,6 +277,12 @@ public class Engage
                 public static String enabled = "enabled";
                 public static String maxAttachmentQuotaMb = "maxAttachmentQuotaMb";
                 public static String maxEventAgeSecs = "maxEventAgeSecs";
+	            public static String storageRoot = "storageRoot";
+                public static String maxStorageQuotaMb = "maxStorageQuotaMb";
+	            public static String maxEvents = "maxEvents";
+                public static String groomingIntervalSecs = "groomingIntervalSecs";
+                public static String autosaveIntervalSecs = "autosaveIntervalSecs";
+                public static String disableSigningAndVerification = "disableSigningAndVerification";
             }
 
             public class Security
@@ -292,6 +321,24 @@ public class Engage
                 public static String maxReconnectPauseMs = "maxReconnectPauseMs";
                 public static String reconnectFailurePauseIncrementMs = "reconnectFailurePauseIncrementMs";
                 public static String sendFailurePauseMs = "sendFailurePauseMs";
+                public static String rallypointRtTestIntervalMs = "rallypointRtTestIntervalMs";
+                public static String logRtpJitterBufferStats = "logRtpJitterBufferStats";
+            }
+
+            public class Audio
+            {
+                public static String objectName = "audio";
+                public static String internalRate = "internalRate";
+                public static String internalChannels = "internalChannels";
+                public static String inputRate = "inputRate";
+                public static String inputChannels = "inputChannels";
+                public static String inputBufferMs = "inputBufferMs";
+                public static String outputRate = "outputRate";
+                public static String outputChannels = "outputChannels";
+                public static String outputBufferMs = "outputBufferMs";
+                public static String outputGainPercentage = "outputGainPercentage";
+                public static String allowOutputOnTransmit = "allowOutputOnTransmit";
+                public static String muteTxOnTx = "muteTxOnTx";
             }
 
             public class Discovery
@@ -350,6 +397,7 @@ public class Engage
             public static String allowSelfSignedCertificate = "allowSelfSignedCertificate";
             public static String transactionTimeoutMs = "transactionTimeoutMs";
             public static String disableMessageSigning = "disableMessageSigning";
+            public static String use = "use";
         }
 
         public class Address
@@ -394,6 +442,13 @@ public class Engage
             public static String framingMs = "framingMs";
             public static String maxTxSecs = "maxTxSecs";
             public static String noHdrExt = "noHdrExt";
+        }
+
+        public class NetworkTxOptions
+        {
+            public static String objectName = "txOptions";
+            public static String priority = "priority";
+            public static String ttl = "ttl";
         }
 
         public class Presence
@@ -579,6 +634,8 @@ public class Engage
         public EngageStringCallback PFN_ENGAGE_GROUP_TX_FAILED;
         public EngageStringCallback PFN_ENGAGE_GROUP_TX_USURPED_BY_PRIORITY;
         public EngageStringCallback PFN_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED;
+        public EngageStringCallback PFN_ENGAGE_GROUP_TX_MUTED;
+        public EngageStringCallback PFN_ENGAGE_GROUP_TX_UNMUTED;
 
         public EngageString2Callback PFN_ENGAGE_GROUP_ASSET_DISCOVERED;
         public EngageString2Callback PFN_ENGAGE_GROUP_ASSET_REDISCOVERED;
@@ -717,6 +774,12 @@ public class Engage
     private static extern int engageUnmuteGroupRx(string id);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageMuteGroupTx(string id);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageUnmuteGroupTx(string id);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageSetGroupRxVolume(string id, int left, int right);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
@@ -754,6 +817,33 @@ public class Engage
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr engageGenerateMission(string keyPhrase, int audioGroupCount, string rallypointHost, string missionName);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageSetMissionId(string missionId);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageOpenCertStore(string fileName, string passwordHexByteString);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr engageGetCertStoreDescriptor();
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageCloseCertStore();
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageSetCertStoreCertificatePem(string id, string certificatePem, string privateKeyPem);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageSetCertStoreCertificateP12(string id, byte[] data, int size, string password);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageDeleteCertStoreCertificate(string id);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr engageGetCertStoreCertificatePem(string id);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr engageGetCertificateDescriptorFromPem(string pem);
     #endregion
 
     #region Internal functions
@@ -837,6 +927,9 @@ public class Engage
 
         cb.PFN_ENGAGE_GROUP_RX_MUTED = on_ENGAGE_GROUP_RX_MUTED;
         cb.PFN_ENGAGE_GROUP_RX_UNMUTED = on_ENGAGE_GROUP_RX_UNMUTED;
+
+        cb.PFN_ENGAGE_GROUP_TX_MUTED = on_ENGAGE_GROUP_TX_MUTED;
+        cb.PFN_ENGAGE_GROUP_TX_UNMUTED = on_ENGAGE_GROUP_TX_UNMUTED;
 
         cb.PFN_ENGAGE_GROUP_RX_SPEAKERS_CHANGED = on_ENGAGE_GROUP_RX_SPEAKERS_CHANGED;
 
@@ -1157,6 +1250,28 @@ public class Engage
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
                 n.onGroupRxUnmuted(id);
+            }
+        }
+    };
+
+    private EngageStringCallback on_ENGAGE_GROUP_TX_MUTED = (string id) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTxMuted(id);
+            }
+        }
+    };
+
+    private EngageStringCallback on_ENGAGE_GROUP_TX_UNMUTED = (string id) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTxUnmuted(id);
             }
         }
     };
@@ -1678,6 +1793,16 @@ public class Engage
         return engageUnmuteGroupRx(id);
     }    
 
+    public int muteGroupTx(string id)
+    {
+        return engageMuteGroupTx(id);
+    }    
+
+    public int unmuteGroupTx(string id)
+    {
+        return engageUnmuteGroupTx(id);
+    }    
+
     public int setGroupRxVolume(string id, int left, int right)
     {
         return engageSetGroupRxVolume(id, left, right);
@@ -1754,6 +1879,92 @@ public class Engage
         }
     }
 
+    public String getAudioDevices()
+    {
+        IntPtr ptr = engageGetAudioDevices();
+
+        if (ptr == IntPtr.Zero)
+        {
+            return null;
+        }
+        else
+        {
+            return Marshal.PtrToStringAnsi(ptr);
+        }
+    }
+
+    public int setMissionId(string missionId)
+    {
+        return engageSetMissionId(missionId);
+    }
+
+    public int openCertStore(string fileName, string passwordHexByteString)
+    {
+        return engageOpenCertStore(fileName, passwordHexByteString);
+    }   
+
+    public String getCertStoreDescriptor()
+    {
+        IntPtr ptr = engageGetCertStoreDescriptor();
+
+        if (ptr == IntPtr.Zero)
+        {
+            return null;
+        }
+        else
+        {
+            return Marshal.PtrToStringAnsi(ptr);
+        }
+    }
+
+    public int closeCertStore()
+    {
+        return engageCloseCertStore();
+    }
+
+    public int setCertStoreCertificatePem(string id, string certificatePem, string privateKeyPem)
+    {
+        return engageSetCertStoreCertificatePem(id, certificatePem, privateKeyPem);
+    }
+
+    public int setCertStoreCertificateP12(string id, byte[] data, int size, string password)
+    {
+        // TODO
+        return -1;
+    }
+
+    public int deleteCertStoreCertificate(string id)
+    {
+        return engageDeleteCertStoreCertificate(id);
+    }
+
+    public String getCertStoreCertificatePem(string id)
+    {
+        IntPtr ptr = engageGetCertStoreCertificatePem(id);
+
+        if (ptr == IntPtr.Zero)
+        {
+            return null;
+        }
+        else
+        {
+            return Marshal.PtrToStringAnsi(ptr);
+        }
+    }
+
+    public String getCertificateDescriptorFromPem(string pem)
+    {
+        IntPtr ptr = engageGetCertificateDescriptorFromPem(pem);
+
+        if (ptr == IntPtr.Zero)
+        {
+            return null;
+        }
+        else
+        {
+            return Marshal.PtrToStringAnsi(ptr);
+        }
+    }
     #endregion
 
     #region Helpers
