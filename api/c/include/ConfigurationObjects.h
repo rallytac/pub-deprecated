@@ -43,10 +43,8 @@
     #endif
 #endif  // ENGAGE_IGNORE_COMPILER_UNUSED_WARNING
 
-
 namespace ConfigurationObjects
-{
-
+{   
     //-----------------------------------------------------------
     #pragma pack(push, 1)
         typedef struct
@@ -278,47 +276,6 @@ namespace ConfigurationObjects
         catch(...)
         {
         }
-    }
-
-    static bool readTextFileIntoString(const char *fn, std::string& str)
-    {
-        bool rc = false;
-		FILE *fp;
-
-		#ifndef WIN32
-				fp = fopen(fn, "rb");
-		#else
-				if (fopen_s(&fp, fn, "rb") != 0)
-				{
-					fp = nullptr;
-				}
-		#endif
-
-        if(fp != nullptr)
-        {
-            fseek(fp, 0, SEEK_END);
-            long sz = ftell(fp);
-            fseek(fp, 0, SEEK_SET);
-
-            if(sz > 0)
-            {
-                char *buff = new char[sz + 1];
-                long read = (long)fread(buff, 1, sz, fp);
-
-                if(read == sz)
-                {
-                    buff[sz] = 0;
-                    str = buff;
-                    rc = true;
-                }
-                
-                delete []buff;
-            }
-            
-            fclose(fp);
-        }
-
-        return rc;
     }
 
     class ConfigurationObjectBase
@@ -665,14 +622,8 @@ namespace ConfigurationObjects
         /** @brief [Optional, Default: empty string] The Engage Engine should transmit the user's alias as part of the header extension in the RTP packet. */
         std::string     alias;
 
-        /** @brief [Optional, Default: empty string] The Engage Engine should play the audio specified by this URI while TX is pending. */
-        std::string     pendingAudioUri;
-
-        /** @brief [Optional, Default: empty string] The Engage Engine should play the audio specified by this URI when TX is granted. */
-        std::string     grantAudioUri;
-
-        /** @brief [Optional, Default: empty string] The Engage Engine should play the audio specified by this URI when TX is denied. */
-        std::string     denyAudioUri;
+        /** @brief [Optional, Default: false] While the microphone should be opened, captured audio should be ignored until unmuted. */
+        bool            muted;
 
         AdvancedTxParams()
         {
@@ -686,9 +637,7 @@ namespace ConfigurationObjects
             subchannelTag = 0;
             includeNodeId = false;
             alias.clear();
-            pendingAudioUri.clear();
-            grantAudioUri.clear();
-            denyAudioUri.clear();
+            muted = false;
         }
 
         virtual void initForDocumenting()
@@ -704,9 +653,7 @@ namespace ConfigurationObjects
             TOJSON_IMPL(subchannelTag),
             TOJSON_IMPL(includeNodeId),
             TOJSON_IMPL(alias),
-            TOJSON_IMPL(pendingAudioUri),
-            TOJSON_IMPL(grantAudioUri),
-            TOJSON_IMPL(denyAudioUri)
+            TOJSON_IMPL(muted)
         };
     }
     static void from_json(const nlohmann::json& j, AdvancedTxParams& p)
@@ -717,9 +664,7 @@ namespace ConfigurationObjects
         getOptional<uint16_t>("subchannelTag", p.subchannelTag, j, 0);
         getOptional<bool>("includeNodeId", p.includeNodeId, j, false);
         getOptional<std::string>("alias", p.alias, j, EMPTY_STRING);
-        getOptional<std::string>("pendingAudioUri", p.pendingAudioUri, j, EMPTY_STRING);
-        getOptional<std::string>("grantAudioUri", p.grantAudioUri, j, EMPTY_STRING);
-        getOptional<std::string>("denyAudioUri", p.denyAudioUri, j, EMPTY_STRING);
+        getOptional<bool>("muted", p.muted, j, false);
     }
 
     //-----------------------------------------------------------
@@ -1290,25 +1235,24 @@ namespace ConfigurationObjects
          */
         typedef enum
         {
-            /** @brief NET_SERVICE_TYPE_BE */
+            /** @brief best effort */
             priBestEffort   = 0, 
 
-
-            /** @brief NET_SERVICE_TYPE_SIG */
+            /** @brief signaling */
             priSignaling    = 2,
 
-            /** @brief NET_SERVICE_TYPE_VI */
+            /** @brief video */
             priVideo        = 3,
 
-            /** @brief NET_SERVICE_TYPE_VO */
+            /** @brief voice */
             priVoice        = 4
         } TxPriority_t;
 
-        /** @brief [Optional, Default: @ref priVoice] Transmission priority at which to tag the packets with.  */
+        /** @brief [Optional, Default: @ref priVoice] Transmission priority. This has meaning on some operating systems based on how their IP stack operates.  It may or may not affect final packet marking. */
         TxPriority_t    priority;
 
         /** 
-         * @brief [Optional, Default: 128] Time to live or hop limit is a mechanism that limits the lifespan or lifetime of data in a network. TTL prevents a data packet from circulating indefinitely. 
+         * @brief [Optional, Default: 1] Time to live or hop limit is a mechanism that limits the lifespan or lifetime of data in a network. TTL prevents a data packet from circulating indefinitely. 
          *   
          *   E.g If you don't want multicast data to leave your local network, set the TTL to 1. 
          */
@@ -1322,7 +1266,7 @@ namespace ConfigurationObjects
         void clear()
         {
             priority = priVoice;
-            ttl = 128;
+            ttl = 1;
         }
 
         virtual void initForDocumenting()
@@ -1341,7 +1285,7 @@ namespace ConfigurationObjects
     {
         p.clear();
         getOptional<NetworkTxOptions::TxPriority_t>("priority", p.priority, j, NetworkTxOptions::priVoice);
-        getOptional<int>("ttl", p.ttl, j, 128);
+        getOptional<int>("ttl", p.ttl, j, 1);
     }
 
     //-----------------------------------------------------------
@@ -1559,6 +1503,7 @@ namespace ConfigurationObjects
             TOJSON_IMPL(disableMessageSigning)
         };
     }
+
     static void from_json(const nlohmann::json& j, Rallypoint& p)
     {
         p.clear();
@@ -1569,25 +1514,9 @@ namespace ConfigurationObjects
         getOptional<bool>("allowSelfSignedCertificate", p.allowSelfSignedCertificate, j, true);
         getOptional<std::vector<std::string>>("caCertificates", p.caCertificates, j);
         getOptional<int>("transactionTimeoutMs", p.transactionTimeoutMs, j, 5000);
-
-        if(!p.certificate.empty() && p.certificate.c_str()[0] == '@')
-        {
-            if(!readTextFileIntoString(p.certificate.c_str() + 1, p.certificate))
-            {
-                p.certificate.clear();
-            }
-        }
-
-        if(!p.certificateKey.empty() && p.certificateKey.c_str()[0] == '@')
-        {
-            if(!readTextFileIntoString(p.certificateKey.c_str() + 1, p.certificateKey))
-            {
-                p.certificateKey.clear();
-            }
-        }
-
         getOptional<bool>("disableMessageSigning", p.disableMessageSigning, j, false);
     }
+
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(TxAudio)
@@ -2395,7 +2324,7 @@ namespace ConfigurationObjects
         /** @brief The network address for transmitting network traffic to. */
         NetworkAddress                          tx;
 
-        /** @brief Transmit options fro the group (see @ref NetworkTxOptions). */
+        /** @brief Transmit options for the group (see @ref NetworkTxOptions). */
         NetworkTxOptions                        txOptions;
 
         /** @brief Audio transmit options such as codec, framing size etc (see @ref TxAudio). */
@@ -2891,6 +2820,8 @@ namespace ConfigurationObjects
         /** @brief [Optional, Default: false] TODO: Shaun. */ 
         bool                allowOutputOnTransmit;
 
+        /** @brief [Optional, Default: false] Automatically mute TX when TX begins */ 
+        bool                muteTxOnTx;
 
         EnginePolicyAudio()
         {
@@ -2912,6 +2843,7 @@ namespace ConfigurationObjects
 
             outputGainPercentage = 0;
             allowOutputOnTransmit = false;
+            muteTxOnTx = false;
         }
     };
 
@@ -2928,7 +2860,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(outputRate),
             TOJSON_IMPL(outputChannels),
             TOJSON_IMPL(outputGainPercentage),
-            TOJSON_IMPL(allowOutputOnTransmit)
+            TOJSON_IMPL(allowOutputOnTransmit),
+            TOJSON_IMPL(muteTxOnTx)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyAudio& p)
@@ -2947,7 +2880,8 @@ namespace ConfigurationObjects
 
         FROMJSON_IMPL(outputGainPercentage, int, 0);
         FROMJSON_IMPL(allowOutputOnTransmit, bool, false);
-    }           
+        FROMJSON_IMPL(muteTxOnTx, bool, false);
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(SecurityCertificate)
@@ -2970,11 +2904,10 @@ namespace ConfigurationObjects
         /** 
          * @brief x509 certificate text.
          * 
-         * TODO: Shaun, do we need to expand on this 
          */ 
         std::string         certificate;
 
-        /** @brief Private key for the certificate. TODO: Shaun, please verify. */ 
+        /** @brief Private key for the certificate. */ 
         std::string         key;
 
         SecurityCertificate()
@@ -3001,22 +2934,6 @@ namespace ConfigurationObjects
         p.clear();
         FROMJSON_IMPL(certificate, std::string, EMPTY_STRING);
         FROMJSON_IMPL(key, std::string, EMPTY_STRING);
-
-        if(!p.certificate.empty() && p.certificate.c_str()[0] == '@')
-        {
-            if(!readTextFileIntoString(p.certificate.c_str() + 1, p.certificate))
-            {
-                p.certificate.clear();
-            }
-        }
-
-        if(!p.key.empty() && p.key.c_str()[0] == '@')
-        {
-            if(!readTextFileIntoString(p.key.c_str() + 1, p.key))
-            {
-                p.key.clear();
-            }
-        }      
     }           
     
     // This is where spell checking stops
@@ -4498,6 +4415,12 @@ namespace ConfigurationObjects
         /** @brief Vector of pre-configured multicasts that must always be reflected. */
         std::vector<NetworkAddressRxTx>             requiredMulticasts;
 
+        /** @brief Tx options. */
+        NetworkTxOptions                            txOptions;
+
+        /** @brief Tx options for multicast. */
+        NetworkTxOptions                            multicastTxOptions;
+
         RallypointServer()
         {
             clear();
@@ -4533,6 +4456,8 @@ namespace ConfigurationObjects
             multicastBlacklist.clear();
             igmpSnooping.clear();
             requiredMulticasts.clear();
+            txOptions.clear();
+            multicastTxOptions.clear();
         }
     };
     
@@ -4567,7 +4492,9 @@ namespace ConfigurationObjects
             TOJSON_IMPL(multicastBlacklist),
             TOJSON_IMPL(multicastBlacklist),
             TOJSON_IMPL(igmpSnooping),
-            TOJSON_IMPL(requiredMulticasts)
+            TOJSON_IMPL(requiredMulticasts),
+            TOJSON_IMPL(txOptions),
+            TOJSON_IMPL(multicastTxOptions)
         };
     }
     static void from_json(const nlohmann::json& j, RallypointServer& p)
@@ -4601,6 +4528,8 @@ namespace ConfigurationObjects
         getOptional<std::vector<NetworkAddressRxTx>>("multicastBlacklist", p.multicastBlacklist, j);
         getOptional<IgmpSnooping>("igmpSnooping", p.igmpSnooping, j);
         getOptional<std::vector<NetworkAddressRxTx>>("requiredMulticasts", p.requiredMulticasts, j);
+        getOptional<NetworkTxOptions>("txOptions", p.txOptions, j);
+        getOptional<NetworkTxOptions>("multicastTxOptions", p.multicastTxOptions, j);
     }    
 
     
@@ -4784,6 +4713,276 @@ namespace ConfigurationObjects
         getOptional<std::string>("sql", p.sql, j, EMPTY_STRING);
     }
 
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(CertStoreCertificate)
+    /**
+    * @brief Holds a certificate and (optionally) a private key in a certstore
+    * 
+    * Helper C++ class to serialize and de-serialize CertStoreCertificate JSON 
+    *         
+    */       
+    class CertStoreCertificate : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(CertStoreCertificate)
+        
+    public:
+        /** @brief Id of the certificate */
+        std::string                     id;
+
+        /** @brief Certificate in PEM format */
+        std::string                     certificatePem;
+
+        /** @brief Private key in PEM format */
+        std::string                     privateKeyPem;
+
+        /** @brief Unserialized internal data */
+        void                            *internalData;
+
+        CertStoreCertificate()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            id.clear();
+            certificatePem.clear();
+            privateKeyPem.clear();
+            internalData = nullptr;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const CertStoreCertificate& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(id),
+            TOJSON_IMPL(certificatePem),
+            TOJSON_IMPL(privateKeyPem)
+        };
+    }
+    static void from_json(const nlohmann::json& j, CertStoreCertificate& p)
+    {
+        p.clear();
+        j.at("id").get_to(p.id);
+        j.at("certificatePem").get_to(p.certificatePem);
+        getOptional<std::string>("privateKeyPem", p.privateKeyPem, j, EMPTY_STRING);
+    }
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(CertStore)
+    /**
+    * @brief Holds a certstore
+    * 
+    * Helper C++ class to serialize and de-serialize CertStore JSON 
+    *         
+    */       
+    class CertStore : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(CertStore)
+        
+    public:
+        /** @brief Array of certificates in this store */
+        std::vector<CertStoreCertificate>    certificates;
+
+        CertStore()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            certificates.clear();
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const CertStore& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(certificates)
+        };
+    }
+    static void from_json(const nlohmann::json& j, CertStore& p)
+    {
+        p.clear();
+        getOptional<std::vector<CertStoreCertificate>>("certificates", p.certificates, j);
+    }
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(CertStoreCertificateElement)
+    /**
+    * @brief Description of a certstore certificate element
+    * 
+    * Helper C++ class to serialize and de-serialize CertStoreCertificateElement JSON 
+    *         
+    */       
+    class CertStoreCertificateElement : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(CertStoreCertificateElement)
+        
+    public:
+        /** @brief ID */
+        std::string                     id;
+
+        /** @brief True if the certificate has private key associated with it */
+        bool                            hasPrivateKey;
+
+        CertStoreCertificateElement()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            id.clear();
+            hasPrivateKey = false;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const CertStoreCertificateElement& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(id),
+            TOJSON_IMPL(hasPrivateKey)
+        };
+    }
+    static void from_json(const nlohmann::json& j, CertStoreCertificateElement& p)
+    {
+        p.clear();
+        getOptional<std::string>("id", p.id, j, EMPTY_STRING);
+        getOptional<bool>("hasPrivateKey", p.hasPrivateKey, j, false);
+    }    
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(CertStoreDescriptor)
+    /**
+    * @brief Description of a certstore
+    * 
+    * Helper C++ class to serialize and de-serialize CertStoreDescriptor JSON 
+    *         
+    */       
+    class CertStoreDescriptor : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(CertStoreDescriptor)
+        
+    public:
+        /** @brief Name of the file the certstore resides in. */
+        std::string                                     fileName;
+
+        /** @brief Version of the certstore. */
+        int                                             version;
+
+        /** @brief Flags set for the certstore. */
+        int                                             flags;
+
+        /** @brief Array of certificate elements. */
+        std::vector<CertStoreCertificateElement>        certificates;
+
+        CertStoreDescriptor()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            fileName.clear();
+            version = 0;
+            flags = 0;
+            certificates.clear();
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const CertStoreDescriptor& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(fileName),
+            TOJSON_IMPL(version),
+            TOJSON_IMPL(flags),
+            TOJSON_IMPL(certificates)
+        };
+    }
+    static void from_json(const nlohmann::json& j, CertStoreDescriptor& p)
+    {
+        p.clear();
+        getOptional<std::string>("fileName", p.fileName, j, EMPTY_STRING);
+        getOptional<int>("version", p.version, j, 0);
+        getOptional<int>("flags", p.flags, j, 0);
+        getOptional<std::vector<CertStoreCertificateElement>>("certificates", p.certificates, j);
+    }
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(CertificateDescriptor)
+    /**
+    * @brief Description of a certificate
+    * 
+    * Helper C++ class to serialize and de-serialize CertificateDescriptor JSON 
+    *         
+    */       
+    class CertificateDescriptor : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(CertificateDescriptor)
+        
+    public:
+        /** @brief Subject */
+        std::string                                     subject;
+
+        /** @brief Issuer */
+        std::string                                     issuer;
+
+        /** @brief Indicates whether the certificqte is self-signed */
+        bool                                            selfSigned;
+
+        /** @brief Version */
+        int                                             version;
+
+        /** @brief Validity date notBefore */
+        std::string                                     notBefore;
+
+        /** @brief Validity date notAfter */
+        std::string                                     notAfter;
+
+        CertificateDescriptor()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            subject.clear();
+            issuer.clear();
+            selfSigned = false;
+            version = 0;
+            notBefore.clear();
+            notAfter.clear();
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const CertificateDescriptor& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(subject),
+            TOJSON_IMPL(issuer),
+            TOJSON_IMPL(selfSigned),
+            TOJSON_IMPL(version),
+            TOJSON_IMPL(notBefore),
+            TOJSON_IMPL(notAfter)
+        };
+    }
+    static void from_json(const nlohmann::json& j, CertificateDescriptor& p)
+    {
+        p.clear();
+        getOptional<std::string>("subject", p.subject, j, EMPTY_STRING);
+        getOptional<std::string>("issuer", p.issuer, j, EMPTY_STRING);
+        getOptional<bool>("selfSigned", p.selfSigned, j, false);
+        getOptional<int>("version", p.version, j, 0);
+        getOptional<std::string>("notBefore", p.notBefore, j, EMPTY_STRING);
+        getOptional<std::string>("notAfter", p.notAfter, j, EMPTY_STRING);
+    }
+
     //-----------------------------------------------------------    
     static inline void dumpExampleConfigurations(const char *path)
     {
@@ -4836,6 +5035,10 @@ namespace ConfigurationObjects
         RallypointServer::document(path);
         PlatformDiscoveredService::document(path);
         TimelineQueryParameters::document(path);
+        CertStoreDescriptor::document(path);
+        CertStoreCertificate::document(path);
+        CertStore::document(path);
+        CertificateDescriptor::document(path);
     }
 }
 
