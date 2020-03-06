@@ -22,7 +22,7 @@
 - Improved support for application-defined audio devices
 
 # December 10, 2019 - 1.108.8863
-- Corrects a numnber of minor bugs
+- Corrects a number of minor bugs
 - Adds ability to disable audio record but retain timeline metadata
 - Improves performance in the audio resampler
 
