@@ -13,7 +13,7 @@
 - Adds Rallypoint reciprocal subscription (--beta--) 
 - Adds Visual C/C++ runtimes to the npm module
 
-# January 26, 2019 - 1.116.8874
+# January 26, 2020 - 1.116.8874
 - Corrects an issue with audio on certain versions of Android
 - Corrects a random crash on all platforms during shutdown.  
 - Corrects minor memory leaks
