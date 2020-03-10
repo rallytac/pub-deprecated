@@ -15,21 +15,15 @@ g++ -c -Wno-psabi -Wall -std=c++11 -fPIC  -DNDEBUG -O3 -I. -I../../../api/c/incl
 warning: unknown warning option '-Wno-psabi' [-Wunknown-warning-option]
 1 warning generated.
 g++ -Wno-psabi -Wall -std=c++11 -fPIC  -DNDEBUG -O3 -I. -I../../../api/c/include -o mingage Mingage.o WorkQueue.o -L../../../bin/1.121.8880/darwin_x64 -lengage-shared -lpthread -lstdc++
-Building mingage with Engage version 1.121.8880
+Building mingage with Engage version latest
 ```
 
 >Your compiler might produce warnings for the "***-Wno-psabi***" option.  This can be expected when compiling for non-ARM platforms and can generally be ignored.
 
-The current version of Engage to link with is 1.121.8880 and this value is defined in the make file as:
+The current version of Engage to link with is "***latest***" which is a subdirectory of ***bin*** in this repository.  This value is defined in the make file as:
 
 ```shell
-ENGAGE_VER ?= 1.121.8880
-```
-
-To link against a different version, either change the Makefile or set the variable on the command-line as follows:
-
-```shell
-$ make ENGAGE_VER=x.y.z
+ENGAGE_VER ?= latest
 ```
 
 ## Running
