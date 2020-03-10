@@ -1,6 +1,6 @@
 # Change List
 
-## March 9, 2020 - 1.132.8898
+## March 9, 2020 - 1.132.8892
 - Adds multicast failover and failback of downed Rallypoint links as a standard feature.
 - Adds JSON clarifier objects to all events fired by the Engine.
 
