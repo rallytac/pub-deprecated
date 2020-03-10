@@ -236,8 +236,31 @@ namespace ConfigurationObjects
         \
         std::string serialize(const int indent = -1) \
         { \
-            nlohmann::json j; to_json(j, *this); \
+            nlohmann::json j; \
+            to_json(j, *this); \
             return j.dump(indent); \
+        }
+
+    #define IMPLEMENT_WRAPPED_JSON_SERIALIZATION(_cn) \
+        public: \
+        std::string serializeWrapped(const int indent = -1) \
+        { \
+            nlohmann::json j; \
+            to_json(j, *this); \
+            \
+            std::string rc; \
+            char firstChar[2]; \
+            firstChar[0] = #_cn[0]; \
+            firstChar[1] = 0; \
+            firstChar[0] = tolower(firstChar[0]); \
+            rc.assign("{\""); \
+            rc.append(firstChar); \
+            rc.append((#_cn) + 1); \
+            rc.append("\":"); \
+            rc.append(j.dump(indent)); \
+            rc.append("}"); \
+            \
+            return rc; \
         }
 
     #define TOJSON_IMPL(__var) \
@@ -2368,7 +2391,10 @@ namespace ConfigurationObjects
          *
          * When the time limit is exceeded, the Engine will fire a PFN_ENGAGE_GROUP_MAX_RX_TIME_EXCEEDED event.
          */   
-        int             maxRxSecs;
+        int                                     maxRxSecs;
+
+        bool                                    enableMulticastFailover;
+        int                                     multicastFailoverSecs;
 
 
         Group()
@@ -2402,6 +2428,9 @@ namespace ConfigurationObjects
             source.clear();
 
             maxRxSecs = 0;
+
+            enableMulticastFailover = true;
+            multicastFailoverSecs = 10;
         }
     };
 
@@ -2425,7 +2454,9 @@ namespace ConfigurationObjects
             TOJSON_IMPL(timeline),
             TOJSON_IMPL(blockAdvertising),
             TOJSON_IMPL(source),
-            TOJSON_IMPL(maxRxSecs)
+            TOJSON_IMPL(maxRxSecs),
+            TOJSON_IMPL(enableMulticastFailover),
+            TOJSON_IMPL(multicastFailoverSecs)
         };
     }
     static void from_json(const nlohmann::json& j, Group& p)
@@ -2448,6 +2479,8 @@ namespace ConfigurationObjects
         getOptional<bool>("blockAdvertising", p.blockAdvertising, j, false);
         getOptional<std::string>("source", p.source, j);
         getOptional<int>("maxRxSecs", p.maxRxSecs, j, 0);
+        getOptional<bool>("enableMulticastFailover", p.enableMulticastFailover, j, true);
+        getOptional<int>("multicastFailoverSecs", p.multicastFailoverSecs, j, 10);
     }
     
     
@@ -4981,6 +5014,78 @@ namespace ConfigurationObjects
         getOptional<int>("version", p.version, j, 0);
         getOptional<std::string>("notBefore", p.notBefore, j, EMPTY_STRING);
         getOptional<std::string>("notAfter", p.notAfter, j, EMPTY_STRING);
+    }
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(GroupConnectionDetail)
+    /**
+    * @brief Detailed information for a group connection
+    * 
+    * Helper C++ class to serialize and de-serialize EEGroupConnection JSON 
+    *         
+    */       
+    class GroupConnectionDetail : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_WRAPPED_JSON_SERIALIZATION(GroupConnectionDetail)
+        IMPLEMENT_JSON_DOCUMENTATION(GroupConnectionDetail)
+        
+    public:
+        /** @brief Connection type. */
+        typedef enum
+        {
+            /** @brief Undefined */
+            ctUndefined                     = 0,
+
+            /** @brief IP multicast */
+            ctIPMulticast                   = 1,
+
+            /** @brief Rallypoint */            
+            ctRallypoint                    = 2
+        } ConnectionType_t;
+
+        /** @brief ID of the group */
+        std::string                                     id;
+
+        /** @brief The connection type */
+        ConnectionType_t                                connectionType;
+
+        /** @brief Peer information */
+        std::string                                     peer;
+
+        /** @brief Indicates whether the connection is for purposes of failover */
+        bool                                            asFailover;
+
+        GroupConnectionDetail()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            id.clear();
+            connectionType = ctUndefined;
+            peer.clear();
+            asFailover = false;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const GroupConnectionDetail& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(id),
+            TOJSON_IMPL(connectionType),
+            TOJSON_IMPL(peer),
+            TOJSON_IMPL(asFailover)
+        };
+    }
+    static void from_json(const nlohmann::json& j, GroupConnectionDetail& p)
+    {
+        p.clear();
+        getOptional<std::string>("id", p.id, j, EMPTY_STRING);
+        getOptional<GroupConnectionDetail::ConnectionType_t>("connectionType", p.connectionType, j, GroupConnectionDetail::ConnectionType_t::ctUndefined);
+        getOptional<std::string>("peer", p.peer, j, EMPTY_STRING);
+        getOptional<bool>("asFailover", p.asFailover, j, false);
     }
 
     //-----------------------------------------------------------    

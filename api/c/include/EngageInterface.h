@@ -91,173 +91,173 @@ static const uint8_t ENGAGE_TXFLAG_AUTOMATED_SYSTEM    = 0x0004;
 typedef struct
 {
     /** @brief Fired when the Engine has started */
-    void (* _Nullable PFN_ENGAGE_ENGINE_STARTED)(void);
+    void (* _Nullable PFN_ENGAGE_ENGINE_STARTED)(const char * _Nullable eventExtraJson);
 
     /** @brief Fired when the Engine has stopped */
-    void (* _Nullable PFN_ENGAGE_ENGINE_STOPPED)(void);
+    void (* _Nullable PFN_ENGAGE_ENGINE_STOPPED)(const char * _Nullable eventExtraJson);
 
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_RP_PAUSING_CONNECTION_ATTEMPT)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_RP_PAUSING_CONNECTION_ATTEMPT)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_RP_CONNECTING)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_RP_CONNECTING)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_RP_CONNECTED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_RP_CONNECTED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_RP_DISCONNECTED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_RP_DISCONNECTED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief Fired on a roundtrip report */
-    void (* _Nullable PFN_ENGAGE_RP_ROUNDTRIP_REPORT)(const char * _Nonnull pId, uint32_t rtMs, uint32_t rtQualityRating);
+    void (* _Nullable PFN_ENGAGE_RP_ROUNDTRIP_REPORT)(const char * _Nonnull pId, uint32_t rtMs, uint32_t rtQualityRating, const char * _Nullable eventExtraJson);
 
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_CREATED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_CREATED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_CREATE_FAILED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_CREATE_FAILED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_DELETED)(const char * _Nonnull pId);
-
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_CONNECTED)(const char * _Nonnull pId);
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_CONNECT_FAILED)(const char * _Nonnull pId);
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_DISCONNECTED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_DELETED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_JOINED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_CONNECTED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_JOIN_FAILED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_CONNECT_FAILED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_LEFT)(const char * _Nonnull pId);
-
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_MEMBER_COUNT_CHANGED)(const char * _Nonnull pId, size_t newCount);
+    void (* _Nullable PFN_ENGAGE_GROUP_DISCONNECTED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_NODE_DISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson);
+    void (* _Nullable PFN_ENGAGE_GROUP_JOINED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_NODE_REDISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson);
+    void (* _Nullable PFN_ENGAGE_GROUP_JOIN_FAILED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_NODE_UNDISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson);
-
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_RX_STARTED)(const char * _Nonnull pId);
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_RX_ENDED)(const char * _Nonnull pId);
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_RX_SPEAKERS_CHANGED)(const char * _Nonnull pId, const char * _Nonnull groupTalkerJson);
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_RX_MUTED)(const char * _Nonnull pId);
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_RX_UNMUTED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_LEFT)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_TX_STARTED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_MEMBER_COUNT_CHANGED)(const char * _Nonnull pId, size_t newCount, const char * _Nullable eventExtraJson);
+
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_TX_ENDED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_NODE_DISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_TX_FAILED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_NODE_REDISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_TX_USURPED_BY_PRIORITY)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_NODE_UNDISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson, const char * _Nullable eventExtraJson);
+
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_RX_STARTED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_RX_ENDED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_RX_SPEAKERS_CHANGED)(const char * _Nonnull pId, const char * _Nonnull groupTalkerJson, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_RX_MUTED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_RX_UNMUTED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
+
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_TX_STARTED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_TX_ENDED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_TX_FAILED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_TX_USURPED_BY_PRIORITY)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
     
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_TX_MUTED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_TX_MUTED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_TX_UNMUTED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_TX_UNMUTED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_ASSET_DISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson);
+    void (* _Nullable PFN_ENGAGE_GROUP_ASSET_DISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_ASSET_REDISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson);
+    void (* _Nullable PFN_ENGAGE_GROUP_ASSET_REDISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_ASSET_UNDISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson);
-
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_LICENSE_CHANGED)(void);
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_LICENSE_EXPIRED)(void);
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_LICENSE_EXPIRING)(const char * _Nonnull pSecsLeft);
+    void (* _Nullable PFN_ENGAGE_GROUP_ASSET_UNDISCOVERED)(const char * _Nonnull pId, const char * _Nonnull nodeJson, const char * _Nullable eventExtraJson);
 
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_BLOB_SENT)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_LICENSE_CHANGED)(const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_BLOB_SEND_FAILED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_LICENSE_EXPIRED)(const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_BLOB_RECEIVED)(const char * _Nonnull pId, const char * _Nonnull blobInfoJson, const uint8_t * _Nonnull blob, size_t blobSize);
-
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_RTP_SENT)(const char * _Nonnull pId);
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_RTP_SEND_FAILED)(const char * _Nonnull pId);
-
-    /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_RTP_RECEIVED)(const char * _Nonnull pId, const char * _Nonnull rtpHeaderJson, const uint8_t * _Nonnull payload, size_t payloadSize);
+    void (* _Nullable PFN_ENGAGE_LICENSE_EXPIRING)(const char * _Nonnull pSecsLeft, const char * _Nullable eventExtraJson);
 
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_RAW_SENT)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_BLOB_SENT)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_RAW_SEND_FAILED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_BLOB_SEND_FAILED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_RAW_RECEIVED)(const char * _Nonnull pId, const uint8_t * _Nonnull raw, size_t rawSize);
+    void (* _Nullable PFN_ENGAGE_GROUP_BLOB_RECEIVED)(const char * _Nonnull pId, const char * _Nonnull blobInfoJson, const uint8_t * _Nonnull blob, size_t blobSize, const char * _Nullable eventExtraJson);
 
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_EVENT_STARTED)(const char * _Nonnull pId, const char * _Nonnull eventJson);
+    void (* _Nullable PFN_ENGAGE_GROUP_RTP_SENT)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED)(const char * _Nonnull pId, const char * _Nonnull eventJson);
+    void (* _Nullable PFN_ENGAGE_GROUP_RTP_SEND_FAILED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_EVENT_ENDED)(const char * _Nonnull pId, const char * _Nonnull eventJson);
+    void (* _Nullable PFN_ENGAGE_GROUP_RTP_RECEIVED)(const char * _Nonnull pId, const char * _Nonnull rtpHeaderJson, const uint8_t * _Nonnull payload, size_t payloadSize, const char * _Nullable eventExtraJson);
+
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_REPORT)(const char * _Nonnull pId, const char * _Nonnull timelineJson);
+    void (* _Nullable PFN_ENGAGE_GROUP_RAW_SENT)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 
     /** @brief TODO: */
-    void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED)(const char * _Nonnull pId);
+    void (* _Nullable PFN_ENGAGE_GROUP_RAW_SEND_FAILED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_RAW_RECEIVED)(const char * _Nonnull pId, const uint8_t * _Nonnull raw, size_t rawSize, const char * _Nullable eventExtraJson);
+
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_EVENT_STARTED)(const char * _Nonnull pId, const char * _Nonnull eventJson, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED)(const char * _Nonnull pId, const char * _Nonnull eventJson, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_EVENT_ENDED)(const char * _Nonnull pId, const char * _Nonnull eventJson, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_REPORT)(const char * _Nonnull pId, const char * _Nonnull timelineJson, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
 } EngageEvents_t;
 /** @} */ 
 
