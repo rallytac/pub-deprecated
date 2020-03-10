@@ -25,76 +25,76 @@ public class Engage
 
     public interface IEngineNotifications
     {
-        void onEngineStarted();
-        void onEngineStopped();
+        void onEngineStarted(string eventExtraJson);
+        void onEngineStopped(string eventExtraJson);
     }
 
     public interface ILicenseNotifications
     {
-        void onLicenseChanged();
-        void onLicenseExpired();
-        void onLicenseExpiring(double secondsLeft);
+        void onLicenseChanged(string eventExtraJson);
+        void onLicenseExpired(string eventExtraJson);
+        void onLicenseExpiring(double secondsLeft, string eventExtraJson);
     }
 
     public interface IRallypointNotifications
     {
-        void onRallypointPausingConnectionAttempt(string id);
-        void onRallypointConnecting(string id);
-        void onRallypointConnected(string id);
-        void onRallypointDisconnected(string id);
-        void onRallypointRoundtripReport(string id, int rtMs, int rtRating);
+        void onRallypointPausingConnectionAttempt(string id, string eventExtraJson);
+        void onRallypointConnecting(string id, string eventExtraJson);
+        void onRallypointConnected(string id, string eventExtraJson);
+        void onRallypointDisconnected(string id, string eventExtraJson);
+        void onRallypointRoundtripReport(string id, int rtMs, int rtRating, string eventExtraJson);
     }
 
     public interface IGroupNotifications
     {
-        void onGroupCreated(string id);
-        void onGroupCreateFailed(string id);
-        void onGroupDeleted(string id);
-        void onGroupConnected(string id);
-        void onGroupConnectFailed(string id);
-        void onGroupDisconnected(string id);
-        void onGroupJoined(string id);
-        void onGroupJoinFailed(string id);
-        void onGroupLeft(string id);
-        void onGroupMemberCountChanged(string id, int newCount);
-        void onGroupRxStarted(string id);
-        void onGroupRxEnded(string id);
-        void onGroupRxMuted(string id);
-        void onGroupRxUnmuted(string id);
-        void onGroupTxMuted(string id);
-        void onGroupTxUnmuted(string id);
-        void onGroupRxSpeakersChanged(string id, string groupTalkerJson);
-        void onGroupTxStarted(string id);
-        void onGroupTxEnded(string id);
-        void onGroupTxFailed(string id);
-        void onGroupTxUsurpedByPriority(string id);
-        void onGroupMaxTxTimeExceeded(string id);
-        void onGroupNodeDiscovered(string id, string nodeJson);
-        void onGroupNodeRediscovered(string id, string nodeJson);
-        void onGroupNodeUndiscovered(string id, string nodeJson);
-        void onGroupAssetDiscovered(string id, string nodeJson);
-        void onGroupAssetRediscovered(string id, string nodeJson);
-        void onGroupAssetUndiscovered(string id, string nodeJson);
-        void onGroupBlobSent(string id);
-        void onGroupBlobSendFailed(string id);
-        void onGroupBlobReceived(string id, string blobInfoJson, byte[] blob, int blobSize);
-        void onGroupRtpSent(string id);
-        void onGroupRtpSendFailed(string id);
-        void onGroupRtpReceived(string id, string rtpInfoJson, byte[] payload, int payloadSize);
-        void onGroupRawSent(string id);
-        void onGroupRawSendFailed(string id);
-        void onGroupRawReceived(string id, byte[] raw, int rawSize);
+        void onGroupCreated(string id, string eventExtraJson);
+        void onGroupCreateFailed(string id, string eventExtraJson);
+        void onGroupDeleted(string id, string eventExtraJson);
+        void onGroupConnected(string id, string eventExtraJson);
+        void onGroupConnectFailed(string id, string eventExtraJson);
+        void onGroupDisconnected(string id, string eventExtraJson);
+        void onGroupJoined(string id, string eventExtraJson);
+        void onGroupJoinFailed(string id, string eventExtraJson);
+        void onGroupLeft(string id, string eventExtraJson);
+        void onGroupMemberCountChanged(string id, int newCount, string eventExtraJson);
+        void onGroupRxStarted(string id, string eventExtraJson);
+        void onGroupRxEnded(string id, string eventExtraJson);
+        void onGroupRxMuted(string id, string eventExtraJson);
+        void onGroupRxUnmuted(string id, string eventExtraJson);
+        void onGroupTxMuted(string id, string eventExtraJson);
+        void onGroupTxUnmuted(string id, string eventExtraJson);
+        void onGroupRxSpeakersChanged(string id, string groupTalkerJson, string eventExtraJson);
+        void onGroupTxStarted(string id, string eventExtraJson);
+        void onGroupTxEnded(string id, string eventExtraJson);
+        void onGroupTxFailed(string id, string eventExtraJson);
+        void onGroupTxUsurpedByPriority(string id, string eventExtraJson);
+        void onGroupMaxTxTimeExceeded(string id, string eventExtraJson);
+        void onGroupNodeDiscovered(string id, string nodeJson, string eventExtraJson);
+        void onGroupNodeRediscovered(string id, string nodeJson, string eventExtraJson);
+        void onGroupNodeUndiscovered(string id, string nodeJson, string eventExtraJson);
+        void onGroupAssetDiscovered(string id, string nodeJson, string eventExtraJson);
+        void onGroupAssetRediscovered(string id, string nodeJson, string eventExtraJson);
+        void onGroupAssetUndiscovered(string id, string nodeJson, string eventExtraJson);
+        void onGroupBlobSent(string id, string eventExtraJson);
+        void onGroupBlobSendFailed(string id, string eventExtraJson);
+        void onGroupBlobReceived(string id, string blobInfoJson, byte[] blob, int blobSize, string eventExtraJson);
+        void onGroupRtpSent(string id, string eventExtraJson);
+        void onGroupRtpSendFailed(string id, string eventExtraJson);
+        void onGroupRtpReceived(string id, string rtpInfoJson, byte[] payload, int payloadSize, string eventExtraJson);
+        void onGroupRawSent(string id, string eventExtraJson);
+        void onGroupRawSendFailed(string id, string eventExtraJson);
+        void onGroupRawReceived(string id, byte[] raw, int rawSize, string eventExtraJson);
 
-        void onGroupTimelineEventStarted(string id, string eventJson);
-        void onGroupTimelineEventUpdated(string id, string eventJson);
-        void onGroupTimelineEventEnded(string id, string eventJson);
-        void onGroupTimelineReport(string id, string reportJson);
-        void onGroupTimelineReportFailed(string id);
+        void onGroupTimelineEventStarted(string id, string eventJson, string eventExtraJson);
+        void onGroupTimelineEventUpdated(string id, string eventJson, string eventExtraJson);
+        void onGroupTimelineEventEnded(string id, string eventJson, string eventExtraJson);
+        void onGroupTimelineReport(string id, string reportJson, string eventExtraJson);
+        void onGroupTimelineReportFailed(string id, string eventExtraJson);
     }	
 
     public interface IHumanBiometricsNotifications
     {
-        void onHumanBiometricsReceived(string groupId, string nodeId, string hbmJson);
+        void onHumanBiometricsReceived(string groupId, string nodeId, string hbmJson, string eventExtraJson);
 	}	
     #endregion
 
@@ -160,6 +160,15 @@ public class Engage
 
     public class JsonFields
     {
+        public class GroupConnectionDetail
+        {
+            public static String objectName = "groupConnectionDetail";
+            public static String id = "id";
+            public static String connectionType = "connectionType";
+            public static String peer = "peer";
+            public static String asFailover = "asFailover";
+        }
+
         public class CertStoreCertificateElement
         {
             public static String objectName = "certStoreCertificateElement";
@@ -557,23 +566,23 @@ public class Engage
 
     #region Callback delegate types
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate void EngageVoidCallback();
+    private delegate void EngageVoidCallback(string eventExtraJson);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate void EngageStringCallback(string s);
+    private delegate void EngageStringCallback(string s, string eventExtraJson);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate void EngageString2Callback(string s1, string s2);
+    private delegate void EngageString2Callback(string s1, string s2, string eventExtraJson);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate void EngageStringAndIntCallback(string s, int i);
+    private delegate void EngageStringAndIntCallback(string s, int i, string eventExtraJson);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate void EngageStringAndArgvCallback(string s, IntPtr ptr);
+    private delegate void EngageStringAndArgvCallback(string s, IntPtr ptr, string eventExtraJson);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate void EngageStringAndBlobCallback(string s, IntPtr ptr, int i);
+    private delegate void EngageStringAndBlobCallback(string s, IntPtr ptr, int i, string eventExtraJson);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate void EngageString2AndBlobCallback(string s, string j, IntPtr ptr, int i);
+    private delegate void EngageString2AndBlobCallback(string s, string j, IntPtr ptr, int i, string eventExtraJson);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate void EngageStringAndTwoIntCallback(string s, int i1, int i2);
+    private delegate void EngageStringAndTwoIntCallback(string s, int i1, int i2, string eventExtraJson);
     #endregion
 
     #region Structures
@@ -1023,447 +1032,447 @@ public class Engage
     #endregion
 
     #region Callback delegates
-    private EngageVoidCallback on_ENGAGE_ENGINE_STARTED = () =>
+    private EngageVoidCallback on_ENGAGE_ENGINE_STARTED = (string eventExtraJson) =>
     {
         lock (_engineNotificationSubscribers)
         {
             foreach (IEngineNotifications n in _engineNotificationSubscribers)
             {
-                n.onEngineStarted();
+                n.onEngineStarted(eventExtraJson);
             }
         }
     };
 
-    private EngageVoidCallback on_ENGAGE_ENGINE_STOPPED = () =>
+    private EngageVoidCallback on_ENGAGE_ENGINE_STOPPED = (string eventExtraJson) =>
     {
         lock (_engineNotificationSubscribers)
         {
             foreach (IEngineNotifications n in _engineNotificationSubscribers)
             {
-                n.onEngineStopped();
+                n.onEngineStopped(eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_RP_PAUSING_CONNECTION_ATTEMPT = (string id) =>
+    private EngageStringCallback on_ENGAGE_RP_PAUSING_CONNECTION_ATTEMPT = (string id, string eventExtraJson) =>
     {
         lock (_rallypointNotificationSubscribers)
         {
             foreach (IRallypointNotifications n in _rallypointNotificationSubscribers)
             {
-                n.onRallypointPausingConnectionAttempt(id);
+                n.onRallypointPausingConnectionAttempt(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_RP_CONNECTING = (string id) =>
+    private EngageStringCallback on_ENGAGE_RP_CONNECTING = (string id, string eventExtraJson) =>
     {
         lock (_rallypointNotificationSubscribers)
         {
             foreach (IRallypointNotifications n in _rallypointNotificationSubscribers)
             {
-                n.onRallypointConnecting(id);
+                n.onRallypointConnecting(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_RP_CONNECTED = (string id) =>
+    private EngageStringCallback on_ENGAGE_RP_CONNECTED = (string id, string eventExtraJson) =>
     {
         lock (_rallypointNotificationSubscribers)
         {
             foreach (IRallypointNotifications n in _rallypointNotificationSubscribers)
             {
-                n.onRallypointConnected(id);
+                n.onRallypointConnected(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_RP_DISCONNECTED = (string id) =>
+    private EngageStringCallback on_ENGAGE_RP_DISCONNECTED = (string id, string eventExtraJson) =>
     {
         lock (_rallypointNotificationSubscribers)
         {
             foreach (IRallypointNotifications n in _rallypointNotificationSubscribers)
             {
-                n.onRallypointDisconnected(id);
+                n.onRallypointDisconnected(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringAndTwoIntCallback on_ENGAGE_RP_ROUNDTRIP_REPORT = (string id, int rtMs, int rtRating) =>
+    private EngageStringAndTwoIntCallback on_ENGAGE_RP_ROUNDTRIP_REPORT = (string id, int rtMs, int rtRating, string eventExtraJson) =>
     {
         lock (_rallypointNotificationSubscribers)
         {
             foreach (IRallypointNotifications n in _rallypointNotificationSubscribers)
             {
-                n.onRallypointRoundtripReport(id, rtMs, rtRating);
+                n.onRallypointRoundtripReport(id, rtMs, rtRating, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_CREATED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_CREATED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupCreated(id);
+                n.onGroupCreated(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_CREATE_FAILED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_CREATE_FAILED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupCreateFailed(id);
+                n.onGroupCreateFailed(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_DELETED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_DELETED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupDeleted(id);
+                n.onGroupDeleted(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_CONNECTED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_CONNECTED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupConnected(id);
+                n.onGroupConnected(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_CONNECT_FAILED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_CONNECT_FAILED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupConnectFailed(id);
+                n.onGroupConnectFailed(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_DISCONNECTED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_DISCONNECTED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupDisconnected(id);
+                n.onGroupDisconnected(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_JOINED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_JOINED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupJoined(id);
+                n.onGroupJoined(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_JOIN_FAILED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_JOIN_FAILED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupJoinFailed(id);
+                n.onGroupJoinFailed(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_LEFT = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_LEFT = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupLeft(id);
+                n.onGroupLeft(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringAndIntCallback on_ENGAGE_GROUP_MEMBER_COUNT_CHANGED = (string id, int newCount) =>
+    private EngageStringAndIntCallback on_ENGAGE_GROUP_MEMBER_COUNT_CHANGED = (string id, int newCount, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupMemberCountChanged(id, newCount);
+                n.onGroupMemberCountChanged(id, newCount, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_RX_STARTED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_RX_STARTED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupRxStarted(id);
+                n.onGroupRxStarted(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_RX_ENDED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_RX_ENDED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupRxEnded(id);
+                n.onGroupRxEnded(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_RX_MUTED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_RX_MUTED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupRxMuted(id);
+                n.onGroupRxMuted(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_RX_UNMUTED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_RX_UNMUTED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupRxUnmuted(id);
+                n.onGroupRxUnmuted(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_TX_MUTED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_TX_MUTED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupTxMuted(id);
+                n.onGroupTxMuted(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_TX_UNMUTED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_TX_UNMUTED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupTxUnmuted(id);
+                n.onGroupTxUnmuted(id, eventExtraJson);
             }
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_RX_SPEAKERS_CHANGED = (string id, string speakerjson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_RX_SPEAKERS_CHANGED = (string id, string speakerjson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupRxSpeakersChanged(id, speakerjson);
+                n.onGroupRxSpeakersChanged(id, speakerjson, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_TX_STARTED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_TX_STARTED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupTxStarted(id);
+                n.onGroupTxStarted(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_TX_ENDED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_TX_ENDED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupTxEnded(id);
+                n.onGroupTxEnded(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_TX_FAILED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_TX_FAILED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupTxFailed(id);
+                n.onGroupTxFailed(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_TX_USURPED_BY_PRIORITY = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_TX_USURPED_BY_PRIORITY = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupTxUsurpedByPriority(id);
+                n.onGroupTxUsurpedByPriority(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupMaxTxTimeExceeded(id);
+                n.onGroupMaxTxTimeExceeded(id, eventExtraJson);
             }
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_NODE_DISCOVERED = (string id, string nodeJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_NODE_DISCOVERED = (string id, string nodeJson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupNodeDiscovered(id, nodeJson);
+                n.onGroupNodeDiscovered(id, nodeJson, eventExtraJson);
             }
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_NODE_REDISCOVERED = (string id, string nodeJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_NODE_REDISCOVERED = (string id, string nodeJson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupNodeRediscovered(id, nodeJson);
+                n.onGroupNodeRediscovered(id, nodeJson, eventExtraJson);
             }
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_NODE_UNDISCOVERED = (string id, string nodeJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_NODE_UNDISCOVERED = (string id, string nodeJson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupNodeUndiscovered(id, nodeJson);
+                n.onGroupNodeUndiscovered(id, nodeJson, eventExtraJson);
             }
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_ASSET_DISCOVERED = (string id, string nodeJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_ASSET_DISCOVERED = (string id, string nodeJson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupAssetDiscovered(id, nodeJson);
+                n.onGroupAssetDiscovered(id, nodeJson, eventExtraJson);
             }
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_ASSET_REDISCOVERED = (string id, string nodeJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_ASSET_REDISCOVERED = (string id, string nodeJson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupAssetRediscovered(id, nodeJson);
+                n.onGroupAssetRediscovered(id, nodeJson, eventExtraJson);
             }
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_ASSET_UNDISCOVERED = (string id, string nodeJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_ASSET_UNDISCOVERED = (string id, string nodeJson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupAssetUndiscovered(id, nodeJson);
+                n.onGroupAssetUndiscovered(id, nodeJson, eventExtraJson);
             }
         }
     };
 
-    private EngageVoidCallback on_ENGAGE_LICENSE_CHANGED = () =>
+    private EngageVoidCallback on_ENGAGE_LICENSE_CHANGED = (string eventExtraJson) =>
     {
         lock (_licenseNotificationSubscribers)
         {
             foreach (ILicenseNotifications n in _licenseNotificationSubscribers)
             {
-                n.onLicenseChanged();
+                n.onLicenseChanged(eventExtraJson);
             }
         }
     };
 
-    private EngageVoidCallback on_ENGAGE_LICENSE_EXPIRED = () =>
+    private EngageVoidCallback on_ENGAGE_LICENSE_EXPIRED = (string eventExtraJson) =>
     {
         lock (_licenseNotificationSubscribers)
         {
             foreach (ILicenseNotifications n in _licenseNotificationSubscribers)
             {
-                n.onLicenseExpired();
+                n.onLicenseExpired(eventExtraJson);
             }
         }
     };
     
-    private EngageStringCallback on_ENGAGE_LICENSE_EXPIRING = (string secondsLeft) =>
+    private EngageStringCallback on_ENGAGE_LICENSE_EXPIRING = (string secondsLeft, string eventExtraJson) =>
     {
         lock (_licenseNotificationSubscribers)
         {
             foreach (ILicenseNotifications n in _licenseNotificationSubscribers)
             {
-                n.onLicenseExpiring(Double.Parse(secondsLeft));
+                n.onLicenseExpiring(Double.Parse(secondsLeft), eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_BLOB_SENT = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_BLOB_SENT = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupBlobSent(id);
+                n.onGroupBlobSent(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_BLOB_SEND_FAILED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_BLOB_SEND_FAILED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupBlobSendFailed(id);
+                n.onGroupBlobSendFailed(id, eventExtraJson);
             }
         }
     };
 
-    private EngageString2AndBlobCallback on_ENGAGE_GROUP_BLOB_RECEIVED = (string id, string blobInfoJson, IntPtr blob, int blobSize) =>
+    private EngageString2AndBlobCallback on_ENGAGE_GROUP_BLOB_RECEIVED = (string id, string blobInfoJson, IntPtr blob, int blobSize, string eventExtraJson) =>
     {
         byte[] csBlob = new byte[blobSize];
         Marshal.Copy(blob, csBlob, 0, blobSize);
@@ -1472,7 +1481,7 @@ public class Engage
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupBlobReceived(id, blobInfoJson, csBlob, blobSize);
+                n.onGroupBlobReceived(id, blobInfoJson, csBlob, blobSize, eventExtraJson);
             }
         }
 
@@ -1497,7 +1506,7 @@ public class Engage
                         {
                             foreach (IHumanBiometricsNotifications n in _humanBiometricsNotifications)
                             {
-                                n.onHumanBiometricsReceived(id, nodeId, hbmJson);
+                                n.onHumanBiometricsReceived(id, nodeId, hbmJson, eventExtraJson);
                             }
                         }
                     }
@@ -1506,29 +1515,29 @@ public class Engage
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_RTP_SENT = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_RTP_SENT = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupRtpSent(id);
+                n.onGroupRtpSent(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_RTP_SEND_FAILED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_RTP_SEND_FAILED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupRtpSendFailed(id);
+                n.onGroupRtpSendFailed(id, eventExtraJson);
             }
         }
     };
 
-    private EngageString2AndBlobCallback on_ENGAGE_GROUP_RTP_RECEIVED = (string id, string rtpHeaderJson, IntPtr payload, int payloadSize) =>
+    private EngageString2AndBlobCallback on_ENGAGE_GROUP_RTP_RECEIVED = (string id, string rtpHeaderJson, IntPtr payload, int payloadSize, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
@@ -1537,34 +1546,34 @@ public class Engage
 
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupRtpReceived(id, rtpHeaderJson, csPayload, payloadSize);
+                n.onGroupRtpReceived(id, rtpHeaderJson, csPayload, payloadSize, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_RAW_SENT = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_RAW_SENT = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupRawSent(id);
+                n.onGroupRawSent(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_RAW_SEND_FAILED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_RAW_SEND_FAILED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupRawSendFailed(id);
+                n.onGroupRawSendFailed(id, eventExtraJson);
             }
         }
     };
 
-    private EngageStringAndBlobCallback on_ENGAGE_GROUP_RAW_RECEIVED = (string id, IntPtr raw, int rawSize) =>
+    private EngageStringAndBlobCallback on_ENGAGE_GROUP_RAW_RECEIVED = (string id, IntPtr raw, int rawSize, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
@@ -1573,62 +1582,62 @@ public class Engage
 
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupRawReceived(id, csRaw, rawSize);
+                n.onGroupRawReceived(id, csRaw, rawSize, eventExtraJson);
             }
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_STARTED = (string id, string eventJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_STARTED = (string id, string eventJson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupTimelineEventStarted(id, eventJson);
+                n.onGroupTimelineEventStarted(id, eventJson, eventExtraJson);
             }
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED = (string id, string eventJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED = (string id, string eventJson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupTimelineEventUpdated(id, eventJson);
+                n.onGroupTimelineEventUpdated(id, eventJson, eventExtraJson);
             }
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_ENDED = (string id, string eventJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_EVENT_ENDED = (string id, string eventJson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupTimelineEventEnded(id, eventJson);
+                n.onGroupTimelineEventEnded(id, eventJson, eventExtraJson);
             }
         }
     };
 
-    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_REPORT = (string id, string reportJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_REPORT = (string id, string reportJson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupTimelineReport(id, reportJson);
+                n.onGroupTimelineReport(id, reportJson, eventExtraJson);
             }
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED = (string id) =>
+    private EngageStringCallback on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED = (string id, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
-                n.onGroupTimelineReportFailed(id);
+                n.onGroupTimelineReportFailed(id, eventExtraJson);
             }
         }
     };
