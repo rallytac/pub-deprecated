@@ -28,6 +28,44 @@ import java.util.Enumeration;
 
 public final class Engine
 {
+    public enum ConnectionType
+    {
+        undefined(0),
+        ipMulticast(1),
+        rallypoint(2)
+        ;
+
+        private final int _val;
+
+        private ConnectionType(int val)
+        {
+            this._val = val;
+        }
+
+        public static ConnectionType fromInt(int i)
+        {
+            for (ConnectionType e : values())
+            {
+                if (e._val == i)
+                {
+                    return e;
+                }
+            }
+
+            return null;
+        }
+
+        public static int toInt(ConnectionType e)
+        {
+            return e.toInt();
+        }
+
+        public int toInt()
+        {
+            return _val;
+        }        
+    } 
+
     public enum LicenseType
     {
         unknown(0),
@@ -276,7 +314,16 @@ public final class Engine
     public static final String GROUP_SOURCE_ENGAGE_MAGELLAN_TRELLISWARE = "com.rallytac.engage.magellan.trellisware";
     
     public final class JsonFields
-    {
+    {        
+        public final class GroupConnectionDetail
+        {
+            public static final String objectName = "groupConnectionDetail";
+            public static final String id = "id";
+            public static final String connectionType = "connectionType";
+            public static final String peer = "peer";
+            public static final String asFailover = "asFailover";
+        }
+
         public final class CertStoreCertificateElement
         {
             public static final String objectName = "certStoreCertificateElement";
@@ -755,75 +802,75 @@ public final class Engine
     @Keep
     public interface IEngineListener
     {
-        void onEngineStarted();
-        void onEngineStartFailed();
-        void onEngineStopped();
+        void onEngineStarted(String eventExtraJson);
+        void onEngineStartFailed(String eventExtraJson);
+        void onEngineStopped(String eventExtraJson);
     }
 
     @Keep
     public interface IRallypointListener
     {
-        void onRallypointPausingConnectionAttempt(String id);
-        void onRallypointConnecting(String id);
-        void onRallypointConnected(String id);
-        void onRallypointDisconnected(String id);
-        void onRallypointRoundtripReport(String id, long rtMs, long rtQualityRating);
+        void onRallypointPausingConnectionAttempt(String id, String eventExtraJson);
+        void onRallypointConnecting(String id, String eventExtraJson);
+        void onRallypointConnected(String id, String eventExtraJson);
+        void onRallypointDisconnected(String id, String eventExtraJson);
+        void onRallypointRoundtripReport(String id, long rtMs, long rtQualityRating, String eventExtraJson);
     }
 
     @Keep
     public interface IGroupListener
     {
-        void onGroupCreated(String id);
-        void onGroupCreateFailed(String id);
-        void onGroupDeleted(String id);
-        void onGroupConnected(String id);
-        void onGroupConnectFailed(String id);
-        void onGroupDisconnected(String id);
-        void onGroupJoined(String id);
-        void onGroupJoinFailed(String id);
-        void onGroupLeft(String id);
-        void onGroupMemberCountChanged(String id, long count);
-        void onGroupRxStarted(String id);
-        void onGroupRxEnded(String id);
-        void onGroupRxSpeakersChanged(String id, String groupTalkerJson);
-        void onGroupRxMuted(String id);
-        void onGroupRxUnmuted(String id);
-        void onGroupTxMuted(String id);
-        void onGroupTxUnmuted(String id);
-        void onGroupTxStarted(String id);
-        void onGroupTxEnded(String id);
-        void onGroupTxFailed(String id);
-        void onGroupTxUsurpedByPriority(String id);
-        void onGroupMaxTxTimeExceeded(String id);
-        void onGroupNodeDiscovered(String id, String nodeJson);
-        void onGroupNodeRediscovered(String id, String nodeJson);
-        void onGroupNodeUndiscovered(String id, String nodeJson);
-        void onGroupAssetDiscovered(String id, String nodeJson);
-        void onGroupAssetRediscovered(String id, String nodeJson);
-        void onGroupAssetUndiscovered(String id, String nodeJson);
-        void onGroupBlobSent(String id);
-        void onGroupBlobSendFailed(String id);
-        void onGroupBlobReceived(String id, String blobInfoJson, byte[] blob, long blobSize);
-        void onGroupRtpSent(String id);
-        void onGroupRtpSendFailed(String id);
-        void onGroupRtpReceived(String id, String blobInfoJson, byte[] payload, long payloadSize);
-        void onGroupRawSent(String id);
-        void onGroupRawSendFailed(String id);
-        void onGroupRawReceived(String id, byte[] raw, long rawSize);
+        void onGroupCreated(String id, String eventExtraJson);
+        void onGroupCreateFailed(String id, String eventExtraJson);
+        void onGroupDeleted(String id, String eventExtraJson);
+        void onGroupConnected(String id, String eventExtraJson);
+        void onGroupConnectFailed(String id, String eventExtraJson);
+        void onGroupDisconnected(String id, String eventExtraJson);
+        void onGroupJoined(String id, String eventExtraJson);
+        void onGroupJoinFailed(String id, String eventExtraJson);
+        void onGroupLeft(String id, String eventExtraJson);
+        void onGroupMemberCountChanged(String id, long count, String eventExtraJson);
+        void onGroupRxStarted(String id, String eventExtraJson);
+        void onGroupRxEnded(String id, String eventExtraJson);
+        void onGroupRxSpeakersChanged(String id, String groupTalkerJson, String eventExtraJson);
+        void onGroupRxMuted(String id, String eventExtraJson);
+        void onGroupRxUnmuted(String id, String eventExtraJson);
+        void onGroupTxMuted(String id, String eventExtraJson);
+        void onGroupTxUnmuted(String id, String eventExtraJson);
+        void onGroupTxStarted(String id, String eventExtraJson);
+        void onGroupTxEnded(String id, String eventExtraJson);
+        void onGroupTxFailed(String id, String eventExtraJson);
+        void onGroupTxUsurpedByPriority(String id, String eventExtraJson);
+        void onGroupMaxTxTimeExceeded(String id, String eventExtraJson);
+        void onGroupNodeDiscovered(String id, String nodeJson, String eventExtraJson);
+        void onGroupNodeRediscovered(String id, String nodeJson, String eventExtraJson);
+        void onGroupNodeUndiscovered(String id, String nodeJson, String eventExtraJson);
+        void onGroupAssetDiscovered(String id, String nodeJson, String eventExtraJson);
+        void onGroupAssetRediscovered(String id, String nodeJson, String eventExtraJson);
+        void onGroupAssetUndiscovered(String id, String nodeJson, String eventExtraJson);
+        void onGroupBlobSent(String id, String eventExtraJson);
+        void onGroupBlobSendFailed(String id, String eventExtraJson);
+        void onGroupBlobReceived(String id, String blobInfoJson, byte[] blob, long blobSize, String eventExtraJson);
+        void onGroupRtpSent(String id, String eventExtraJson);
+        void onGroupRtpSendFailed(String id, String eventExtraJson);
+        void onGroupRtpReceived(String id, String blobInfoJson, byte[] payload, long payloadSize, String eventExtraJson);
+        void onGroupRawSent(String id, String eventExtraJson);
+        void onGroupRawSendFailed(String id, String eventExtraJson);
+        void onGroupRawReceived(String id, byte[] raw, long rawSize, String eventExtraJson);
 
-        void onGroupTimelineEventStarted(String id, String eventson);
-        void onGroupTimelineEventUpdated(String id, String eventson);
-        void onGroupTimelineEventEnded(String id, String eventson);
-        void onGroupTimelineReport(String id, String reportJson);
-        void onGroupTimelineReportFailed(String id);
+        void onGroupTimelineEventStarted(String id, String eventJson, String eventExtraJson);
+        void onGroupTimelineEventUpdated(String id, String eventJson, String eventExtraJson);
+        void onGroupTimelineEventEnded(String id, String eventJson, String eventExtraJson);
+        void onGroupTimelineReport(String id, String reportJson, String eventExtraJson);
+        void onGroupTimelineReportFailed(String id, String eventExtraJson);
     }
 
     @Keep
     public interface ILicenseListener
     {
-        void onLicenseChanged();
-        void onLicenseExpired();
-        void onLicenseExpiring(double secondsLeft);
+        void onLicenseChanged(String eventExtraJson);
+        void onLicenseExpired(String eventExtraJson);
+        void onLicenseExpiring(double secondsLeft, String eventExtraJson);
     }
 
     // Listeners
@@ -1795,7 +1842,7 @@ public final class Engine
 
     // Event callbacks
     @Keep
-    private void onEngineStarted()
+    private void onEngineStarted(final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1804,14 +1851,14 @@ public final class Engine
             {
                 for (IEngineListener listener : _engineListeners)
                 {
-                    listener.onEngineStarted();
+                    listener.onEngineStarted(eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onEngineStartFailed()
+    private void onEngineStartFailed(final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1820,14 +1867,14 @@ public final class Engine
             {
                 for (IEngineListener listener : _engineListeners)
                 {
-                    listener.onEngineStartFailed();
+                    listener.onEngineStartFailed(eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onEngineStopped()
+    private void onEngineStopped(final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1836,14 +1883,14 @@ public final class Engine
             {
                 for (IEngineListener listener : _engineListeners)
                 {
-                    listener.onEngineStopped();
+                    listener.onEngineStopped(eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onRpLeafPausingConnectionAttempt(final String id)
+    private void onRpLeafPausingConnectionAttempt(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1852,14 +1899,14 @@ public final class Engine
             {
                 for (IRallypointListener listener : _rallypointListeners)
                 {
-                    listener.onRallypointPausingConnectionAttempt(id);
+                    listener.onRallypointPausingConnectionAttempt(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onRpLeafConnecting(final String id)
+    private void onRpLeafConnecting(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1868,14 +1915,14 @@ public final class Engine
             {
                 for (IRallypointListener listener : _rallypointListeners)
                 {
-                    listener.onRallypointConnecting(id);
+                    listener.onRallypointConnecting(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onRpLeafConnected(final String id)
+    private void onRpLeafConnected(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1884,14 +1931,14 @@ public final class Engine
             {
                 for (IRallypointListener listener : _rallypointListeners)
                 {
-                    listener.onRallypointConnected(id);
+                    listener.onRallypointConnected(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onRpLeafDisconnected(final String id)
+    private void onRpLeafDisconnected(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1900,14 +1947,14 @@ public final class Engine
             {
                 for (IRallypointListener listener : _rallypointListeners)
                 {
-                    listener.onRallypointDisconnected(id);
+                    listener.onRallypointDisconnected(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    public void onRpLeafRoundtripReport(final String id, final long rtMs, final long rtQualityRating)
+    public void onRpLeafRoundtripReport(final String id, final long rtMs, final long rtQualityRating, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1916,14 +1963,14 @@ public final class Engine
             {
                 for (IRallypointListener listener : _rallypointListeners)
                 {
-                    listener.onRallypointRoundtripReport(id, rtMs, rtQualityRating);
+                    listener.onRallypointRoundtripReport(id, rtMs, rtQualityRating, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupCreated(final String id)
+    private void onGroupCreated(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1932,14 +1979,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupCreated(id);
+                    listener.onGroupCreated(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupCreateFailed(final String id)
+    private void onGroupCreateFailed(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1948,7 +1995,7 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupCreateFailed(id);
+                    listener.onGroupCreateFailed(id, eventExtraJson);
                 }
             }
         });
@@ -1956,7 +2003,7 @@ public final class Engine
 
 
     @Keep
-    private void onGroupDeleted(final String id)
+    private void onGroupDeleted(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1965,14 +2012,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupDeleted(id);
+                    listener.onGroupDeleted(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupConnected(final String id)
+    private void onGroupConnected(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1981,14 +2028,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupConnected(id);
+                    listener.onGroupConnected(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupConnectFailed(final String id)
+    private void onGroupConnectFailed(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -1997,14 +2044,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupConnectFailed(id);
+                    listener.onGroupConnectFailed(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupDisconnected(final String id)
+    private void onGroupDisconnected(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2013,14 +2060,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupDisconnected(id);
+                    listener.onGroupDisconnected(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupJoined(final String id)
+    private void onGroupJoined(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2029,14 +2076,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupJoined(id);
+                    listener.onGroupJoined(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupJoinFailed(final String id)
+    private void onGroupJoinFailed(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2045,14 +2092,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupJoinFailed(id);
+                    listener.onGroupJoinFailed(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupLeft(final String id)
+    private void onGroupLeft(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2061,14 +2108,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupLeft(id);
+                    listener.onGroupLeft(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupMemberCountChanged(final String id, final long count)
+    private void onGroupMemberCountChanged(final String id, final long count, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2077,14 +2124,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupMemberCountChanged(id, count);
+                    listener.onGroupMemberCountChanged(id, count, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupRxStarted(final String id)
+    private void onGroupRxStarted(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2093,14 +2140,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupRxStarted(id);
+                    listener.onGroupRxStarted(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupRxEnded(final String id)
+    private void onGroupRxEnded(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2109,14 +2156,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupRxEnded(id);
+                    listener.onGroupRxEnded(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupRxMuted(final String id)
+    private void onGroupRxMuted(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2125,14 +2172,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupRxMuted(id);
+                    listener.onGroupRxMuted(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupRxUnmuted(final String id)
+    private void onGroupRxUnmuted(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2141,14 +2188,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupRxUnmuted(id);
+                    listener.onGroupRxUnmuted(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupTxMuted(final String id)
+    private void onGroupTxMuted(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2157,14 +2204,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupTxMuted(id);
+                    listener.onGroupTxMuted(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupTxUnmuted(final String id)
+    private void onGroupTxUnmuted(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2173,14 +2220,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupTxUnmuted(id);
+                    listener.onGroupTxUnmuted(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupTxStarted(final String id)
+    private void onGroupTxStarted(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2189,14 +2236,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupTxStarted(id);
+                    listener.onGroupTxStarted(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupTxEnded(final String id)
+    private void onGroupTxEnded(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2205,14 +2252,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupTxEnded(id);
+                    listener.onGroupTxEnded(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupTxFailed(final String id)
+    private void onGroupTxFailed(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2221,14 +2268,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupTxFailed(id);
+                    listener.onGroupTxFailed(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupTxUsurpedByPriority(final String id)
+    private void onGroupTxUsurpedByPriority(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2237,14 +2284,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupTxUsurpedByPriority(id);
+                    listener.onGroupTxUsurpedByPriority(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupMaxTxTimeExceeded(final String id)
+    private void onGroupMaxTxTimeExceeded(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2253,14 +2300,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupMaxTxTimeExceeded(id);
+                    listener.onGroupMaxTxTimeExceeded(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupRxSpeakersChanged(final String id, final String groupTalkerJson)
+    private void onGroupRxSpeakersChanged(final String id, final String groupTalkerJson, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2269,14 +2316,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupRxSpeakersChanged(id, groupTalkerJson);
+                    listener.onGroupRxSpeakersChanged(id, groupTalkerJson, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupNodeDiscovered(final String id, final String nodeJson)
+    private void onGroupNodeDiscovered(final String id, final String nodeJson, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2285,14 +2332,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupNodeDiscovered(id, nodeJson);
+                    listener.onGroupNodeDiscovered(id, nodeJson, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupNodeRediscovered(final String id, final String nodeJson)
+    private void onGroupNodeRediscovered(final String id, final String nodeJson, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2301,14 +2348,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupNodeRediscovered(id, nodeJson);
+                    listener.onGroupNodeRediscovered(id, nodeJson, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupNodeUndiscovered(final String id, final String nodeJson)
+    private void onGroupNodeUndiscovered(final String id, final String nodeJson, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2317,14 +2364,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupNodeUndiscovered(id, nodeJson);
+                    listener.onGroupNodeUndiscovered(id, nodeJson, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupAssetDiscovered(final String id, final String nodeJson)
+    private void onGroupAssetDiscovered(final String id, final String nodeJson, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2333,14 +2380,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupAssetDiscovered(id, nodeJson);
+                    listener.onGroupAssetDiscovered(id, nodeJson, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupAssetRediscovered(final String id, final String nodeJson)
+    private void onGroupAssetRediscovered(final String id, final String nodeJson, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2349,14 +2396,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupAssetRediscovered(id, nodeJson);
+                    listener.onGroupAssetRediscovered(id, nodeJson, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupAssetUndiscovered(final String id, final String nodeJson)
+    private void onGroupAssetUndiscovered(final String id, final String nodeJson, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2365,14 +2412,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupAssetUndiscovered(id, nodeJson);
+                    listener.onGroupAssetUndiscovered(id, nodeJson, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupBlobSent(final String id)
+    private void onGroupBlobSent(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2381,14 +2428,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupBlobSent(id);
+                    listener.onGroupBlobSent(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onGroupBlobSendFailed(final String id)
+    private void onGroupBlobSendFailed(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2397,14 +2444,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupBlobSendFailed(id);
+                    listener.onGroupBlobSendFailed(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    void onGroupBlobReceived(final String id, final String blobInfoJson, final byte[] blob, final long blobSize)
+    void onGroupBlobReceived(final String id, final String blobInfoJson, final byte[] blob, final long blobSize, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2413,14 +2460,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupBlobReceived(id, blobInfoJson, blob, blobSize);
+                    listener.onGroupBlobReceived(id, blobInfoJson, blob, blobSize, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    void onGroupRtpSent(final String id)
+    void onGroupRtpSent(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2429,14 +2476,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupRtpSent(id);
+                    listener.onGroupRtpSent(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    void onGroupRtpSendFailed(final String id)
+    void onGroupRtpSendFailed(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2445,14 +2492,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupRtpSendFailed(id);
+                    listener.onGroupRtpSendFailed(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    void onGroupRtpReceived(final String id, final String rtpHeaderJson, final byte[] payload, final long payloadSize)
+    void onGroupRtpReceived(final String id, final String rtpHeaderJson, final byte[] payload, final long payloadSize, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2461,14 +2508,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupRtpReceived(id, rtpHeaderJson, payload, payloadSize);
+                    listener.onGroupRtpReceived(id, rtpHeaderJson, payload, payloadSize, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    void onGroupRawSent(final String id)
+    void onGroupRawSent(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2477,14 +2524,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupRawSent(id);
+                    listener.onGroupRawSent(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    void onGroupRawSendFailed(final String id)
+    void onGroupRawSendFailed(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2493,14 +2540,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupRawSendFailed(id);
+                    listener.onGroupRawSendFailed(id, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    void onGroupRawReceived(final String id, final byte[] raw, final long rawSize)
+    void onGroupRawReceived(final String id, final byte[] raw, final long rawSize, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2509,14 +2556,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupRawReceived(id, raw, rawSize);
+                    listener.onGroupRawReceived(id, raw, rawSize, eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onLicenseChanged()
+    private void onLicenseChanged(final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2525,14 +2572,14 @@ public final class Engine
             {
                 for (ILicenseListener listener : _licenseListeners)
                 {
-                    listener.onLicenseChanged();
+                    listener.onLicenseChanged(eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onLicenseExpired()
+    private void onLicenseExpired(final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2541,14 +2588,14 @@ public final class Engine
             {
                 for (ILicenseListener listener : _licenseListeners)
                 {
-                    listener.onLicenseExpired();
+                    listener.onLicenseExpired(eventExtraJson);
                 }
             }
         });
     }
 
     @Keep
-    private void onLicenseExpiring(final String secondsLeft)
+    private void onLicenseExpiring(final String secondsLeft, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2559,14 +2606,14 @@ public final class Engine
                 doubleSecondsLeft = Double.parseDouble(secondsLeft);
                 for(ILicenseListener listener :_licenseListeners)
                 {
-                    listener.onLicenseExpiring(doubleSecondsLeft);
+                    listener.onLicenseExpiring(doubleSecondsLeft, eventExtraJson);
                 }
             }
         });
     }
     
     @Keep
-    private void onGroupTimelineEventStarted(final String id, final String eventJson)
+    private void onGroupTimelineEventStarted(final String id, final String eventJson, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2575,14 +2622,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupTimelineEventStarted(id, eventJson);
+                    listener.onGroupTimelineEventStarted(id, eventJson, eventExtraJson);
                 }
             }
         });
     }    
 
     @Keep
-    private void onGroupTimelineEventUpdated(final String id, final String eventJson)
+    private void onGroupTimelineEventUpdated(final String id, final String eventJson, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2591,14 +2638,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupTimelineEventUpdated(id, eventJson);
+                    listener.onGroupTimelineEventUpdated(id, eventJson, eventExtraJson);
                 }
             }
         });
     }    
 
     @Keep
-    private void onGroupTimelineEventEnded(final String id, final String eventJson)
+    private void onGroupTimelineEventEnded(final String id, final String eventJson, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2607,14 +2654,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupTimelineEventEnded(id, eventJson);
+                    listener.onGroupTimelineEventEnded(id, eventJson, eventExtraJson);
                 }
             }
         });
     }    
 
     @Keep
-    private void onGroupTimelineReport(final String id, final String reportJson)
+    private void onGroupTimelineReport(final String id, final String reportJson, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2623,14 +2670,14 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupTimelineReport(id, reportJson);
+                    listener.onGroupTimelineReport(id, reportJson, eventExtraJson);
                 }
             }
         });
     }    
 
     @Keep
-    private void onGroupTimelineReportFailed(final String id)
+    private void onGroupTimelineReportFailed(final String id, final String eventExtraJson)
     {
         _handler.post(new Runnable()
         {
@@ -2639,7 +2686,7 @@ public final class Engine
             {
                 for (IGroupListener listener : _groupListeners)
                 {
-                    listener.onGroupTimelineReportFailed(id);
+                    listener.onGroupTimelineReportFailed(id, eventExtraJson);
                 }
             }
         });

@@ -30,51 +30,51 @@ using namespace v8;
     info[_index]->Int32Value(Nan::GetCurrentContext()).FromJust()
 
 #define ENGAGE_CB_NO_PARAMS(_ename) \
-    void on_ ## _ename(void) \
+    void on_ ## _ename(const char *eventExtraJson) \
     { \
         CrossThreadCallbackWorker *cbw = getCallback(#_ename); \
         if(!cbw) \
         { \
             return; \
         } \
-        cbw->enqueue(); \
-        cbw->releaseReference(); \
+        cbw->enqueue(eventExtraJson); \
+        cbw->RELEASE_OBJECT_REFERENCE(); \
     }
 
 #define ENGAGE_CB_STR_PARAM(_ename) \
-    void on_ ## _ename(const char *id) \
+    void on_ ## _ename(const char *str, const char *eventExtraJson) \
     { \
         CrossThreadCallbackWorker *cbw = getCallback(#_ename); \
         if(!cbw) \
         { \
             return; \
         } \
-        cbw->enqueue(id); \
-        cbw->releaseReference(); \
+        cbw->enqueue(str, eventExtraJson); \
+        cbw->RELEASE_OBJECT_REFERENCE(); \
     }
 
 #define ENGAGE_CB_ID_PARAM(_ename) \
-    void on_ ## _ename(const char *id) \
+    void on_ ## _ename(const char *id, const char *eventExtraJson) \
     { \
         CrossThreadCallbackWorker *cbw = getCallback(#_ename); \
         if(!cbw) \
         { \
             return; \
         } \
-        cbw->enqueue(id); \
-        cbw->releaseReference(); \
+        cbw->enqueue(id, eventExtraJson); \
+        cbw->RELEASE_OBJECT_REFERENCE(); \
     }
 
 #define ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(_ename) \
-    void on_ ## _ename(const char *id, const char *s) \
+    void on_ ## _ename(const char *id, const char *s, const char *eventExtraJson) \
     { \
         CrossThreadCallbackWorker *cbw = getCallback(#_ename); \
         if(!cbw) \
         { \
             return; \
         } \
-        cbw->enqueue(id, s); \
-        cbw->releaseReference(); \
+        cbw->enqueue(id, s, eventExtraJson); \
+        cbw->RELEASE_OBJECT_REFERENCE(); \
     }
 
 #define ENGAGE_CB_TABLE_ENTRY(_pfn, _ename) \
@@ -101,7 +101,10 @@ public:
         StringParameter(const char *s)
         {
             _type = ptString;
-            _val = s;
+            if(s != nullptr && s[0] != 0)
+            {
+                _val = s;
+            }            
         }
 
         std::string _val;
@@ -132,7 +135,7 @@ public:
                 size_t index = 0;
                 while(array[index] != nullptr)
                 {
-                    _val.push_back(array[index]);
+                    _val.push_back(array[index] != nullptr ? array[index] : "");
                     index++;
                 }
             }
@@ -161,7 +164,7 @@ public:
         _persistentHandle.Reset(obj);
         _resource = new AsyncResource("CrossThreadCallbackWorker", obj);
 
-        addReference();
+        ADD_OBJECT_REFERENCE();
     }
 
     virtual ~CrossThreadCallbackWorker() 
@@ -176,13 +179,13 @@ public:
         delete _resource;
     }
 
-    void addReference()
+    void ADD_OBJECT_REFERENCE()
     {
         assert(_refCount >= 0);
         _refCount++;
     }
 
-    void releaseReference()
+    void RELEASE_OBJECT_REFERENCE()
     {
         assert(_refCount > 0);
         if(_refCount.fetch_sub(1) == 1)
@@ -191,23 +194,27 @@ public:
         }
     }
 
-    void enqueue()
-    {
-        enqueue(static_cast<std::vector<Parameter*>*>(nullptr));
-    }
-
-    void enqueue(const char *s)
+    void enqueue(const char *extra)
     {
         std::vector<Parameter*> *params = new std::vector<Parameter*>();        
-        params->push_back(new StringParameter(s));
+        params->push_back(new StringParameter(extra));
         enqueue(params);
     }
 
-    void enqueue(const char *s1, const char *s2)
+    void enqueue(const char *s, const char *extra)
+    {
+        std::vector<Parameter*> *params = new std::vector<Parameter*>();        
+        params->push_back(new StringParameter(s));
+        params->push_back(new StringParameter(extra));
+        enqueue(params);
+    }
+
+    void enqueue(const char *s1, const char *s2, const char *extra)
     {
         std::vector<Parameter*> *params = new std::vector<Parameter*>();        
         params->push_back(new StringParameter(s1));
         params->push_back(new StringParameter(s2));
+        params->push_back(new StringParameter(extra));
         enqueue(params);
     }
 
@@ -233,7 +240,7 @@ public:
 
         _lock.unlock();
 
-        addReference();
+        ADD_OBJECT_REFERENCE();
         uv_queue_work(_evLoop,
                       &_workCtx,
                       CrossThreadCallbackWorker::onExecuteWork,
@@ -342,7 +349,7 @@ private:
         _lock.unlock();
 
         // Finally, let go of the reference we added when this was enqueue
-        releaseReference();        
+        RELEASE_OBJECT_REFERENCE();        
     }    
 
     std::mutex _lock;
@@ -380,7 +387,7 @@ static CrossThreadCallbackWorker *getCallback(const char *cbName)
     if(itr != g_cbMap.end())
     {
         rc = itr->second;
-        rc->addReference();
+        rc->ADD_OBJECT_REFERENCE();
     }
 
     g_cbMapLock.unlock();
@@ -431,6 +438,9 @@ ENGAGE_CB_ID_PARAM(groupTxFailed);
 ENGAGE_CB_ID_PARAM(groupTxUsurpedByPriority);
 ENGAGE_CB_ID_PARAM(groupMaxTxTimeExceeded);
 
+ENGAGE_CB_ID_PARAM(groupTxMuted)
+ENGAGE_CB_ID_PARAM(groupTxUnmuted)
+
 ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(groupAssetDiscovered);
 ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(groupAssetRediscovered);
 ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(groupAssetUndiscovered);
@@ -480,7 +490,7 @@ NAN_METHOD(on)
         // We have an entry ...
 
         // ... get rid of it (we're either removing or replacing)
-        itr->second->releaseReference();
+        itr->second->RELEASE_OBJECT_REFERENCE();
         g_cbMap.erase(itr);
 
         // ... and maybe put in the new one
@@ -493,23 +503,6 @@ NAN_METHOD(on)
     g_cbMapLock.unlock();
 }
 
-//--------------------------------------------------------
-NAN_METHOD(setLogLevel)
-{
-    engageSetLogLevel(INTVAL(0));
-}
-
-//--------------------------------------------------------
-NAN_METHOD(enableCallbacks)
-{
-    g_wantCallbacks = true;
-}
-
-//--------------------------------------------------------
-NAN_METHOD(disableCallbacks)
-{
-    g_wantCallbacks = false;
-}
 
 //--------------------------------------------------------
 NAN_METHOD(initialize)
@@ -542,6 +535,9 @@ NAN_METHOD(initialize)
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_MUTED, groupRxMuted);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_UNMUTED, groupRxUnmuted);
 
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TX_MUTED, groupTxMuted);
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TX_UNMUTED, groupTxUnmuted);
+
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_SPEAKERS_CHANGED, groupRxSpeakersChanged);
 
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_NODE_DISCOVERED, groupNodeDiscovered);
@@ -573,6 +569,30 @@ NAN_METHOD(initialize)
     engageRegisterEventCallbacks(&g_eventCallbacks);
 
     engageInitialize(STRVAL(0), STRVAL(1), STRVAL(2));
+}
+
+//--------------------------------------------------------
+NAN_METHOD(enableCallbacks)
+{
+    g_wantCallbacks = true;
+}
+
+//--------------------------------------------------------
+NAN_METHOD(disableCallbacks)
+{
+    g_wantCallbacks = false;
+}
+
+//--------------------------------------------------------
+NAN_METHOD(setLogLevel)
+{
+    engageSetLogLevel(INTVAL(0));
+}
+
+//--------------------------------------------------------
+NAN_METHOD(engageEnableSyslog)
+{
+    engageEnableSyslog(INTVAL(0) == 1 ? true : false);
 }
 
 //--------------------------------------------------------
@@ -654,15 +674,21 @@ NAN_METHOD(unmuteGroupRx)
 }
 
 //--------------------------------------------------------
-NAN_METHOD(setGroupRxVolume)
+NAN_METHOD(muteGroupTx)
 {
-    engageSetGroupRxVolume(STRVAL(0), INTVAL(1), INTVAL(2));
+    engageMuteGroupTx(STRVAL(0));
 }
 
 //--------------------------------------------------------
-NAN_METHOD(queryGroupTimeline)
+NAN_METHOD(unmuteGroupTx)
 {
-    engageQueryGroupTimeline(STRVAL(0), STRVAL(1));
+    engageUnmuteGroupTx(STRVAL(0));
+}
+
+//--------------------------------------------------------
+NAN_METHOD(setGroupRxVolume)
+{
+    engageSetGroupRxVolume(STRVAL(0), INTVAL(1), INTVAL(2));
 }
 
 //--------------------------------------------------------
@@ -714,41 +740,9 @@ NAN_METHOD(decrypt)
 }
 
 //--------------------------------------------------------
-NAN_METHOD(updateLicense)
-{
-    engageUpdateLicense(STRVAL(0), STRVAL(1), STRVAL(2));
-}
-
-//--------------------------------------------------------
 NAN_METHOD(getVersion)
 {
     const char *rc = engageGetVersion();
-
-    if(rc == nullptr)
-    {
-        rc = "";
-    }
-
-    info.GetReturnValue().Set(New(rc).ToLocalChecked());
-}
-
-//--------------------------------------------------------
-NAN_METHOD(getNetworkInterfaceDevices)
-{
-    const char *rc = engageGetNetworkInterfaceDevices();
-
-    if(rc == nullptr)
-    {
-        rc = "";
-    }
-
-    info.GetReturnValue().Set(New(rc).ToLocalChecked());
-}
-
-//--------------------------------------------------------
-NAN_METHOD(getAudioDevices)
-{
-    const char *rc = engageGetAudioDevices();
 
     if(rc == nullptr)
     {
@@ -785,6 +779,77 @@ NAN_METHOD(getLicenseDescriptor)
 }
 
 //--------------------------------------------------------
+NAN_METHOD(updateLicense)
+{
+    engageUpdateLicense(STRVAL(0), STRVAL(1), STRVAL(2));
+}
+
+// TODO: engageSendGroupRtp
+// TODO: engageRegisterGroupRtpHandler
+// TODO: engageUnregisterGroupRtpHandler
+// TODO: engageSendGroupBlob
+// TODO: engageSendGroupRaw
+// TODO: engagePlatformServiceDiscovered
+// TODO: engagePlatformServiceRediscovered
+// TODO: engagePlatformServiceUndiscovered
+
+//--------------------------------------------------------
+NAN_METHOD(queryGroupTimeline)
+{
+    engageQueryGroupTimeline(STRVAL(0), STRVAL(1));
+}
+
+// TODO: engageLogMsg
+
+//--------------------------------------------------------
+NAN_METHOD(getNetworkInterfaceDevices)
+{
+    const char *rc = engageGetNetworkInterfaceDevices();
+
+    if(rc == nullptr)
+    {
+        rc = "";
+    }
+
+    info.GetReturnValue().Set(New(rc).ToLocalChecked());
+}
+
+//--------------------------------------------------------
+NAN_METHOD(getAudioDevices)
+{
+    const char *rc = engageGetAudioDevices();
+
+    if(rc == nullptr)
+    {
+        rc = "";
+    }
+
+    info.GetReturnValue().Set(New(rc).ToLocalChecked());
+}
+
+// TODO: engageGenerateMission
+// TODO: engageSetMissionId
+
+//--------------------------------------------------------
+NAN_METHOD(openCertStore)
+{
+    engageOpenCertStore(STRVAL(0), STRVAL(1));
+}
+
+//--------------------------------------------------------
+NAN_METHOD(closeCertStore)
+{
+    engageCloseCertStore();
+}
+
+// TODO: engageSetCertStoreCertificatePem
+// TODO: engageSetCertStoreCertificatePem
+// TODO: engageSetCertStoreCertificateP12
+// TODO: engageDeleteCertStoreCertificate
+// TODO: engageGetCertStoreCertificatePem
+// TODO: engageGetCertificateDescriptorFromPem
+
+//--------------------------------------------------------
 NAN_MODULE_INIT(Init) 
 {    
     ENGAGE_BINDING(on);
@@ -813,6 +878,9 @@ NAN_MODULE_INIT(Init)
     ENGAGE_BINDING(muteGroupRx);
     ENGAGE_BINDING(unmuteGroupRx);
 
+    ENGAGE_BINDING(muteGroupTx);
+    ENGAGE_BINDING(unmuteGroupTx);
+
     ENGAGE_BINDING(setGroupRxVolume);
 
     ENGAGE_BINDING(queryGroupTimeline);
@@ -828,7 +896,10 @@ NAN_MODULE_INIT(Init)
     ENGAGE_BINDING(getAudioDevices);
 
     ENGAGE_BINDING(getActiveLicenseDescriptor);
-    ENGAGE_BINDING(getLicenseDescriptor);    
+    ENGAGE_BINDING(getLicenseDescriptor);
+
+    ENGAGE_BINDING(openCertStore);
+    ENGAGE_BINDING(closeCertStore);
 }
 
 NODE_MODULE(engage, Init)

@@ -9,7 +9,7 @@ else
     CFLAGS += -DNDEBUG -O3
 endif
 
-ENGAGE_VER ?= 1.121.8880
+ENGAGE_VER ?= latest
 INCLUDES =  -I. -I../../../api/c/include
 LFLAGS = -L../../../bin/$(ENGAGE_VER)/darwin_x64
 LIBS = -lengage-shared -lpthread -lstdc++

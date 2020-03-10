@@ -61,7 +61,7 @@ nlohmann::json* getGroup(const char *pId)
 }
 
 
-void onGroupCreated(const char *pId)
+void onGroupCreated(const char *pId, const char *pEventExtraJson)
 {
     std::string id = pId;
 
@@ -98,7 +98,7 @@ void onGroupCreated(const char *pId)
 }
 
 
-void onGroupDeleted(const char *pId)
+void onGroupDeleted(const char *pId, const char *pEventExtraJson)
 {
     std::string id = pId;
 
@@ -146,7 +146,7 @@ void onGroupDeleted(const char *pId)
 }
 
 
-void onGroupConnected(const char *pId)
+void onGroupConnected(const char *pId, const char *pEventExtraJson)
 {
     std::string id = pId;
 
@@ -165,7 +165,7 @@ void onGroupConnected(const char *pId)
 }
 
 
-void onGroupDisconnected(const char *pId)
+void onGroupDisconnected(const char *pId, const char *pEventExtraJson)
 {
     std::string id = pId;
 
@@ -184,7 +184,7 @@ void onGroupDisconnected(const char *pId)
 }
 
 
-void onGroupTxStarted(const char *pId)
+void onGroupTxStarted(const char *pId, const char *pEventExtraJson)
 {
     std::string id = pId;
 
@@ -204,7 +204,7 @@ void onGroupTxStarted(const char *pId)
 }
 
 
-void onGroupTxEnded(const char *pId)
+void onGroupTxEnded(const char *pId, const char *pEventExtraJson)
 {
     std::string id = pId;
 
@@ -223,7 +223,7 @@ void onGroupTxEnded(const char *pId)
     }));
 }
 
-void onGroupTxFailed(const char *pId)
+void onGroupTxFailed(const char *pId, const char *pEventExtraJson)
 {
     std::string id = pId;
 
@@ -242,7 +242,7 @@ void onGroupTxFailed(const char *pId)
     }));
 }
 
-void onGroupTxUsurpedByPriority(const char *pId)
+void onGroupTxUsurpedByPriority(const char *pId, const char *pEventExtraJson)
 {
     std::string id = pId;
 
@@ -261,7 +261,7 @@ void onGroupTxUsurpedByPriority(const char *pId)
     }));
 }
 
-void onGroupMaxTxTimeExceeded(const char *pId)
+void onGroupMaxTxTimeExceeded(const char *pId, const char *pEventExtraJson)
 {
     std::string id = pId;
 
@@ -280,7 +280,7 @@ void onGroupMaxTxTimeExceeded(const char *pId)
     }));
 }
 
-void onEngineStarted()
+void onEngineStarted(const char *pEventExtraJson)
 {
     g_wq.submit(([]()
  	{

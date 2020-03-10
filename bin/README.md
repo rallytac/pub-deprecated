@@ -1,5 +1,9 @@
 # Change List
 
+## March 9, 2020 - 1.132.8898
+- Adds multicast failover and failback of downed Rallypoint links as a standard feature.
+- Adds JSON clarifier objects to all events fired by the Engine.
+
 ## March 5, 2020 - 1.126.8887
 - Adds Engage-managed certificate stores
 - Adds tx mute/unmute for groups - including the ability to begin tx in a muted state

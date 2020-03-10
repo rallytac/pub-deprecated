@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2018 Rally Tactical Systems, Inc.
+//  Copyright (c) 2019 Rally Tactical Systems, Inc.
 //  All rights reserved.
 //
 //  PLEASE NOTE: This code is used internally at Rally Tactical Systems as a test harness
@@ -47,25 +47,83 @@
     #if defined(__APPLE__)
         #include "License.hpp"
     #endif
+
+    #if defined(RTS_HAVE_DBUS)
+        #include "SimpleDbusSignalListener.hpp"
+    #endif
 #endif
 
-typedef struct
+class GroupInfo
 {
-    int type;
+public:
+
+    int         type;
     std::string id;
     std::string name;
     std::string jsonConfiguration;
     bool        isEncrypted;
     bool        allowsFullDuplex;
-} GroupInfo_t;
 
-std::vector<GroupInfo_t>    g_new_groups;
+    bool        created;
+    bool        createFailed;
+    bool        deleted;
+
+    bool        joined;
+    bool        joinFailed;
+    bool        notJoined;
+
+    bool        connected;
+    bool        connectFailed;
+    bool        notConnected;
+
+    bool        rxStarted;
+    bool        rxEnded;
+
+    bool        txStarted;
+    bool        txEnded;
+    bool        txFailed;
+
+    GroupInfo()
+    {
+        type = 0;
+        id.clear();
+        name.clear();
+        jsonConfiguration.clear();
+        isEncrypted = false;
+        allowsFullDuplex = false;
+
+        created = false;
+        createFailed = false;
+        deleted = false;
+
+        joined = false;
+        joinFailed = false;
+        notJoined = true;
+
+        connected = false;
+        connectFailed = false;
+        notConnected = true;
+
+        rxStarted = false;
+        rxEnded = false;
+
+        txStarted = false;
+        txEnded = false;
+        txFailed = false;
+    }
+};
+
+const size_t MAX_CMD_BUFF_SIZE = 4096;
+
+std::vector<GroupInfo>    g_new_groups;
 std::map<std::string, ConfigurationObjects::PresenceDescriptor>    g_nodes;
 
 int g_txPriority = 0;
 uint32_t g_txFlags = 0;
 bool g_anonymous = false;
 bool g_useadad = false;
+const char *g_adadMicFile = nullptr;
+const char *g_adadSpkFile = nullptr;
 ConfigurationObjects::EnginePolicy g_enginePolicy;
 ConfigurationObjects::Mission g_mission;
 ConfigurationObjects::Rallypoint *g_rallypoint = nullptr;
@@ -74,11 +132,19 @@ char g_szUsepLdonfigUserId[64 +1] = {0};
 char g_szUsepLdonfigDisplayName[64 + 1] = {0};
 bool g_verboseScript = false;
 const char *g_pszPresenceFile = "junk/pres1.json";
+const char *g_desiredSpeakerName = nullptr;
+const char *g_desiredMicrophoneName = nullptr;
+bool g_engineStarted = false;
+bool g_engineStopped = true;
 
 int16_t                             g_speakerDeviceId = 0;
 int16_t                             g_microphoneDeviceId = 0;
 int16_t                             g_nextAudioDeviceInstanceId = 0;
 
+int16_t                             g_desiredSpeakerDeviceId = 0;
+int16_t                             g_desiredMicrophoneDeviceId = 0;
+
+bool processCommandBuffer(char *buff);
 void showUsage();
 void showHelp();
 void showGroups();
@@ -89,6 +155,7 @@ bool runScript();
 bool loadPolicy(const char *pszFn, ConfigurationObjects::EnginePolicy *pPolicy);
 bool loadMission(const char *pszFn, ConfigurationObjects::Mission *pMission, ConfigurationObjects::Rallypoint *pRp);
 bool loadRp(const char *pszFn, ConfigurationObjects::Rallypoint *pRp);
+
 
 void doStartEngine();
 void doStopEngine();
@@ -101,22 +168,203 @@ void doBeginTx(int index);
 void doEndTx(int index);
 void doMuteRx(int index);
 void doUnmuteRx(int index);
+void doMuteTx(int index);
+void doUnmuteTx(int index);
 void doSetGroupRxTag(int index, int tag);
 void doSendBlob(int index, const uint8_t* blob, size_t size, const char *jsonParams);
 void doSendRtp(int index, const uint8_t* payload, size_t size, const char *jsonParams);
 void doSendRaw(int index, const uint8_t* raw, size_t size, const char *jsonParams);
 void doRegisterGroupRtpHandler(int index, int payloadId);
 void doUnregisterGroupRtpHandler(int index, int payloadId);
+void generateMission();
 
 void registerADAD();
 void unregisterADAD();
+void showAudioDevices();
+
+int indexOfGroupId(const char *id);
+
+#if defined(RTS_HAVE_DBUS)
+class MyDbusNotifications : public SimpleDbusSignalListener::IDbusSignalNotification
+{
+public:
+    virtual void onDbusError(const void *ctx, const char *nm, const char *msg) const
+    {
+        char logBuff[1024];
+        sprintf_s(logBuff, sizeof(logBuff), "onDbusError [%s] [%s]", nm, msg);
+        engageLogMsg(1, "MyDbusNotifications", logBuff);
+    }
+
+    virtual void onDbusConnected(const void *ctx) const
+    {
+        engageLogMsg(4, "MyDbusNotifications", "onDbusConnected");
+    }
+
+    virtual void onDbusDisconnected(const void *ctx) const
+    {
+        engageLogMsg(4, "MyDbusNotifications", "onDbusDisconnected");
+    }
+
+    virtual bool onDbusSignalReceived(const void *ctx, const char *signal) const
+    {
+        char logBuff[1024];
+        sprintf_s(logBuff, sizeof(logBuff), "onDbusSignalReceived [%s]", signal);
+        engageLogMsg(4, "MyDbusNotifications", logBuff);
+        
+        char buff[MAX_CMD_BUFF_SIZE];
+
+        strcpy_s(buff, sizeof(buff), signal);
+        processCommandBuffer(buff);
+
+        return true;
+    }
+};
+
+SimpleDbusSignalListener    *g_dbusReceiver = nullptr;
+MyDbusNotifications         g_dbusNotificationHandler;
+#endif
+
+bool g_enableDbus = false;
+std::string g_dbusConnectionName;
+std::string g_dbusSignalName;
+
+void setupDbusSignalListener()
+{
+    if(!g_enableDbus)
+    {
+        return;
+    }
+
+    #if defined(RTS_HAVE_DBUS)
+        if(g_dbusConnectionName.empty())
+        {
+            std::cout << "******* ERROR *******: no DBUS connection name provided - dbus interface disabled" << std::endl;
+            return;        
+        }
+
+        if(g_dbusSignalName.empty())
+        {
+            std::cout << "******* ERROR *******: no DBUS signal name provided - dbus interface disabled" << std::endl;
+            return;        
+        }
+
+        std::string sinkConnectionName;
+        std::string matchRule;
+        std::string signalInterface;
+
+        sinkConnectionName.assign(g_dbusConnectionName);
+            sinkConnectionName.append(".sink");
+
+        matchRule.assign("type='signal'");
+        matchRule.append(",interface='");
+            matchRule.append(g_dbusConnectionName);
+            matchRule.append(".Type'");
+
+        signalInterface.assign(g_dbusConnectionName);
+            signalInterface.append(".Type");
+
+        g_dbusReceiver = new SimpleDbusSignalListener(sinkConnectionName.c_str(),
+                                                    matchRule.c_str(),
+                                                    signalInterface.c_str(),
+                                                    g_dbusSignalName.c_str(),
+                                                    &g_dbusNotificationHandler,
+                                                    nullptr);
+
+        g_dbusReceiver->start();
+    #else
+        std::cout << "******* ERROR *******: no DBUS available on this platform - dbus interface disabled" << std::endl;
+        return;        
+    #endif
+}
+
+void shutdownDbusSignalListener()
+{
+    #if defined(RTS_HAVE_DBUS)
+        if(g_dbusReceiver != nullptr)
+        {
+            g_dbusReceiver->stop();
+            delete g_dbusReceiver;
+            g_dbusReceiver = nullptr;
+        }
+    #endif
+}
+
+uint64_t getTickMs()
+{
+    return static_cast<uint64_t>(std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now())
+                                    .time_since_epoch()
+                                    .count());
+}
+
+bool readInput(char *buff, size_t maxSize)
+{
+    if( !fgets(buff, maxSize, stdin) )
+    {
+        return false;
+    }
+
+    char *p = (buff + strlen(buff) - 1);
+    while((p >= buff) && (*p == '\n'))
+    {
+        *p = 0;
+        p--;
+    }
+
+    return true;
+}
+
+
+#include "Crypto.hpp"
+#include "ConfigurationObjects.h"
 
 void devTest1()
-{
+{ 
+    FILE *fp = fopen("/Global/github/shaunwork/pd.json", "rb");
+    fseek(fp, 0, SEEK_END);
+    long sz = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char *json = new char[sz + 1];
+    fread(json, 1, sz, fp);
+    json[sz] = 0;
+    fclose(fp);
+
+    ConfigurationObjects::PresenceDescriptor pd;
+    pd.deserialize(json);
+
+    std::map<std::string, int>              aliasMap;
+    std::map<std::string, int>::iterator    itrAlias;
+    int                                     nextAliasIndex;
+    
+    nextAliasIndex = 0;
+    for(std::vector<ConfigurationObjects::GroupAlias>::iterator itrGa = pd.groupAliases.begin();
+        itrGa != pd.groupAliases.end();
+        itrGa++)
+    {
+        itrAlias = aliasMap.find(itrGa->alias);
+        if(itrAlias == aliasMap.end())
+        {
+            aliasMap[itrGa->alias] = nextAliasIndex;
+            nextAliasIndex++;
+        }
+    }
 }
 
 void devTest2()
-{
+{         
+    std::cout << "-------------- DATASTORE WITH NO APP PASSWORD" << std::endl;
+    engageOpenCertStore("engage-default.certstore", "");
+
+    std::string cert;
+    std::string key;
+
+    cert = Utils::readTextFile("/Global/github/pub/certificates/rtsCA.pem");
+    engageSetCertStoreCertificatePem("rtsCA", cert.c_str(), nullptr);
+
+    cert = Utils::readTextFile("/Global/github/pub/certificates/rtsFactoryDefaultEngage.pem");
+    key = Utils::readTextFile("/Global/github/pub/certificates/rtsFactoryDefaultEngage.key");
+    engageSetCertStoreCertificatePem("rtsFactoryDefaultEngage", cert.c_str(), key.c_str());
+
+    std::cout << engageGetCertStoreDescriptor() << std::endl;
 }
 
 void devTest3()
@@ -126,22 +374,21 @@ void devTest3()
 
 int main(int argc, const char * argv[])
 {
+    //devTest2();
+    //exit(0);
+
     std::cout << "---------------------------------------------------------------------------------" << std::endl;
 
     #if defined(HAVE_RTS_INTERNAL_SOURCE_CODE)
-        std::cout << "Engage-Cmd version " << PRODUCT_VERSION << " for " << Utils::getOsDescriptor();
-
+        std::cout << "Engage-Cmd version " << PRODUCT_VERSION << " for " << Utils::getPlatformTargetDescriptor();
         #if defined(RTS_DEBUG_BUILD)
             std::cout << " [*** DEBUG BUILD ***]";
-        #else
-            std::cout << " [*** RELEASE BUILD ***]";
         #endif
-
         std::cout << std::endl;
         
-        std::cout << "Copyright (c) 2018 Rally Tactical Systems, Inc." << std::endl;
+        std::cout << "Copyright (c) 2019 Rally Tactical Systems, Inc." << std::endl;
         std::cout << "Build time: " << __DATE__ << " @ " << __TIME__ << std::endl;
-        std::cout << Utils::getOsDescriptor().c_str() << std::endl;
+        std::cout << Utils::getPlatformTargetDescriptor().c_str() << std::endl;
         std::cout << "cpu:" << Utils::numberOfCpus() << std::endl;
         std::cout << "mfd:" << Utils::getMaxOpenFds() << std::endl;
     #else
@@ -165,7 +412,9 @@ int main(int argc, const char * argv[])
     const char *pszScript = nullptr;
     bool haveScript = false;
     bool continueWithCmdLine = true;
-    std::string nicName;
+    std::string nicName;    
+    std::string certStore;
+    std::string certStorePwd;
 
     #if defined(HAVE_RTS_INTERNAL_SOURCE_CODE)
         Utils::NetworkInterfaceInfo nic;
@@ -193,6 +442,14 @@ int main(int argc, const char * argv[])
         {
             missionFile = argv[x] + 9;
         }        
+        else if(strncmp(argv[x], "-cs:", 4) == 0)
+        {
+            certStore = argv[x] + 4;
+        }
+        else if(strncmp(argv[x], "-csp:", 5) == 0)
+        {
+            certStorePwd = argv[x] + 5;
+        }
         else if(strncmp(argv[x], "-nic:", 5) == 0)
         {
             nicName = argv[x] + 5;
@@ -212,6 +469,14 @@ int main(int argc, const char * argv[])
         else if(strcmp(argv[x], "-useadad") == 0)
         {
             g_useadad = true;
+        }
+        else if(strncmp(argv[x], "-adadmic:", 9) == 0)
+        {
+            g_adadMicFile = (argv[x] + 9);
+        }
+        else if(strncmp(argv[x], "-adadspk:", 9) == 0)
+        {
+            g_adadSpkFile = (argv[x] + 9);
         }
         else if(strncmp(argv[x], "-script:", 8) == 0)
         {
@@ -248,12 +513,36 @@ int main(int argc, const char * argv[])
         {
             putenv((char*)(argv[x] + 8));
         }
+        else if(strncmp(argv[x], "-sn:", 4) == 0)
+        {
+            g_desiredSpeakerName = (argv[x] + 4);
+        }
+        else if(strncmp(argv[x], "-mn:", 4) == 0)
+        {
+            g_desiredMicrophoneName = (argv[x] + 4);
+        }
+        else if(strncmp(argv[x], "-dbusconn:", 10) == 0)
+        {
+            g_enableDbus = true;
+            g_dbusConnectionName = (argv[x] + 10);
+        }
+        else if(strncmp(argv[x], "-dbussig:", 9) == 0)
+        {
+            g_enableDbus = true;
+            g_dbusSignalName = (argv[x] + 9);
+        }
         else
         {
             std::cout << "unknown option '" << argv[x] << "'" << std::endl;
             showUsage();
             goto end_function;
         }
+    }
+
+    // Open a cert store if we have one
+    if(!certStore.empty())
+    {
+        engageOpenCertStore(certStore.c_str(), certStorePwd.c_str());
     }
 
     // We're just going to use a simple random number generator for this app
@@ -372,6 +661,8 @@ int main(int argc, const char * argv[])
                 for(size_t x = 0; x < presentNics.size(); x++)
                 {
                     std::cerr << "name='" << presentNics[x]._name << "'"
+                            << ", friendlyName='" << presentNics[x]._friendlyName << "'"
+                            << ", description='" << presentNics[x]._description << "'"                            
                             << ", family=" << presentNics[x]._family
                             << ", address='" << presentNics[x]._address << "'"
                             << ", available=" << presentNics[x]._isAvailable
@@ -392,6 +683,8 @@ int main(int argc, const char * argv[])
                 for(size_t x = 0; x < presentNics.size(); x++)
                 {
                     std::cerr << "name='" << presentNics[x]._name << "'"
+                            << ", friendlyName='" << presentNics[x]._friendlyName << "'"
+                            << ", description='" << presentNics[x]._description << "'"                            
                             << ", family=" << presentNics[x]._family
                             << ", address='" << presentNics[x]._address << "'"
                             << ", available=" << presentNics[x]._isAvailable
@@ -404,6 +697,8 @@ int main(int argc, const char * argv[])
         }
 
         std::cout << "name='" << nic._name << "'"
+                    << ", friendlyName='" << nic._friendlyName << "'"
+                    << ", description='" << nic._description << "'"                    
                     << ", family=" << nic._family
                     << ", address='" << nic._address << "'"
                     << ", available=" << nic._isAvailable
@@ -417,11 +712,12 @@ int main(int argc, const char * argv[])
         itr != g_mission.groups.end();
         itr++)
     {
-        GroupInfo_t gi;
+        GroupInfo gi;
 
         gi.id = (int)itr->type;
         gi.id = itr->id;
         gi.name = itr->name;
+        gi.type = itr->type;
         gi.isEncrypted = (!itr->cryptoPassword.empty());
         gi.allowsFullDuplex = itr->txAudio.fdx;
 
@@ -459,6 +755,9 @@ int main(int argc, const char * argv[])
         goto end_function;
     }
 
+    // Fire up the dbus interface if any.  Do this here because the dbus goodies uses the Engage logger
+    setupDbusSignalListener();
+
     // Start the Engine
     pLd = engageStart();
     if(pLd != ENGAGE_RESULT_OK)
@@ -483,252 +782,27 @@ int main(int argc, const char * argv[])
     // Go round and round getting commands from our console user
     while( continueWithCmdLine )
     {
-        char buff[256];
-        char *p;
+        char buff[MAX_CMD_BUFF_SIZE];
         std::cout << "............running >";
 
-        if( !fgets(buff, sizeof(buff), stdin) )
+        memset(buff, 0, sizeof(buff));
+        if( !readInput(buff, sizeof(buff)) )
         {
             continue;
         }
 
-        p = (buff + strlen(buff) - 1);
-        while((p >= buff) && (*p == '\n'))
-        {
-            *p = 0;
-            p--;
-        }
-
-        if(buff[0] == 0)
-        {
-            continue;
-        }
-        
-        else if(strcmp(buff, "q") == 0)
+        if( !processCommandBuffer(buff) )
         {
             break;
         }
-
-        else if(buff[0] == '!')
-        {
-            if(system(buff + 1) < 0)
-            {
-                std::cout << "Error executing '" << (buff + 1) << "'" << std::endl;
-            }
-        }
-
-        else if(strncmp(buff, "tl", 2) == 0)
-        {
-            const char *p = (buff + 2);
-            while( *p == ' ')
-            {
-                p++;
-            }
-
-            if( *p == 0 )
-            {
-                p = "filters/default-timeline-query.json";
-            }
-
-            if(*p != 0)
-            {
-                std::string filter;
-                ConfigurationObjects::readTextFileIntoString(p, filter);
-                if(!filter.empty())
-                {
-                    engageQueryGroupTimeline(g_new_groups[1].id.c_str(), filter.c_str());
-                }
-                else
-                {
-                    std::cout << "ERROR: Cannot load specified filter file" << std::endl;
-                }                
-            }
-            else
-            {
-                std::cout << "NOTE: No filter file specified" << std::endl;
-                engageQueryGroupTimeline(g_new_groups[1].id.c_str(), "{}");
-            }
-
-            /*
-            "((started >= 123 && ended <= 999) || duration >= 1000) && (alias matches '[*]TEST[*]')"            
-
-            "started >= 123"
-            "ended <= 999"
-            "duration >= 1000"
-            "alias like '*TEST*'"
-            "nodeId = '{bb805ced-3d01-420d-9a2a-8cfdf4eded0b}'"
-            "direction = 2"
-            "audio.ms >= 500"
-            "audio.samples >= 2000"
-            "id = '{ef34ec8e-8a18-456e-9c14-073373830e31}'"
-            "type = 2"
-            "inProgress = false"
-            */
-        }
-
-        else if(buff[0] == '1')
-        {
-            devTest1();
-        }
-        else if(buff[0] == '2')
-        {
-            devTest2();
-        }
-        else if(buff[0] == '3')
-        {
-            devTest3();
-        }
-
-        /*
-        else if(buff[0] == 'l')
-        {            
-            const char *msg = "hello world blob";
-            size_t size = strlen(msg + 1);
-
-            uint8_t *blob = new uint8_t[size];
-            memcpy(blob, msg, size);
-            std::string jsonParams;
-
-            ConfigurationObjects::BlobInfo bi;
-            bi.rtpHeader.pt = 114;
-            jsonParams = bi.serialize();
-
-            doSendBlob(buff[1] == 'a' ? -1 : atoi(buff + 1), blob, size, jsonParams.c_str());
-
-            delete[] blob;
-        }
-        else if(buff[0] == 'r')
-        {
-            const char *msg = "hello world rtp";
-            size_t size = strlen(msg + 1);
-
-            uint8_t *payload = new uint8_t[size];
-            memcpy(payload, msg, size);
-            std::string jsonParams;
-
-            ConfigurationObjects::RtpHeader rtpHeader;
-            rtpHeader.pt = 109;
-            jsonParams = rtpHeader.serialize();
-
-            doSendRtp(buff[1] == 'a' ? -1 : atoi(buff + 1), payload, size, jsonParams.c_str());
-
-            delete[] payload;
-        }
-        else if(buff[0] == 'w')
-        {
-            const char *msg = "hello world raw";
-            size_t size = strlen(msg + 1);
-
-            uint8_t *payload = new uint8_t[size];
-            memcpy(payload, msg, size);
-            std::string jsonParams;
-
-            doSendRaw(buff[1] == 'a' ? -1 : atoi(buff + 1), payload, size, jsonParams.c_str());
-
-            delete[] payload;
-        }
-        */
-       
-        else if(strcmp(buff, "?") == 0)
-        {
-            showHelp();
-        }
-        else if(strcmp(buff, "sg") == 0)
-        {
-            showGroups();
-        }
-        else if(strcmp(buff, "sn") == 0)
-        {
-            showNodes();
-        }
-        else if(buff[0] == 'z')
-        {
-            doUpdatePresence(buff[1] == 'a' ? -1 : atoi(buff + 1));
-        }
-        else if(buff[0] == 'c')
-        {
-            doCreate(buff[1] == 'a' ? -1 : atoi(buff + 1));
-        }
-        else if(buff[0] == 'd')
-        {
-            doDelete(buff[1] == 'a' ? -1 : atoi(buff + 1));
-        }
-        else if(buff[0] == 'j')
-        {
-            doJoin(buff[1] == 'a' ? -1 : atoi(buff + 1));
-        }
-        else if(buff[0] == 'l')
-        {
-            doLeave(buff[1] == 'a' ? -1 : atoi(buff + 1));
-        }
-        else if(buff[0] == 'p')
-        {
-            g_txPriority = atoi(buff + 1);
-            std::cout << "tx priority set to " << g_txPriority << std::endl;
-        }
-        else if(buff[0] == 'f')
-        {
-            g_txFlags = atoi(buff + 1);
-            std::cout << "tx flags set to " << g_txFlags << std::endl;
-        }
-        else if(buff[0] == 't')
-        {
-            char *val = strchr(buff, ' ');
-            if(val != nullptr)
-            {
-                *val = 0;
-                int tag = atoi(val + 1);
-                doSetGroupRxTag(buff[1] == 'a' ? -1 : atoi(buff + 1), tag);
-            }
-        }
-        else if(buff[0] == 'b')
-        {
-            doBeginTx(buff[1] == 'a' ? -1 : atoi(buff + 1));
-        }
-        else if(buff[0] == 'e')
-        {
-            doEndTx(buff[1] == 'a' ? -1 : atoi(buff + 1));
-        }
-        else if(buff[0] == 'm')
-        {
-            doMuteRx(buff[1] == 'a' ? -1 : atoi(buff + 1));
-        }
-        else if(buff[0] == 'u')
-        {
-            doUnmuteRx(buff[1] == 'a' ? -1 : atoi(buff + 1));
-        }
-        else if(buff[0] == 'x')
-        {
-            char *val = strchr(buff, ' ');
-            if(val != nullptr)
-            {
-                *val = 0;
-                int tag = atoi(val + 1);
-                doRegisterGroupRtpHandler(buff[1] == 'a' ? -1 : atoi(buff + 1), tag);
-            }
-        }
-        else if(buff[0] == 'y')
-        {
-            char *val = strchr(buff, ' ');
-            if(val != nullptr)
-            {
-                *val = 0;
-                int tag = atoi(val + 1);
-                doUnregisterGroupRtpHandler(buff[1] == 'a' ? -1 : atoi(buff + 1), tag);
-            }
-        }
-        else
-        {
-            std::cout << "'" << buff << "' not recognized" << std::endl;
-            showHelp();
-        }
-
-        memset(buff, 0, sizeof(buff));
     }
 
     unregisterADAD();
 
 end_function:
+    // Shutdown the dbus interface if any
+    shutdownDbusSignalListener();
+
     // Stop the Engine
     engageStop();
 
@@ -738,7 +812,327 @@ end_function:
     // Clean up
     g_new_groups.clear();
 
+    if(g_rallypoint != nullptr)
+    {
+        delete g_rallypoint;
+    }
+
     return 0;
+}
+
+bool processCommandBuffer(char *buff)
+{
+    if(buff[0] == 0)
+    {
+        return true;
+    }
+
+    else if(strcmp(buff, "q") == 0)
+    {
+        return false;
+    }
+
+    else if(strcmp(buff, "starteng") == 0)
+    {
+        doStartEngine();
+    }
+
+    else if(strcmp(buff, "stopeng") == 0)
+    {
+        doStopEngine();
+    }
+
+    else if(buff[0] == '!')
+    {
+        if(system(buff + 1) < 0)
+        {
+            std::cout << "Error executing '" << (buff + 1) << "'" << std::endl;
+        }
+    }
+
+    else if(strncmp(buff, "tl", 2) == 0)
+    {
+        const char *p = (buff + 2);
+        while( *p == ' ')
+        {
+            p++;
+        }
+
+        if( *p == 0 )
+        {
+            p = "filters/default-timeline-query.json";
+        }
+
+        if(*p != 0)
+        {
+            std::string filter;
+            filter = Utils::readTextFile(p);
+            if(!filter.empty())
+            {
+                engageQueryGroupTimeline(g_new_groups[1].id.c_str(), filter.c_str());
+            }
+            else
+            {
+                std::cout << "******* ERROR *******: Cannot load specified filter file" << std::endl;
+            }                
+        }
+        else
+        {
+            std::cout << "NOTE: No filter file specified" << std::endl;
+            engageQueryGroupTimeline(g_new_groups[1].id.c_str(), "{}");
+        }
+    }
+
+    else if(strcmp(buff, "dev1") == 0)
+    {
+        devTest1();
+    }
+    else if(strcmp(buff, "dev2") == 0)
+    {
+        devTest2();
+    }
+    else if(strcmp(buff, "dev3") == 0)
+    {
+        devTest3();
+    }
+
+    /*
+    else if(buff[0] == 'l')
+    {            
+        const char *msg = "hello world blob";
+        size_t size = strlen(msg + 1);
+
+        uint8_t *blob = new uint8_t[size];
+        memcpy(blob, msg, size);
+        std::string jsonParams;
+
+        ConfigurationObjects::BlobInfo bi;
+        bi.rtpHeader.pt = 114;
+        jsonParams = bi.serialize();
+
+        doSendBlob(buff[1] == 'a' ? -1 : atoi(buff + 1), blob, size, jsonParams.c_str());
+
+        delete[] blob;
+    }
+    else if(buff[0] == 'r')
+    {
+        const char *msg = "hello world rtp";
+        size_t size = strlen(msg + 1);
+
+        uint8_t *payload = new uint8_t[size];
+        memcpy(payload, msg, size);
+        std::string jsonParams;
+
+        ConfigurationObjects::RtpHeader rtpHeader;
+        rtpHeader.pt = 109;
+        jsonParams = rtpHeader.serialize();
+
+        doSendRtp(buff[1] == 'a' ? -1 : atoi(buff + 1), payload, size, jsonParams.c_str());
+
+        delete[] payload;
+    }
+    else if(buff[0] == 'w')
+    {
+        const char *msg = "hello world raw";
+        size_t size = strlen(msg + 1);
+
+        uint8_t *payload = new uint8_t[size];
+        memcpy(payload, msg, size);
+        std::string jsonParams;
+
+        doSendRaw(buff[1] == 'a' ? -1 : atoi(buff + 1), payload, size, jsonParams.c_str());
+
+        delete[] payload;
+    }
+    */
+    
+    else if(strcmp(buff, "?") == 0)
+    {
+        showHelp();
+    }
+    else if(strcmp(buff, "sg") == 0)
+    {
+        showGroups();
+    }
+    else if(strcmp(buff, "sn") == 0)
+    {
+        showNodes();
+    }
+    else if(strcmp(buff, "gm") == 0)
+    {
+        generateMission();
+    }
+    else if(buff[0] == 'z')
+    {
+        doUpdatePresence(buff[1] == 'a' ? -1 : atoi(buff + 1));
+    }
+    else if(buff[0] == 'c')
+    {
+        doCreate(buff[1] == 'a' ? -1 : atoi(buff + 1));
+    }
+    else if(buff[0] == 'd')
+    {
+        doDelete(buff[1] == 'a' ? -1 : atoi(buff + 1));
+    }
+    else if(buff[0] == 'j')
+    {
+        doJoin(buff[1] == 'a' ? -1 : atoi(buff + 1));
+    }
+    else if(buff[0] == 'l')
+    {
+        doLeave(buff[1] == 'a' ? -1 : atoi(buff + 1));
+    }
+    else if(buff[0] == 'p')
+    {
+        g_txPriority = atoi(buff + 1);
+        std::cout << "tx priority set to " << g_txPriority << std::endl;
+    }
+    else if(buff[0] == 'f')
+    {
+        g_txFlags = atoi(buff + 1);
+        std::cout << "tx flags set to " << g_txFlags << std::endl;
+    }
+    else if(buff[0] == 't')
+    {
+        char *val = strchr(buff, ' ');
+        if(val != nullptr)
+        {
+            *val = 0;
+            int tag = atoi(val + 1);
+            doSetGroupRxTag(buff[1] == 'a' ? -1 : atoi(buff + 1), tag);
+        }
+    }
+    else if(buff[0] == 'b')
+    {
+        doBeginTx(buff[1] == 'a' ? -1 : atoi(buff + 1));
+    }
+    else if(buff[0] == 'e')
+    {
+        doEndTx(buff[1] == 'a' ? -1 : atoi(buff + 1));
+    }
+    else if(buff[0] == 'm')
+    {
+        doMuteRx(buff[1] == 'a' ? -1 : atoi(buff + 1));
+    }
+    else if(buff[0] == 'u')
+    {
+        doUnmuteRx(buff[1] == 'a' ? -1 : atoi(buff + 1));
+    }
+    /* TODO
+    else if(buff[0] == 'todo for mutetx')
+    {
+        doMuteTx(buff[1] == 'a' ? -1 : atoi(buff + 1));
+    }
+    else if(buff[0] == 'todo for unmutetx')
+    {
+        doUnmuteTx(buff[1] == 'a' ? -1 : atoi(buff + 1));
+    }
+    */
+    else if(buff[0] == 'x')
+    {
+        char *val = strchr(buff, ' ');
+        if(val != nullptr)
+        {
+            *val = 0;
+            int tag = atoi(val + 1);
+            doRegisterGroupRtpHandler(buff[1] == 'a' ? -1 : atoi(buff + 1), tag);
+        }
+    }
+    else if(buff[0] == 'y')
+    {
+        char *val = strchr(buff, ' ');
+        if(val != nullptr)
+        {
+            *val = 0;
+            int tag = atoi(val + 1);
+            doUnregisterGroupRtpHandler(buff[1] == 'a' ? -1 : atoi(buff + 1), tag);
+        }
+    }
+    else
+    {
+        std::cout << "'" << buff << "' not recognized" << std::endl;
+        showHelp();
+    }
+
+    return true;
+}
+
+int getIdOfNamedAudioDevice(const char *nm, bool forInput)
+{
+    int rc = 0;
+
+    try
+    {
+        const char *jsonString = engageGetAudioDevices();
+
+        ConfigurationObjects::ListOfAudioDeviceDescriptor obj;
+
+        if(!obj.deserialize(jsonString))
+        {
+            throw "";
+        }
+
+        for(std::vector<ConfigurationObjects::AudioDeviceDescriptor>::iterator itr = obj.list.begin();
+            itr != obj.list.end();
+            itr++)
+        {
+            if(itr->name.compare(nm) == 0 && 
+               ((forInput && itr->direction == 1) || (!forInput && itr->direction == 2)) )
+            {
+                rc = itr->deviceId;
+                break;
+            }
+        }
+    }
+    catch(...)
+    {
+        rc = 0;
+    }
+    
+    return rc;
+}
+
+void showAudioDevices()
+{
+    std::cout << "-------------------------------------------------------" << std::endl;
+    std::cout << "Available audio devices" << std::endl;
+
+    try
+    {
+        const char *jsonString = engageGetAudioDevices();
+
+        ConfigurationObjects::ListOfAudioDeviceDescriptor obj;
+
+        if(!obj.deserialize(jsonString))
+        {
+            throw "";
+        }
+
+        for(std::vector<ConfigurationObjects::AudioDeviceDescriptor>::iterator itr = obj.list.begin();
+            itr != obj.list.end();
+            itr++)
+        {
+            std::cout << "deviceId.............: " << itr->deviceId << std::endl <<
+                         "   name..............: " << itr->name << std::endl <<
+                         "   manufacturer......: " << itr->manufacturer << std::endl <<
+                         "   model.............: " << itr->model << std::endl <<
+                         "   hardwareId........: " << itr->hardwareId << std::endl <<
+                         "   serialNumber......: " << itr->serialNumber << std::endl <<
+                         "   isDefault.........: " << itr->isDefault << std::endl <<
+                         "   isAdad............: " << itr->isAdad << std::endl <<
+                         "   samplingRate......: " << itr->samplingRate << std::endl <<
+                         "   channels..........: "<< itr->channels << std::endl <<
+                         "   direction.........: " << itr->direction << std::endl <<
+                         "   boostPercentage...: " << itr->boostPercentage << std::endl <<
+            std::endl;
+        }
+    }
+    catch(...)
+    {
+        std::cout << "******* ERROR *******: exception while processing audio devices list" << std::endl;
+    }
+
+    std::cout << "-------------------------------------------------------" << std::endl;
 }
 
 std::string buildGroupCreationJson(int index)
@@ -761,22 +1155,44 @@ std::string buildGroupCreationJson(int index)
         groupConfig.rallypoints.push_back(*g_rallypoint);
     }
 
-    // We'll use our application-defined speaker audio device if we have one
-    if(g_speakerDeviceId != 0)
+    if(g_desiredSpeakerName != nullptr)
     {
-        groupConfig.audio.outputId = g_speakerDeviceId;
+        groupConfig.audio.outputId = getIdOfNamedAudioDevice(g_desiredSpeakerName, false);
+        if(groupConfig.audio.outputId == 0)
+        {
+            std::cout << "******* ERROR *******: cannot find requested speaker device '" << g_desiredSpeakerName << "'" << std::endl;
+            showAudioDevices();
+        }
+    }    
+    else
+    {
+        // We'll use our application-defined speaker audio device if we have one
+        if(g_speakerDeviceId != 0)
+        {
+            groupConfig.audio.outputId = g_speakerDeviceId;
+        }
     }
 
-    // We'll use our application-defined microphone audio device if we have one
-    if(g_microphoneDeviceId != 0)
+    if(g_desiredMicrophoneName != nullptr)
     {
-        groupConfig.audio.inputId = g_microphoneDeviceId;
+        groupConfig.audio.inputId = getIdOfNamedAudioDevice(g_desiredMicrophoneName, true);
+        if(groupConfig.audio.inputId == 0)
+        {
+            std::cout << "******* ERROR *******: cannot find requested microphone device '" << g_desiredMicrophoneName << "'" << std::endl;
+            showAudioDevices();
+        }
+    }    
+    else
+    {
+        // We'll use our application-defined microphone audio device if we have one
+        if(g_microphoneDeviceId != 0)
+        {
+            groupConfig.audio.inputId = g_microphoneDeviceId;
+        }
     }
 
     // Serialize to a string
     std::string rc = groupConfig.serialize();
-
-    std::cout << "buildGroupCreationJson: " << rc << std::endl;
 
     return rc;
 }
@@ -797,7 +1213,7 @@ void doUpdatePresence(int index)
 {
     if(g_verboseScript) std::cout << "doUpdatePresence: " << index << std::endl;
     std::string jsonText;
-    ConfigurationObjects::readTextFileIntoString(g_pszPresenceFile, jsonText);
+    jsonText = Utils::readTextFile(g_pszPresenceFile);
 
     if(index == -1)
     {
@@ -920,6 +1336,7 @@ void doBeginTx(int index)
     ConfigurationObjects::AdvancedTxParams params;
     params.flags = (uint16_t)0;
     params.priority = (uint8_t)0;
+    //params.grantAudioUri = "./tx_on.wav";
 
     if(!g_anonymous)
     {
@@ -928,6 +1345,7 @@ void doBeginTx(int index)
 
     params.subchannelTag = 0;
     params.includeNodeId = true;
+    params.muted = false;
     std::string json = params.serialize();
 
     if(g_verboseScript) std::cout << "doBeginTx: " << index << std::endl;
@@ -1014,6 +1432,52 @@ void doUnmuteRx(int index)
         if(index >= 0 && index < (int)g_new_groups.size())
         {
             engageUnmuteGroupRx(g_new_groups[index].id.c_str());
+        }
+        else
+        {
+            std::cerr << "invalid index" << std::endl;
+        }                
+    }
+}
+
+void doMuteTx(int index)
+{
+    if(g_verboseScript) std::cout << "doMuteTx: " << index << std::endl;
+    if(index == -1)
+    {
+        for(size_t x = 0; x < g_new_groups.size(); x++)
+        {
+            engageMuteGroupTx(g_new_groups[x].id.c_str());
+        }
+    }
+    else
+    {
+        if(index >= 0 && index < (int)g_new_groups.size())
+        {
+            engageMuteGroupTx(g_new_groups[index].id.c_str());
+        }
+        else
+        {
+            std::cerr << "invalid index" << std::endl;
+        }                
+    }
+}
+
+void doUnmuteTx(int index)
+{
+    if(g_verboseScript) std::cout << "doUnmuteTx: " << index << std::endl;
+    if(index == -1)
+    {
+        for(size_t x = 0; x < g_new_groups.size(); x++)
+        {
+            engageUnmuteGroupTx(g_new_groups[x].id.c_str());
+        }
+    }
+    else
+    {
+        if(index >= 0 && index < (int)g_new_groups.size())
+        {
+            engageUnmuteGroupTx(g_new_groups[index].id.c_str());
         }
         else
         {
@@ -1160,6 +1624,113 @@ void doSendRaw(int index, const uint8_t* raw, size_t size, const char *jsonParam
     }
 }
 
+int indexOfGroupId(const char *id)
+{
+    for(size_t x = 0; x < g_new_groups.size(); x++)
+    {
+        if(g_new_groups[x].id.compare(id) == 0)
+        {
+            return (int) x;
+        }
+    }
+
+    return -1;
+}
+
+void generateMission()
+{
+    char buff[MAX_CMD_BUFF_SIZE];
+    int channelCount;
+    std::string rallypoint;
+    std::string passphrase;
+    std::string fn;
+    std::string name;
+
+    std::cout << "passphrase: ";
+    memset(buff, 0, sizeof(buff));
+    if( !readInput(buff, sizeof(buff)) )
+    {
+        return;
+    }
+    passphrase.assign(buff);
+    if(passphrase.empty())
+    {
+        return;
+    }
+
+    std::cout << "mission name (optional): ";
+    memset(buff, 0, sizeof(buff));
+    if( !readInput(buff, sizeof(buff)) )
+    {
+        return;
+    }
+    name.assign(buff);
+
+    std::cout << "number of channels: ";
+    memset(buff, 0, sizeof(buff));
+    if( !readInput(buff, sizeof(buff)) )
+    {
+        return;
+    }
+    channelCount = atoi(buff);
+    if(channelCount <= 0)
+    {
+        return;
+    }
+
+
+    std::cout << "rallypoint (optional): ";
+    memset(buff, 0, sizeof(buff));
+    if( !readInput(buff, sizeof(buff)) )
+    {
+        return;
+    }
+    rallypoint.assign(buff);
+        
+    std::cout << "file name (optional): ";
+    memset(buff, 0, sizeof(buff));
+    if( !readInput(buff, sizeof(buff)) )
+    {
+        return;
+    }
+    fn.assign(buff);
+
+    std::string ms;
+
+    ms = engageGenerateMission(passphrase.c_str(), channelCount, rallypoint.c_str(), name.c_str());
+    if(fn.empty())
+    {
+        std::cout << ms << std::endl; 
+    }
+    else
+    {
+        FILE *fp;
+
+        #ifndef WIN32
+            fp = fopen(fn.c_str(), "wt");
+        #else
+            if (fopen_s(&fp, fn.c_str(), "wt") != 0)
+            {
+                fp = nullptr;
+            }
+        #endif
+
+        if(fp == nullptr)
+        {
+            std::cerr << "cannot save to '" << fn.c_str() << "'" << std::endl;
+            return;
+        }
+
+        fputs(ms.c_str(), fp);
+
+        fclose(fp);
+
+        std::cout << "saved to '" << fn.c_str() << "'" << std::endl; 
+    }
+    
+}
+
+
 // Application-defined audio device
 class ADADInstance
 {
@@ -1228,14 +1799,17 @@ private:
 
     void thread()
     {
+        SET_THREAD_NAME("adad");
+
         // Our "device" will work in 60ms intervals
         const size_t  MY_AUDIO_DEVICE_INTERVAL_MS = 60;
 
         // The number of samples we produce/consume is 16 samples per millisecond - i.e. this is a wideband device
-        const size_t  MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT = (MY_AUDIO_DEVICE_INTERVAL_MS * 16);
+        const size_t  MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT = (MY_AUDIO_DEVICE_INTERVAL_MS * 8);
 
         int16_t buffer[MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT];
         int     rc;
+        FILE    *fp = nullptr;
         //int     x;
 
         // These are used to generate the sine wave for our "microphone"
@@ -1247,10 +1821,86 @@ private:
         float phaseShift = 0.0;
         */
 
-       memset(buffer, 0, sizeof(buffer));
+        #if defined(HAVE_RTS_INTERNAL_SOURCE_CODE)
+        uint64_t    now;
+        uint64_t    started = 0;
+        uint64_t    loops = 0;
+        #endif
+
+        size_t      msToSleep;
+
+        struct timeval  tv;
+        int             ret;
+        uint64_t        rxCount = 0;
+
+
+        if(_direction == ConfigurationObjects::AudioDeviceDescriptor::Direction_t::dirInput)
+        {
+            if(g_adadMicFile != nullptr)
+            {
+                fp = fopen(g_adadMicFile, "rb");
+                if(fp == nullptr)
+                {
+                    std::cout << "WARNING: specified adad microphone file '" << g_adadMicFile << "' cannot be opened" << std::endl;
+                }
+            }            
+        }
+        else if(_direction == ConfigurationObjects::AudioDeviceDescriptor::Direction_t::dirOutput)
+        {
+            if(g_adadSpkFile != nullptr)
+            {
+                fp = fopen(g_adadSpkFile, "wb");
+                if(fp == nullptr)
+                {
+                    std::cout << "WARNING: specified adad speaker file '" << g_adadSpkFile << "' cannot be opened" << std::endl;
+                }
+            }            
+        }
+
+        memset(buffer, 0, sizeof(buffer));
 
         while( _running )
         {
+            msToSleep = MY_AUDIO_DEVICE_INTERVAL_MS;
+
+            now = getTickMs();
+
+            if(started == 0)
+            {
+                started = now;
+            }
+            else
+            {
+                uint64_t avg = ((now - started) / loops);
+
+                int64_t potentialTimeToSleep = 0;
+
+                // Maybe catchup or slow down
+                if(avg > MY_AUDIO_DEVICE_INTERVAL_MS)
+                {
+                    potentialTimeToSleep = (MY_AUDIO_DEVICE_INTERVAL_MS - ((avg - MY_AUDIO_DEVICE_INTERVAL_MS) * 32));
+                }
+                else if( avg < MY_AUDIO_DEVICE_INTERVAL_MS )
+                {
+                    potentialTimeToSleep = (MY_AUDIO_DEVICE_INTERVAL_MS + ((MY_AUDIO_DEVICE_INTERVAL_MS - avg) * 32));
+                }
+                else
+                {
+                    potentialTimeToSleep = MY_AUDIO_DEVICE_INTERVAL_MS;
+                }
+
+                if(potentialTimeToSleep < 0)
+                {
+                    potentialTimeToSleep = 0;
+                }
+
+                msToSleep = (size_t) potentialTimeToSleep;
+
+                //std::cout << "avg=" << avg << ", msToSleep=" << msToSleep << std::endl;
+            }
+
+            loops++;
+
             if(!_paused)
             {
                 if(_direction == ConfigurationObjects::AudioDeviceDescriptor::Direction_t::dirOutput)
@@ -1260,83 +1910,58 @@ private:
                     if(rc > 0)
                     {
                         // At this point we have rc number of audio samples from the Engine.  These now need to be sent 
-                        // onward to where they're needed.  For purposes of this demonstration, we'll simply calaculate the
-                        // average sample level and display that.
-
-                        /*
-                        float total = 0.0;
-                        for(x = 0; x < rc; x++)
+                        // onward to where they're needed.  For tis demo, we'll write the samples to a file or, if that's
+                        // not available, we'll display the power level of the received buffer
+                        if(fp != nullptr)
                         {
-                            total += buffer[x];
+                            fwrite(buffer, 1, (2 * rc), fp);
                         }
-                        */
+                        else
+                        {
+                            float total = 0.0;
 
-                        //std::cout << "ADADInstance eadReadBuffer received " << rc << "samples with an average sample level of " << (total / rc) << std::endl;
+                            for(int x = 0; x < rc; x++)
+                            {
+                                total += buffer[x];
+                            }
+
+                            rxCount++;
+                            if(rxCount % 100 == 0)
+                            {
+                                std::cout << "ADADInstance readReadBuffer received " << rxCount << " buffers so far" << std::endl;
+                            }
+                            //std::cout << "ADADInstance readReadBuffer received " << rc << " samples with an average sample level of " << (total / rc) << std::endl;
+                        }
                     }
                 }
                 else if(_direction == ConfigurationObjects::AudioDeviceDescriptor::Direction_t::dirInput)
                 {
-                    // For purposes of this demo, we'll fill our buffer with an ongoing sine wave.  In your app you will want to pull in these
-                    // samples from your actual audio source
-
-                    /*
-                    for(x = 0; x < (int)MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT; x++)
+                    // Read audio from the file, if we can't or don't have one, just generate noise
+                    if(fp != nullptr)
                     {
-                        tm += 1.0;
-
-                        if(tm > 360.0)
+                        size_t amountRead = fread(buffer, 1, MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT * 2, fp);
+                        if(amountRead != MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT * 2)
                         {
-                            tm = 1.0;
+                            fseek(fp, 0, SEEK_SET);
+                            amountRead = fread(buffer, 1, MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT * 2, fp);
+                            if(amountRead != MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT * 2)
+                            {
+                                std::cout << "******* ERROR *******: file read error from adad microphone file" << std::endl;
+                                abort();
+                            }
                         }
-
-                        float sampleVal = amplitute * sin(2 * pi * freq * tm + phaseShift);
-
-                        if(sampleVal < -32768.0)
-                        {
-                            sampleVal = -32768.0;
-                        }
-                        else if(sampleVal > 32767.0)
-                        {
-                            sampleVal = 32767.0;
-                        }
-
-                        buffer[x] = (int16_t)sampleVal;
                     }
-                    */
-
-                   /*
-                   static FILE *fp = nullptr;
-
-                   if(fp == nullptr)
-                   {
-                       fp = fopen("/Users/sbotha/tmp/bah.raw", "rb");
-                   }
-
-                   if(fp != nullptr)
-                   {
-                       size_t amountRead = fread(buffer, 1, MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT * 2, fp);
-                       if(amountRead != MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT * 2)
-                       {
-                           fseek(fp, 0, SEEK_SET);
-                           fread(buffer, 1, MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT * 2, fp);
-                       }
-                   }
-                   else
-                   {
-                       std::cout << "Not reading file" << std::endl;
-                   }
-                   */
-                  
-                   /*
-                   for(int x = 0; x < MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT; x++)
-                   {
-                       buffer[x] = (rand() % 32767);
-                       if(rand() % 100 < 50)
-                       {
-                           buffer[x] *= -1;
-                       }
-                   }
-                    */
+                    else
+                    {
+                        for(size_t x = 0; x < MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT; x++)
+                        {
+                            buffer[x] = (rand() % 32767);
+                            if(rand() % 100 < 50)
+                            {
+                                buffer[x] *= -1;
+                            }
+                        }
+                    }
 
                     rc = engageAudioDeviceWriteBuffer(_deviceId, _instanceId, buffer, MY_AUDIO_DEVICE_BUFFER_SAMPLE_COUNT);
                 }
@@ -1347,7 +1972,20 @@ private:
             }
 
             // Sleep for our device's "interval"
-            std::this_thread::sleep_for(std::chrono::milliseconds(MY_AUDIO_DEVICE_INTERVAL_MS));
+            tv.tv_sec = 0;
+            tv.tv_usec = (msToSleep * 1000);
+            do
+            {
+                ret = select(1, NULL, NULL, NULL, &tv);
+            }
+            while((ret == -1)&&(errno == EINTR));
+            
+            //std::this_thread::sleep_for(std::chrono::milliseconds(msToSleep));
+        }
+
+        if(fp != nullptr)
+        {
+            fclose(fp);
         }
     }
 
@@ -1366,7 +2004,7 @@ int MyAudioDeviceCallback(int16_t deviceId, int16_t instanceId, EngageAudioDevic
     int rc = ENGAGE_AUDIO_DEVICE_RESULT_OK;
 
     ADADInstance *instance = nullptr;
-    std::cout << "MyAudioDeviceCallback: deviceId=" << deviceId << ", ";
+    std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> MyAudioDeviceCallback: deviceId=" << deviceId << ", ";
 
     // Instance creation is a little different from other operations
     if( op == EngageAudioDeviceCtlOp_t::eadCreateInstance)
@@ -1463,7 +2101,7 @@ int MyAudioDeviceCallback(int16_t deviceId, int16_t instanceId, EngageAudioDevic
         }
         else
         {
-            std::cout << "MyAudioDeviceCallback for an unknown instance id of " << instanceId << std::endl;
+            std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> MyAudioDeviceCallback for an unknown instance id of " << instanceId << std::endl;
             rc = ENGAGE_AUDIO_DEVICE_INVALID_INSTANCE_ID;
         }        
     }
@@ -1539,6 +2177,8 @@ void showUsage()
 {
     std::cout << "usage: engage-cmd -mission:<mission_file> [options]" << std::endl << std::endl
               << "\twhere [options] are:" << std::endl << std::endl
+              << "\t-cs:<certificate_store_file> .......... specify a certificate store file" << std::endl
+              << "\t-csp:<certificate_store_pwd> .......... password (if any) for the certificate store in hexstring format" << std::endl
               << "\t-ep:<engine_policy_file> .............. specify an engine policy" << std::endl
               << "\t-rp:<rallypoint_file> ................. specify a rallypoint configuration" << std::endl
               << "\t-nic:<nic_name> ....................... specify the name of the default nic" << std::endl
@@ -1551,7 +2191,13 @@ void showUsage()
               << "\t-verbose .............................. enable verbose script mode" << std::endl
               << "\t-anon ................................. operate in anonymous identity mode" << std::endl
               << "\t-useadad .............................. use an application-defined audio device" << std::endl
-              << "\t-jsonobjects .......................... display json object configuration" << std::endl;
+              << "\t-adadmic:<file_name>................... name of microphone file to use for the ADAD" << std::endl
+              << "\t-adadspk:<file_name>................... name of speaker file to use for the ADAD" << std::endl              
+              << "\t-jsonobjects .......................... display json object configuration" << std::endl
+              << "\t-sn:<speaker_name> .................... set name of audio device to use for speaker" << std::endl
+              << "\t-mn:<microphone_name> ................. set name of audio device to use for microphone" << std::endl
+              << "\t-dbusconn:<dbus_connection_name> ...... set the DBUS connection name" << std::endl
+              << "\t-dbussig:<dbus_signal_name> ........... set the DBUS signal name" << std::endl;
 }
 
 void showHelp()
@@ -1559,7 +2205,11 @@ void showHelp()
     std::cout << "q.............quit" << std::endl;
     std::cout << "!<command>....execute a shell command" << std::endl;
     std::cout << "-.............draw a line" << std::endl;
+    std::cout << "starteng......start engine" << std::endl;
+    std::cout << "stopeng.......stop engine" << std::endl;
     std::cout << "sg............show group list" << std::endl;
+    std::cout << "sn............show node list" << std::endl;
+    std::cout << "gm............generate mission json" << std::endl;
     std::cout << "y.............request sync" << std::endl;
     std::cout << "p<N>..........set tx priority to N" << std::endl;
     std::cout << "f<N>..........set tx flags to N" << std::endl;
@@ -1653,7 +2303,7 @@ bool loadPolicy(const char *pszFn, ConfigurationObjects::EnginePolicy *pPolicy)
     try
     {
         std::string jsonText;
-        ConfigurationObjects::readTextFileIntoString(pszFn, jsonText);
+        jsonText = Utils::readTextFile(pszFn);
 
         nlohmann::json j = nlohmann::json::parse(jsonText);
         ConfigurationObjects::from_json(j, *pPolicy);
@@ -1673,7 +2323,7 @@ bool loadMission(const char *pszFn, ConfigurationObjects::Mission *pMission, Con
     try
     {
         std::string jsonText;
-        ConfigurationObjects::readTextFileIntoString(pszFn, jsonText);
+        jsonText = Utils::readTextFile(pszFn);
 
         nlohmann::json j = nlohmann::json::parse(jsonText);
         ConfigurationObjects::from_json(j, *pMission);
@@ -1710,7 +2360,7 @@ bool loadRp(const char *pszFn, ConfigurationObjects::Rallypoint *pRp)
     try
     {
         std::string jsonText;
-        ConfigurationObjects::readTextFileIntoString(pszFn, jsonText);
+        jsonText = Utils::readTextFile(pszFn);
 
         nlohmann::json j = nlohmann::json::parse(jsonText);
         ConfigurationObjects::from_json(j, *pRp);
@@ -1722,102 +2372,166 @@ bool loadRp(const char *pszFn, ConfigurationObjects::Rallypoint *pRp)
     return pLd;
 }
 
-void on_ENGAGE_ENGINE_STARTED(void)
+void on_ENGAGE_ENGINE_STARTED(const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_ENGINE_STARTED" << std::endl;
+    g_engineStarted = true;
+    g_engineStopped = false;
 }
 
-void on_ENGAGE_ENGINE_STOPPED(void)
+void on_ENGAGE_ENGINE_STOPPED(const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_ENGINE_STOPPED" << std::endl;
+    g_engineStarted = false;
+    g_engineStopped = true;
 }
 
-void on_ENGAGE_RP_PAUSING_CONNECTION_ATTEMPT(const char *pId)
+void on_ENGAGE_RP_PAUSING_CONNECTION_ATTEMPT(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_RP_PAUSING_CONNECTION_ATTEMPT: " << pId << std::endl;
 }
 
-void on_ENGAGE_RP_CONNECTING(const char *pId)
+void on_ENGAGE_RP_CONNECTING(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_RP_CONNECTING: " << pId << std::endl;
 }
 
-void on_ENGAGE_RP_CONNECTED(const char *pId)
+void on_ENGAGE_RP_CONNECTED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_RP_CONNECTED: " << pId << std::endl;
 }
 
-void on_ENGAGE_RP_DISCONNECTED(const char *pId)
+void on_ENGAGE_RP_DISCONNECTED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_RP_DISCONNECTED: " << pId << std::endl;
 }
 
-void on_ENGAGE_RP_ROUNDTRIP_REPORT(const char *pId, uint32_t rtMs, uint32_t rtRating)
+void on_ENGAGE_RP_ROUNDTRIP_REPORT(const char *pId, uint32_t rtMs, uint32_t rtRating, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_RP_ROUNDTRIP_REPORT: " << pId << ", ms=" << rtMs << ", rating=" << rtRating << std::endl;
 }
 
-void on_ENGAGE_GROUP_CREATED(const char *pId)
+void on_ENGAGE_GROUP_CREATED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_CREATED: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].created = true;
+        g_new_groups[index].createFailed = false;
+        g_new_groups[index].deleted = false;
+    }
 }
 
-void on_ENGAGE_GROUP_CREATE_FAILED(const char *pId)
+void on_ENGAGE_GROUP_CREATE_FAILED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_CREATE_FAILED: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].created = false;
+        g_new_groups[index].createFailed = true;
+    }
 }
 
-void on_ENGAGE_GROUP_DELETED(const char *pId)
+void on_ENGAGE_GROUP_DELETED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_DELETED: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].deleted = true;
+    }
 }
 
-void on_ENGAGE_GROUP_INSTANTIATED(const char *pId)
+void on_ENGAGE_GROUP_INSTANTIATED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_INSTANTIATED: " << pId << std::endl;
 }
 
-void on_ENGAGE_GROUP_INSTANTIATE_FAILED(const char *pId)
+void on_ENGAGE_GROUP_INSTANTIATE_FAILED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_INSTANTIATE_FAILED: " << pId << std::endl;
 }
 
-void on_ENGAGE_GROUP_DEINSTANTIATED(const char *pId)
+void on_ENGAGE_GROUP_DEINSTANTIATED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_DEINSTANTIATED: " << pId << std::endl;
 }
 
-void on_ENGAGE_GROUP_CONNECTED(const char *pId)
+void on_ENGAGE_GROUP_CONNECTED(const char *pId, const char *eventExtraJson)
 {
-    std::cout << "D/EngageMain: on_ENGAGE_GROUP_CONNECTED: " << pId << std::endl;
+    std::cout << "D/EngageMain: on_ENGAGE_GROUP_CONNECTED: " << pId << ", " << eventExtraJson << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].connected = true;
+        g_new_groups[index].connectFailed = false;
+        g_new_groups[index].notConnected = false;
+    }
 }
 
-void on_ENGAGE_GROUP_CONNECT_FAILED(const char *pId)
+void on_ENGAGE_GROUP_CONNECT_FAILED(const char *pId, const char *eventExtraJson)
 {
-    std::cout << "D/EngageMain: on_ENGAGE_GROUP_CONNECT_FAILED: " << pId << std::endl;
+    std::cout << "D/EngageMain: on_ENGAGE_GROUP_CONNECT_FAILED: " << pId << ", " << eventExtraJson << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].connected = false;
+        g_new_groups[index].connectFailed = true;
+        g_new_groups[index].notConnected = true;
+    }
 }
 
-void on_ENGAGE_GROUP_DISCONNECTED(const char *pId)
+void on_ENGAGE_GROUP_DISCONNECTED(const char *pId, const char *eventExtraJson)
 {
-    std::cout << "D/EngageMain: on_ENGAGE_GROUP_DISCONNECTED: " << pId << std::endl;
+    std::cout << "D/EngageMain: on_ENGAGE_GROUP_DISCONNECTED: " << pId << ", " << eventExtraJson << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].connected = false;
+        g_new_groups[index].connectFailed = false;
+        g_new_groups[index].notConnected = true;
+    }
 }
 
-void on_ENGAGE_GROUP_JOINED(const char *pId)
+void on_ENGAGE_GROUP_JOINED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_JOINED: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].joined = true;
+        g_new_groups[index].joinFailed = false;
+        g_new_groups[index].notJoined = false;
+    }
 }
 
-void on_ENGAGE_GROUP_JOIN_FAILED(const char *pId)
+void on_ENGAGE_GROUP_JOIN_FAILED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_JOIN_FAILED: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].joined = false;
+        g_new_groups[index].joinFailed = true;
+        g_new_groups[index].notJoined = true;
+    }
 }
 
-void on_ENGAGE_GROUP_LEFT(const char *pId)
+void on_ENGAGE_GROUP_LEFT(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_LEFT: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].joined = false;
+        g_new_groups[index].joinFailed = false;
+        g_new_groups[index].notJoined = true;
+    }
 }
 
-void on_ENGAGE_GROUP_MEMBER_COUNT_CHANGED(const char *pId, size_t newCount)
+void on_ENGAGE_GROUP_MEMBER_COUNT_CHANGED(const char *pId, size_t newCount, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_MEMBER_COUNT_CHANGED: " 
               << pId 
@@ -1825,27 +2539,39 @@ void on_ENGAGE_GROUP_MEMBER_COUNT_CHANGED(const char *pId, size_t newCount)
               << newCount << std::endl;
 }
 
-void on_ENGAGE_GROUP_RX_STARTED(const char *pId)
+void on_ENGAGE_GROUP_RX_STARTED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_RX_STARTED: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].rxStarted = true;
+        g_new_groups[index].rxEnded = false;
+    }
 }
 
-void on_ENGAGE_GROUP_RX_ENDED(const char *pId)
+void on_ENGAGE_GROUP_RX_ENDED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_RX_ENDED: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].rxStarted = false;
+        g_new_groups[index].rxEnded = true;
+    }
 }
 
-void on_ENGAGE_GROUP_RX_MUTED(const char *pId)
+void on_ENGAGE_GROUP_RX_MUTED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_RX_MUTED: " << pId << std::endl;
 }
 
-void on_ENGAGE_GROUP_RX_UNMUTED(const char *pId)
+void on_ENGAGE_GROUP_RX_UNMUTED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_RX_UNMUTED: " << pId << std::endl;
 }
 
-void on_ENGAGE_GROUP_RX_SPEAKERS_CHANGED(const char *pId, const char *groupTalkerJson)
+void on_ENGAGE_GROUP_RX_SPEAKERS_CHANGED(const char *pId, const char *groupTalkerJson, const char *eventExtraJson)
 {
     std::string listOfNames;
     ConfigurationObjects::GroupTalkers gt;
@@ -1878,29 +2604,67 @@ void on_ENGAGE_GROUP_RX_SPEAKERS_CHANGED(const char *pId, const char *groupTalke
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_RX_SPEAKERS_CHANGED: " << pId << " [" << listOfNames << "]" << std::endl;
 }
 
-void on_ENGAGE_GROUP_TX_STARTED(const char *pId)
+void on_ENGAGE_GROUP_TX_STARTED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_TX_STARTED: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].txStarted = true;
+        g_new_groups[index].txEnded = false;
+        g_new_groups[index].txFailed = false;
+    }
 }
 
-void on_ENGAGE_GROUP_TX_ENDED(const char *pId)
+void on_ENGAGE_GROUP_TX_ENDED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_TX_ENDED: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].txStarted = false;
+        g_new_groups[index].txEnded = true;
+        g_new_groups[index].txFailed = false;
+    }
 }
 
-void on_ENGAGE_GROUP_TX_FAILED(const char *pId)
+void on_ENGAGE_GROUP_TX_FAILED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_TX_FAILED: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].txStarted = false;
+        g_new_groups[index].txEnded = false;
+        g_new_groups[index].txFailed = true;
+    }
 }
 
-void on_ENGAGE_GROUP_TX_USURPED_BY_PRIORITY(const char *pId)
+void on_ENGAGE_GROUP_TX_USURPED_BY_PRIORITY(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_TX_USURPED_BY_PRIORITY: " << pId << std::endl;
+    int index = indexOfGroupId(pId);
+    if(index >= 0)
+    {
+        g_new_groups[index].txStarted = false;
+        g_new_groups[index].txEnded = true;
+        g_new_groups[index].txFailed = false;
+    }
 }
 
-void on_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED(const char *pId)
+void on_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED: " << pId << std::endl;
+}
+
+void on_ENGAGE_GROUP_TX_MUTED(const char *pId, const char *eventExtraJson)
+{
+    std::cout << "D/EngageMain: on_ENGAGE_GROUP_TX_MUTED: " << pId << std::endl;
+}
+
+void on_ENGAGE_GROUP_TX_UNMUTED(const char *pId, const char *eventExtraJson)
+{
+    std::cout << "D/EngageMain: on_ENGAGE_GROUP_TX_UNMUTED: " << pId << std::endl;
 }
 
 void addOrUpdatePd(ConfigurationObjects::PresenceDescriptor& pd)
@@ -1914,7 +2678,7 @@ void removePd(ConfigurationObjects::PresenceDescriptor& pd)
     g_nodes.erase(pd.identity.nodeId);
 }
 
-void on_ENGAGE_GROUP_NODE_DISCOVERED(const char *pId, const char *pszNodeJson)
+void on_ENGAGE_GROUP_NODE_DISCOVERED(const char *pId, const char *pszNodeJson, const char *eventExtraJson)
 {
     ConfigurationObjects::PresenceDescriptor pd;
     if(pd.deserialize(pszNodeJson))
@@ -1930,7 +2694,7 @@ void on_ENGAGE_GROUP_NODE_DISCOVERED(const char *pId, const char *pszNodeJson)
     }    
 }
 
-void on_ENGAGE_GROUP_NODE_REDISCOVERED(const char *pId, const char *pszNodeJson)
+void on_ENGAGE_GROUP_NODE_REDISCOVERED(const char *pId, const char *pszNodeJson, const char *eventExtraJson)
 {
     ConfigurationObjects::PresenceDescriptor pd;
     if(pd.deserialize(pszNodeJson))
@@ -1946,7 +2710,7 @@ void on_ENGAGE_GROUP_NODE_REDISCOVERED(const char *pId, const char *pszNodeJson)
     }    
 }
 
-void on_ENGAGE_GROUP_NODE_UNDISCOVERED(const char *pId, const char *pszNodeJson)
+void on_ENGAGE_GROUP_NODE_UNDISCOVERED(const char *pId, const char *pszNodeJson, const char *eventExtraJson)
 {
     ConfigurationObjects::PresenceDescriptor pd;
     if(pd.deserialize(pszNodeJson))
@@ -1960,51 +2724,51 @@ void on_ENGAGE_GROUP_NODE_UNDISCOVERED(const char *pId, const char *pszNodeJson)
     }    
 }
 
-void on_ENGAGE_GROUP_ASSET_DISCOVERED(const char *pId, const char *pszNodeJson)
+void on_ENGAGE_GROUP_ASSET_DISCOVERED(const char *pId, const char *pszNodeJson, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_ASSET_DISCOVERED: " << pId << ", " << pszNodeJson << std::endl;
 
     engageJoinGroup(pId);
 }
 
-void on_ENGAGE_GROUP_ASSET_REDISCOVERED(const char *pId, const char *pszNodeJson)
+void on_ENGAGE_GROUP_ASSET_REDISCOVERED(const char *pId, const char *pszNodeJson, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_ASSET_REDISCOVERED: " << pId << ", " << pszNodeJson << std::endl;
 }
 
-void on_ENGAGE_GROUP_ASSET_UNDISCOVERED(const char *pId, const char *pszNodeJson)
+void on_ENGAGE_GROUP_ASSET_UNDISCOVERED(const char *pId, const char *pszNodeJson, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_ASSET_UNDISCOVERED: " << pId << ", " << pszNodeJson << std::endl;
 }
 
-void on_ENGAGE_LICENSE_CHANGED()
+void on_ENGAGE_LICENSE_CHANGED(const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_LICENSE_CHANGED" << std::endl;
     const char *p = engageGetActiveLicenseDescriptor();
     std::cout << p << std::endl;
 }
 
-void on_ENGAGE_LICENSE_EXPIRED()
+void on_ENGAGE_LICENSE_EXPIRED(const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_LICENSE_EXPIRED" << std::endl;
 }
 
-void on_ENGAGE_LICENSE_EXPIRING(const char *pSecsLeft)
+void on_ENGAGE_LICENSE_EXPIRING(const char *pSecsLeft, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_LICENSE_EXPIRING in " << pSecsLeft << " seconds" << std::endl;
 }
 
-void on_ENGAGE_GROUP_BLOB_SENT(const char *pId)
+void on_ENGAGE_GROUP_BLOB_SENT(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_BLOB_SENT: " << pId << std::endl;
 }
 
-void on_ENGAGE_GROUP_BLOB_SEND_FAILED(const char *pId)
+void on_ENGAGE_GROUP_BLOB_SEND_FAILED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_BLOB_SEND_FAILED: " << pId << std::endl;
 }
 
-void on_ENGAGE_GROUP_BLOB_RECEIVED(const char *pId, const char *pszBlobJson, const uint8_t *blob, size_t blobSize)
+void on_ENGAGE_GROUP_BLOB_RECEIVED(const char *pId, const char *pszBlobJson, const uint8_t *blob, size_t blobSize, const char *eventExtraJson)
 {
     ConfigurationObjects::BlobInfo bi;
 
@@ -2117,61 +2881,84 @@ void on_ENGAGE_GROUP_BLOB_RECEIVED(const char *pId, const char *pszBlobJson, con
     delete[] blobCopy;
 }
 
-void on_ENGAGE_GROUP_RTP_SENT(const char *pId)
+void on_ENGAGE_GROUP_RTP_SENT(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_RTP_SENT: " << pId << std::endl;
 }
 
-void on_ENGAGE_GROUP_RTP_SEND_FAILED(const char *pId)
+void on_ENGAGE_GROUP_RTP_SEND_FAILED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_RTP_SEND_FAILED: " << pId << std::endl;
 }
 
-void on_ENGAGE_GROUP_RTP_RECEIVED(const char *pId, const char *pszRtpHeaderJson, const uint8_t *payload, size_t payloadSize)
+void on_ENGAGE_GROUP_RTP_RECEIVED(const char *pId, const char *pszRtpHeaderJson, const uint8_t *payload, size_t payloadSize, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_RTP_RECEIVED: " << pId << ", payloadSize=" << payloadSize << ", rtpHeaderJson=" << pszRtpHeaderJson << std::endl;
 }
 
-void on_ENGAGE_GROUP_RAW_SENT(const char *pId)
+void on_ENGAGE_GROUP_RAW_SENT(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_RAW_SENT: " << pId << std::endl;
 }
 
-void on_ENGAGE_GROUP_RAW_SEND_FAILED(const char *pId)
+void on_ENGAGE_GROUP_RAW_SEND_FAILED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_RAW_SEND_FAILED: " << pId << std::endl;
 }
 
-void on_ENGAGE_GROUP_RAW_RECEIVED(const char *pId, const uint8_t *raw, size_t rawSize)
+void on_ENGAGE_GROUP_RAW_RECEIVED(const char *pId, const uint8_t *raw, size_t rawSize, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_RAW_RECEIVED: " << pId << std::endl;
 }
 
 
-void on_ENGAGE_GROUP_TIMELINE_EVENT_STARTED(const char *pId, const char *eventJson)
+void on_ENGAGE_GROUP_TIMELINE_EVENT_STARTED(const char *pId, const char *eventJson, const char *eventExtraJson)
 {
+    /*
+    nlohmann::json j = nlohmann::json::parse(eventJson);
+    std::string alias = j.at("alias");
+    std::string nodeId = j.at("nodeId");
+    std::cout << "D/EngageMain: on_ENGAGE_GROUP_TIMELINE_EVENT_STARTED: alias='" << alias << "', nodeIde='" << nodeId << "'" << std::endl;
+    */
+
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_TIMELINE_EVENT_STARTED: " << pId << ":" << eventJson << std::endl;
 }
 
-void on_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED(const char *pId, const char *eventJson)
+void on_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED(const char *pId, const char *eventJson, const char *eventExtraJson)
 {
+    /*
+    nlohmann::json j = nlohmann::json::parse(eventJson);
+    std::string alias = j.at("alias");
+    std::string nodeId = j.at("nodeId");
+    std::cout << "D/EngageMain: on_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED: alias='" << alias << "', nodeIde='" << nodeId << "'" << std::endl;
+    */
+
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED: " << pId << ":" << eventJson << std::endl;
 }
 
-void on_ENGAGE_GROUP_TIMELINE_EVENT_ENDED(const char *pId, const char *eventJson)
+void on_ENGAGE_GROUP_TIMELINE_EVENT_ENDED(const char *pId, const char *eventJson, const char *eventExtraJson)
 {
+    /*
+    nlohmann::json j = nlohmann::json::parse(eventJson);
+    std::string alias = j.at("alias");
+    std::string nodeId = j.at("nodeId");
+    std::cout << "D/EngageMain: on_ENGAGE_GROUP_TIMELINE_EVENT_ENDED: alias='" << alias << "', nodeIde='" << nodeId << "'" << std::endl;
+    */
+
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_TIMELINE_EVENT_ENDED: " << pId << ":" << eventJson << std::endl;
 }
 
-void on_ENGAGE_GROUP_TIMELINE_REPORT(const char *pId, const char *reportJson)
+void on_ENGAGE_GROUP_TIMELINE_REPORT(const char *pId, const char *reportJson, const char *eventExtraJson)
 {
-    std::cout << "D/EngageMain: on_ENGAGE_GROUP_TIMELINE_REPORT: " << pId << ":" << reportJson << std::endl;
+    std::cout << "D/EngageMain: on_ENGAGE_GROUP_TIMELINE_REPORT: " << pId << ":" << std::endl << reportJson << std::endl;
 }
 
-void on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED(const char *pId)
+void on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED(const char *pId, const char *eventExtraJson)
 {
     std::cout << "D/EngageMain: on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED: " << pId << std::endl;
 }
+
+std::string expandString(const char *s);
 
 class Instruction
 {
@@ -2179,7 +2966,11 @@ public:
     typedef enum {iUnknown, 
                   iGoto, 
                   iLabel, 
-                  iMessage, 
+                  iFatalMessage,
+                  iErrorMessage,
+                  iWarningMessage,
+                  iInfoMessage,
+                  iDebugMessage,
                   iSleep,
                   iCreate, 
                   iDelete,
@@ -2189,6 +2980,8 @@ public:
                   iEndTx,
                   iMuteRx,
                   iUnmuteRx,
+                  iMuteTx,
+                  iUnmuteTx,
                   iEndScript,
                   iSet,
                   iAdd,
@@ -2197,14 +2990,28 @@ public:
                   iOnGoto,
                   iCls,
                   iStartEngine,
-                  iStopEngine
+                  iStopEngine,
+                  iIfCondition,
+                  iWaitForGroup,
+                  iWaitForEngine,
                   } Type_t;
 
     Type_t type;
+    
     int intParam;
+    int intParam2;
+
     bool randomizeInt;
+    bool randomizeInt2;
+
     std::string stringParam;
     std::string stringParam2;
+
+    bool intParamFromPlaceholder;
+    std::string intPlaceholder;
+
+    bool intParamFromPlaceholder2;
+    std::string intPlaceholder2;
 
     Instruction()
     {
@@ -2215,9 +3022,63 @@ public:
     {
         type = iUnknown;
         intParam = 0;
+        intParam2 = 0;
         randomizeInt = false;
+        randomizeInt2 = false;
+        intParamFromPlaceholder = false;
+        intParamFromPlaceholder2 = false;
         stringParam.clear();
         stringParam2.clear();
+        intPlaceholder.clear();
+        intPlaceholder2.clear();
+    }
+
+    int getExpandedIntParam(int rndRange)
+    {
+        if(randomizeInt)
+        {
+            if( rndRange > 0)
+            {
+                return (rand() % rndRange);
+            }
+            else
+            {
+                return rand();
+            }
+        }
+        else if(intParamFromPlaceholder)
+        {
+            std::string tmp = expandString(intPlaceholder.c_str());                    
+            return atoi(tmp.c_str());
+        }
+        else
+        {
+            return intParam;
+        }
+    }
+
+    int getExpandedIntParam2(int rndRange)
+    {
+        if(randomizeInt2)
+        {
+            if( rndRange > 0)
+            {
+                return (rand() % rndRange);
+            }
+            else
+            {
+                return rand();
+            }
+        }
+        else if(intParamFromPlaceholder2)
+        {
+            std::string tmp = expandString(intPlaceholder2.c_str());                    
+            return atoi(tmp.c_str());
+        }
+        else
+        {
+            return intParam2;
+        }
     }
 };
 
@@ -2231,16 +3092,16 @@ void processIntParameter(Instruction *pIns, char *tok)
     {
         pIns->intParam = -1;
     }
-    else if(strcmp(tok, "(randomgroup)") == 0)
-    {
-        pIns->intParam = 0;
-        pIns->randomizeInt = true;
-    }
     else if(tok[0] == 'r')
     {
         tok++;
         pIns->intParam = atoi(tok);
         pIns->randomizeInt = true;
+    }
+    else if(tok[0] == '$')
+    {
+        pIns->intPlaceholder.assign(tok);
+        pIns->intParamFromPlaceholder = true;
     }
     else
     {
@@ -2248,6 +3109,29 @@ void processIntParameter(Instruction *pIns, char *tok)
     }
 }
 
+void processIntParameter2(Instruction *pIns, char *tok)
+{
+    printf("[%s]\n", tok);
+    if(strcmp(tok, "(allgroups)") == 0)
+    {
+        pIns->intParam2 = -1;
+    }
+    else if(tok[0] == 'r')
+    {
+        tok++;
+        pIns->intParam2 = atoi(tok);
+        pIns->randomizeInt = true;
+    }
+    else if(tok[0] == '$')
+    {
+        pIns->intPlaceholder2.assign(tok);
+        pIns->intParamFromPlaceholder2 = true;
+    }
+    else
+    {
+        pIns->intParam2 = atoi(tok);
+    }
+}
 
 bool interpret(char *line, Instruction *pIns)
 {
@@ -2267,7 +3151,32 @@ bool interpret(char *line, Instruction *pIns)
 
     if( strcmp(tok, "message") == 0 )
     {
-        pIns->type = Instruction::iMessage;
+        pIns->type = Instruction::iDebugMessage;
+        pIns->stringParam = tok + strlen(tok) + 1;
+    }
+    else if( strcmp(tok, "message.debug") == 0 )
+    {
+        pIns->type = Instruction::iDebugMessage;
+        pIns->stringParam = tok + strlen(tok) + 1;
+    }
+    else if( strcmp(tok, "message.info") == 0 )
+    {
+        pIns->type = Instruction::iInfoMessage;
+        pIns->stringParam = tok + strlen(tok) + 1;
+    }
+    else if( strcmp(tok, "message.warn") == 0 )
+    {
+        pIns->type = Instruction::iWarningMessage;
+        pIns->stringParam = tok + strlen(tok) + 1;
+    }
+    else if( strcmp(tok, "message.error") == 0 )
+    {
+        pIns->type = Instruction::iErrorMessage;
+        pIns->stringParam = tok + strlen(tok) + 1;
+    }
+    else if( strcmp(tok, "message.fatal") == 0 )
+    {
+        pIns->type = Instruction::iFatalMessage;
         pIns->stringParam = tok + strlen(tok) + 1;
     }
     else if( strcmp(tok, "cls") == 0 )
@@ -2337,6 +3246,18 @@ bool interpret(char *line, Instruction *pIns)
         tok = strtok_s(nullptr, SEPS, &tokenCtx);
         processIntParameter(pIns, tok);
     }
+    else if( strcmp(tok, "mutetx") == 0 )
+    {
+        pIns->type = Instruction::iMuteTx;
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        processIntParameter(pIns, tok);
+    }
+    else if( strcmp(tok, "unmutetx") == 0 )
+    {
+        pIns->type = Instruction::iUnmuteTx;
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        processIntParameter(pIns, tok);
+    }
     else if( strcmp(tok, "set") == 0 )
     {
         pIns->type = Instruction::iSet;
@@ -2345,7 +3266,7 @@ bool interpret(char *line, Instruction *pIns)
         pIns->stringParam = tok;
 
         tok = strtok_s(nullptr, SEPS, &tokenCtx);
-        pIns->intParam = atoi(tok);
+        processIntParameter(pIns, tok);
     }
     else if( strcmp(tok, "add") == 0 )
     {
@@ -2355,7 +3276,7 @@ bool interpret(char *line, Instruction *pIns)
         pIns->stringParam = tok;
 
         tok = strtok_s(nullptr, SEPS, &tokenCtx);
-        pIns->intParam = atoi(tok);
+        processIntParameter(pIns, tok);
     }
     else if( strcmp(tok, "sub") == 0 )
     {
@@ -2365,7 +3286,7 @@ bool interpret(char *line, Instruction *pIns)
         pIns->stringParam = tok;
 
         tok = strtok_s(nullptr, SEPS, &tokenCtx);
-        pIns->intParam = atoi(tok);
+        processIntParameter(pIns, tok);
     }
     else if( strcmp(tok, "on") == 0 )
     {
@@ -2375,7 +3296,7 @@ bool interpret(char *line, Instruction *pIns)
         pIns->stringParam = tok;
 
         tok = strtok_s(nullptr, SEPS, &tokenCtx);
-        pIns->intParam = atoi(tok);
+        processIntParameter(pIns, tok);
 
         tok = strtok_s(nullptr, SEPS, &tokenCtx);
         if(strcmp(tok, "goto") != 0)
@@ -2386,6 +3307,83 @@ bool interpret(char *line, Instruction *pIns)
         tok = strtok_s(nullptr, SEPS, &tokenCtx);
         pIns->stringParam2 = tok;
     }
+    else if( strcmp(tok, "ifcondition") == 0 )
+    {
+        pIns->type = Instruction::iIfCondition;
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        pIns->stringParam = tok;
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        if(strcmp(tok, "goto") != 0)
+        {
+            return false;
+        }
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        pIns->stringParam2 = tok;
+    }    
+    else if( strcmp(tok, "waitforengine") == 0 )
+    {
+        pIns->type = Instruction::iWaitForEngine;
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        pIns->stringParam = tok;
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        if(strcmp(tok, "goto") != 0)
+        {
+            std::cerr << "waitforengine: instruction invalid - no 'goto'" << std::endl;
+            return false;
+        }
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        pIns->stringParam2 = tok;
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        if(strcmp(tok, "after") != 0)
+        {
+            std::cerr << "waitforengine: instruction invalid - no 'after'" << std::endl;
+            return false;
+        }
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        processIntParameter(pIns, tok);
+    }    
+    
+    else if( strcmp(tok, "waitforgroup") == 0 )
+    {
+        pIns->type = Instruction::iWaitForGroup;
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        processIntParameter(pIns, tok);
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        pIns->stringParam = tok;
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        if(strcmp(tok, "goto") != 0)
+        {
+            std::cerr << "waitforgroup: instruction invalid - no 'goto'" << std::endl;
+            return false;
+        }
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        pIns->stringParam2 = tok;
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        if(strcmp(tok, "after") != 0)
+        {
+            std::cerr << "waitforgroup: instruction invalid - no 'after'" << std::endl;
+            return false;
+        }
+
+        tok = strtok_s(nullptr, SEPS, &tokenCtx);
+        processIntParameter2(pIns, tok);
+    }    
     else if( strcmp(tok, "enginestart") == 0 )
     {
         pIns->type = Instruction::iStartEngine;
@@ -2396,6 +3394,7 @@ bool interpret(char *line, Instruction *pIns)
     }
     else
     {
+        std::cerr << "unknown instruction '" << tok << "'" << std::endl;
         return false;
     }
 
@@ -2443,7 +3442,7 @@ bool loadScript(const char *pszFile)
 
         // Strip trailing junk
         lineEnd = lineStart + strlen(lineStart) - 1;
-        while(lineEnd >= lineStart && (*lineEnd == '\n' || *lineEnd == '\r'))
+        while(lineEnd >= lineStart && (*lineEnd == '\n' || *lineEnd == '\r' || *lineEnd == '\t' || *lineEnd == ' '))
         {
             *lineEnd = 0;
             lineEnd--;
@@ -2677,18 +3676,54 @@ bool runScript()
             }
             break;
 
-            case Instruction::iMessage:
+            case Instruction::iFatalMessage:
             {                
-                if(g_verboseScript) std::cout << "message: " << ins.stringParam << std::endl;
+                if(g_verboseScript) std::cout << "iFatalMessage: " << ins.stringParam << std::endl;
                 std::string expanded = expandString(ins.stringParam.c_str());
-                std::cout << "[SCR] " << expanded << std::endl;
+                engageLogMsg(0, "Script", expanded.c_str());
+                itrIns++;
+            }
+            break;
+
+            case Instruction::iErrorMessage:
+            {                
+                if(g_verboseScript) std::cout << "iErrorMessage: " << ins.stringParam << std::endl;
+                std::string expanded = expandString(ins.stringParam.c_str());
+                engageLogMsg(1, "Script", expanded.c_str());
+                itrIns++;
+            }
+            break;
+
+            case Instruction::iWarningMessage:
+            {                
+                if(g_verboseScript) std::cout << "iWarningMessage: " << ins.stringParam << std::endl;
+                std::string expanded = expandString(ins.stringParam.c_str());
+                engageLogMsg(2, "Script", expanded.c_str());
+                itrIns++;
+            }
+            break;
+
+            case Instruction::iInfoMessage:
+            {                
+                if(g_verboseScript) std::cout << "iInfoMessage: " << ins.stringParam << std::endl;
+                std::string expanded = expandString(ins.stringParam.c_str());
+                engageLogMsg(3, "Script", expanded.c_str());
+                itrIns++;
+            }
+            break;
+
+            case Instruction::iDebugMessage:
+            {                
+                if(g_verboseScript) std::cout << "iDebugMessage: " << ins.stringParam << std::endl;
+                std::string expanded = expandString(ins.stringParam.c_str());
+                engageLogMsg(4, "Script", expanded.c_str());
                 itrIns++;
             }
             break;
 
             case Instruction::iSleep:
             {
-                int ms = (ins.randomizeInt) ? rand() % ins.intParam : ins.intParam;
+                int ms = ins.getExpandedIntParam(ins.intParam);
                 if(g_verboseScript) std::cout << "sleep: " << ms << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
                 itrIns++;
@@ -2697,56 +3732,70 @@ bool runScript()
 
             case Instruction::iCreate:
             {
-                doCreate((ins.randomizeInt) ? rand() % g_new_groups.size() : ins.intParam);
+                doCreate(ins.getExpandedIntParam(g_new_groups.size()));
                 itrIns++;
             }
             break;
 
             case Instruction::iDelete:
             {
-                doDelete((ins.randomizeInt) ? rand() % g_new_groups.size() : ins.intParam);                
+                doDelete(ins.getExpandedIntParam(g_new_groups.size()));
                 itrIns++;
             }
             break;
 
             case Instruction::iJoin:
             {
-                doJoin((ins.randomizeInt) ? rand() % g_new_groups.size() : ins.intParam);
+                doJoin(ins.getExpandedIntParam(g_new_groups.size()));
                 itrIns++;
             }
             break;
 
             case Instruction::iLeave:
             {
-                doLeave((ins.randomizeInt) ? rand() % g_new_groups.size() : ins.intParam);
+                doLeave(ins.getExpandedIntParam(g_new_groups.size()));
                 itrIns++;
             }
             break;
      
             case Instruction::iBeginTx:
             {
-                doBeginTx((ins.randomizeInt) ? rand() % g_new_groups.size() : ins.intParam);
+                doBeginTx(ins.getExpandedIntParam(g_new_groups.size()));
                 itrIns++;
             }
             break;
 
             case Instruction::iEndTx:
             {
-                doEndTx((ins.randomizeInt) ? rand() % g_new_groups.size() : ins.intParam);
+                doEndTx(ins.getExpandedIntParam(g_new_groups.size()));
                 itrIns++;
             }
             break;
 
             case Instruction::iMuteRx:
             {
-                doMuteRx((ins.randomizeInt) ? rand() % g_new_groups.size() : ins.intParam);
+                doMuteRx(ins.getExpandedIntParam(g_new_groups.size()));
                 itrIns++;
             }
             break;
 
             case Instruction::iUnmuteRx:
             {
-                doUnmuteRx((ins.randomizeInt) ? rand() % g_new_groups.size() : ins.intParam);
+                doUnmuteRx(ins.getExpandedIntParam(g_new_groups.size()));
+                itrIns++;
+            }
+            break;
+
+            case Instruction::iMuteTx:
+            {
+                doMuteTx(ins.getExpandedIntParam(g_new_groups.size()));
+                itrIns++;
+            }
+            break;
+
+            case Instruction::iUnmuteTx:
+            {
+                doUnmuteTx(ins.getExpandedIntParam(g_new_groups.size()));
                 itrIns++;
             }
             break;
@@ -2787,6 +3836,10 @@ bool runScript()
             case Instruction::iOnGoto:
             {
                 if(g_verboseScript) std::cout << "ongoto: " << ins.stringParam << std::endl;
+
+                ins.intParam = ins.getExpandedIntParam(0);
+                ins.intParam2 = ins.getExpandedIntParam2(0);
+
                 std::map<std::string, int>::iterator    itr = g_intVars.find(ins.stringParam);
                 if(itr == g_intVars.end())
                 {
@@ -2795,7 +3848,7 @@ bool runScript()
                 }
                 else
                 {
-                    if(itr->second == itrIns->intParam)
+                    if(itr->second == ins.intParam)
                     {
                         std::list<Instruction>::iterator itrFind;
                         for(itrFind = g_scriptInstructions.begin();
@@ -2811,6 +3864,7 @@ bool runScript()
                         if(itrFind == g_scriptInstructions.end())
                         {
                             std::cerr << "ongoto: label '" << ins.stringParam2 << "' not found!" << std::endl;
+                            error = true;
                         }
 
                         itrIns = itrFind;
@@ -2834,6 +3888,231 @@ bool runScript()
             {
                 doStopEngine();
                 itrIns++;
+            }
+            break;
+
+            case Instruction::iIfCondition:
+            {
+                /*
+                if(g_verboseScript) std::cout << "ifcondition: " << ins.stringParam << std::endl;
+
+                bool foundIt = false;
+                bool conditionSatisfied = false;
+                for(size_t x = 0; g_ifConditions[x].nm; x++)
+                {
+                    if(ins.stringParam.compare(g_ifConditions[x].nm) == 0)
+                    {
+                        foundIt = true;
+                        conditionSatisfied = *g_ifConditions[x].bl;
+                    }
+                }
+
+                if(!foundIt)
+                {
+                    std::cerr << "ifcondition: condition '" << ins.stringParam << "' not found!" << std::endl;
+                    error = true;
+                }
+                else
+                {
+                    if(conditionSatisfied)
+                    {
+                        std::list<Instruction>::iterator itrFind;
+                        for(itrFind = g_scriptInstructions.begin();
+                            itrFind != g_scriptInstructions.end();
+                            itrFind++)
+                        {
+                            if(itrFind->type == Instruction::iLabel && itrFind->stringParam.compare(ins.stringParam2) == 0)
+                            {
+                                break;
+                            }
+                        }
+
+                        if(itrFind == g_scriptInstructions.end())
+                        {
+                            std::cerr << "ifcondition: label '" << ins.stringParam2 << "' not found!" << std::endl;
+                            abort();
+                        }
+
+                        itrIns = itrFind;
+                    }
+                    else
+                    {
+                        itrIns++;
+                    }
+                }
+                */
+            }
+            break;
+            
+            case Instruction::iWaitForEngine:
+            {
+                if(g_verboseScript) std::cout << "waitforengine: " << ins.stringParam << std::endl;
+
+                // intParam1 is the timeout
+                // stringParam is the condition name
+                // stringParam2 is the label to goto upon timeout
+
+                ins.intParam = ins.getExpandedIntParam(0);
+                ins.intParam2 = ins.getExpandedIntParam2(0);
+
+                if(ins.intParam < 0)
+                {
+                    std::cerr << "waitforengine: timeout '" << ins.intParam << " invalid!" << std::endl;
+                    error = true;
+                    break;
+                }
+
+                uint64_t started;
+                uint64_t now;
+                bool timedOut = false;
+
+                started = getTickMs();
+                while( true )
+                {
+                    // Have we timed out?
+                    now = getTickMs();
+                    if( now - started >= (uint64_t) ins.intParam)
+                    {
+                        timedOut = true;
+                        break;
+                    }
+
+                    if( 
+                            ((ins.stringParam.compare("started") == 0) && (g_engineStarted)) ||
+                            ((ins.stringParam.compare("stopped") == 0) && (g_engineStopped)) 
+                        )
+                    {
+                        break;
+                    }
+
+                    // Sleep for the smallest (reasonable) time possible
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+
+                if( !error && timedOut )
+                {
+                    std::list<Instruction>::iterator itrFind;
+                    for(itrFind = g_scriptInstructions.begin();
+                        itrFind != g_scriptInstructions.end();
+                        itrFind++)
+                    {
+                        if(itrFind->type == Instruction::iLabel && itrFind->stringParam.compare(ins.stringParam2) == 0)
+                        {
+                            std::cout << "waitforengine '" << ins.stringParam << "' timeout" << std::endl;
+                            break;
+                        }
+                    }
+
+                    if(itrFind == g_scriptInstructions.end())
+                    {
+                        std::cerr << "waitforengine: label '" << ins.stringParam2 << "' not found!" << std::endl;
+                        abort();
+                    }
+
+                    itrIns = itrFind;
+                }
+                else
+                {
+                    itrIns++;
+                }
+            }
+            break;
+
+            case Instruction::iWaitForGroup:
+            {
+                if(g_verboseScript) std::cout << "waitforgroup: " << ins.stringParam << std::endl;
+
+                ins.intParam = ins.getExpandedIntParam(0);
+                ins.intParam2 = ins.getExpandedIntParam2(0);
+
+                // intParam is the index
+                // intParam2 is the timeout
+                // stringParam is the condition name
+                // stringParam2 is the label to goto upon timeout
+
+                if(ins.intParam < 0 || ins.intParam >= (int)g_new_groups.size())
+                {
+                    std::cerr << "waitforgroup: index '" << ins.intParam << " invalid!" << std::endl;
+                    error = true;
+                    break;
+                }
+
+                if(ins.intParam2 < 0)
+                {
+                    std::cerr << "waitforgroup: timeout '" << ins.intParam2 << " invalid!" << std::endl;
+                    error = true;
+                    break;
+                }
+
+                uint64_t started;
+                uint64_t now;
+                bool timedOut = false;
+
+                started = getTickMs();
+                while( true )
+                {
+                    // Have we timed out?
+                    now = getTickMs();
+                    if( now - started >= (uint64_t) ins.intParam2)
+                    {
+                        timedOut = true;
+                        break;
+                    }
+
+                    if( 
+                            ((ins.stringParam.compare("created") == 0) && (g_new_groups[ins.intParam].created)) ||
+                            ((ins.stringParam.compare("createfailed") == 0) && (g_new_groups[ins.intParam].createFailed)) ||
+                            ((ins.stringParam.compare("deleted") == 0) && (g_new_groups[ins.intParam].deleted)) ||
+
+                            ((ins.stringParam.compare("joined") == 0) && (g_new_groups[ins.intParam].joined)) ||
+                            ((ins.stringParam.compare("joinfailed") == 0) && (g_new_groups[ins.intParam].joinFailed)) ||
+                            ((ins.stringParam.compare("notjoined") == 0) && (g_new_groups[ins.intParam].notJoined)) ||
+                                                    
+                            ((ins.stringParam.compare("connected") == 0) && (g_new_groups[ins.intParam].connected)) ||
+                            ((ins.stringParam.compare("connectfailed") == 0) && (g_new_groups[ins.intParam].connectFailed)) ||
+                            ((ins.stringParam.compare("notconnected") == 0) && (g_new_groups[ins.intParam].notConnected)) ||
+                                                    
+                            ((ins.stringParam.compare("rxstarted") == 0) && (g_new_groups[ins.intParam].rxStarted)) ||
+                            ((ins.stringParam.compare("rxended") == 0) && (g_new_groups[ins.intParam].rxEnded)) ||
+                                                    
+                            ((ins.stringParam.compare("txstarted") == 0) && (g_new_groups[ins.intParam].txStarted)) ||
+                            ((ins.stringParam.compare("txended") == 0) && (g_new_groups[ins.intParam].txEnded)) ||
+                            ((ins.stringParam.compare("txfailed") == 0) && (g_new_groups[ins.intParam].txFailed))
+                        )
+                    {
+                        break;
+                    }
+
+                    // Sleep for the smallest (reasonable) time possible
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+
+                if( !error && timedOut )
+                {
+                    std::list<Instruction>::iterator itrFind;
+                    for(itrFind = g_scriptInstructions.begin();
+                        itrFind != g_scriptInstructions.end();
+                        itrFind++)
+                    {
+                        if(itrFind->type == Instruction::iLabel && itrFind->stringParam.compare(ins.stringParam2) == 0)
+                        {
+                            std::cout << "waitforgroup '" << ins.stringParam << "' timeout" << std::endl;
+                            break;
+                        }
+                    }
+
+                    if(itrFind == g_scriptInstructions.end())
+                    {
+                        std::cerr << "waitforgroup: label '" << ins.stringParam2 << "' not found!" << std::endl;
+                        abort();
+                    }
+
+                    itrIns = itrFind;
+                }
+                else
+                {
+                    itrIns++;
+                }
             }
             break;
         }
@@ -2882,6 +4161,8 @@ bool registepLdallbacks()
     cb.PFN_ENGAGE_GROUP_TX_FAILED = on_ENGAGE_GROUP_TX_FAILED;
     cb.PFN_ENGAGE_GROUP_TX_USURPED_BY_PRIORITY = on_ENGAGE_GROUP_TX_USURPED_BY_PRIORITY;
     cb.PFN_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED = on_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED;
+    cb.PFN_ENGAGE_GROUP_TX_MUTED = on_ENGAGE_GROUP_TX_MUTED;
+    cb.PFN_ENGAGE_GROUP_TX_UNMUTED = on_ENGAGE_GROUP_TX_UNMUTED;
 
     cb.PFN_ENGAGE_GROUP_NODE_DISCOVERED = on_ENGAGE_GROUP_NODE_DISCOVERED;
     cb.PFN_ENGAGE_GROUP_NODE_REDISCOVERED = on_ENGAGE_GROUP_NODE_REDISCOVERED;
