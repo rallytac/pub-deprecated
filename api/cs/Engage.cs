@@ -160,6 +160,15 @@ public class Engage
 
     public class JsonFields
     {
+        public class RallypointConnectionDetail
+        {
+            public static String objectName = "rallypointConnectionDetail";
+            public static String internalId = "internalId";
+            public static String host = "host";
+            public static String port = "port";
+            public static String msToNextConnectionAttempt = "msToNextConnectionAttempt";            
+        }
+
         public class GroupConnectionDetail
         {
             public static String objectName = "groupConnectionDetail";
