@@ -5021,7 +5021,7 @@ namespace ConfigurationObjects
     /**
     * @brief Detailed information for a group connection
     * 
-    * Helper C++ class to serialize and de-serialize EEGroupConnection JSON 
+    * Helper C++ class to serialize and de-serialize GroupConnectionDetail JSON 
     *         
     */       
     class GroupConnectionDetail : public ConfigurationObjectBase
@@ -5078,6 +5078,11 @@ namespace ConfigurationObjects
             TOJSON_IMPL(peer),
             TOJSON_IMPL(asFailover)
         };
+
+        if(p.asFailover)
+        {
+            j["asFailover"] = p.asFailover;
+        }
     }
     static void from_json(const nlohmann::json& j, GroupConnectionDetail& p)
     {
@@ -5088,6 +5093,68 @@ namespace ConfigurationObjects
         getOptional<bool>("asFailover", p.asFailover, j, false);
     }
 
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(RallypointConnectionDetail)
+    /**
+    * @brief Detailed information for a rallypoint connection
+    * 
+    * Helper C++ class to serialize and de-serialize RallypointConnectionDetail JSON 
+    *         
+    */       
+    class RallypointConnectionDetail : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_WRAPPED_JSON_SERIALIZATION(RallypointConnectionDetail)
+        IMPLEMENT_JSON_DOCUMENTATION(RallypointConnectionDetail)
+        
+    public:
+        /** @brief Id */
+        std::string                                     internalId;
+
+        /** @brief Host */
+        std::string                                     host;
+
+        /** @brief Port */
+        int                                             port;
+
+        /** @brief Milliseconds until next connection attempt */
+        uint64_t                                        msToNextConnectionAttempt;
+
+        RallypointConnectionDetail()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            internalId.clear();
+            host.clear();
+            port = 0;
+            msToNextConnectionAttempt = 0;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const RallypointConnectionDetail& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(internalId),
+            TOJSON_IMPL(host),
+            TOJSON_IMPL(port)
+        };
+
+        if(p.msToNextConnectionAttempt > 0)
+        {
+            j["msToNextConnectionAttempt"] = p.msToNextConnectionAttempt;
+        }
+    }
+    static void from_json(const nlohmann::json& j, RallypointConnectionDetail& p)
+    {
+        p.clear();
+        getOptional<std::string>("internalId", p.internalId, j, EMPTY_STRING);
+        getOptional<std::string>("host", p.host, j, EMPTY_STRING);
+        getOptional<int>("port", p.port, j, 0);
+        getOptional<uint64_t>("msToNextConnectionAttempt", p.msToNextConnectionAttempt, j, 0);
+    }
     //-----------------------------------------------------------    
     static inline void dumpExampleConfigurations(const char *path)
     {
@@ -5144,6 +5211,8 @@ namespace ConfigurationObjects
         CertStoreCertificate::document(path);
         CertStore::document(path);
         CertificateDescriptor::document(path);
+        GroupConnectionDetail::document(path);
+        RallypointConnectionDetail::document(path);
     }
 }
 
