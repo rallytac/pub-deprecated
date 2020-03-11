@@ -1,5 +1,8 @@
 # Change List
 
+## March 22, 2020 - 1.133.8893
+- Corrects an issue on some Windows network drivers related to multicast receive on a QoS-enabled socket.
+
 ## March 9, 2020 - 1.132.8892
 - Adds multicast failover and failback of downed Rallypoint links as a standard feature.
 - Adds JSON clarifier objects to all events fired by the Engine.
