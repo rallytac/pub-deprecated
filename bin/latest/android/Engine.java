@@ -315,6 +315,15 @@ public final class Engine
     
     public final class JsonFields
     {        
+        public final class RallypointConnectionDetail
+        {
+            public static final String objectName = "rallypointConnectionDetail";
+            public static final String internalId = "internalId";
+            public static final String host = "host";
+            public static final String port = "port";
+            public static final String msToNextConnectionAttempt = "msToNextConnectionAttempt";            
+        }
+
         public final class GroupConnectionDetail
         {
             public static final String objectName = "groupConnectionDetail";
