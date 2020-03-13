@@ -1,4 +1,7 @@
 apply plugin: 'com.android.application'
+
+// Comment this to disable Firebase Analytics or if you do not have the necessary
+// google-services.json file for Firebase.
 apply plugin: 'com.google.gms.google-services'
 
 // The directory where Engage-specific items are stored

@@ -16,6 +16,7 @@
     <string name="opt_ptt_latching">0</string>
     <string name="opt_experimental_general_enabled">0</string>
     <string name="opt_experimental_human_biometrics_enabled">0</string>
+    <string name="opt_firebase_analytics_enabled">0</string>
 
     <string name="app_keycode_ptt">0</string>
     <string name="app_ptt_voice_control_on">engage</string>
