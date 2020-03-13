@@ -8,7 +8,7 @@ package com.rallytac.engageandroid;
 import android.content.Context;
 import android.location.Location;
 import android.os.Looper;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 
 import com.google.android.gms.location.FusedLocationProviderClient;

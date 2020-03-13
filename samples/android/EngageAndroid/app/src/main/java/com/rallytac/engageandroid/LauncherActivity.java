@@ -10,15 +10,16 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,7 +31,6 @@ import android.widget.EditText;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.journeyapps.barcodescanner.Util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,12 +77,89 @@ public class LauncherActivity extends AppCompatActivity
         // See if the launcher has been run before
         _wasLauncherRunBefore = (Globals.getSharedPreferences().getBoolean(PreferenceKeys.LAUNCHER_RUN_BEFORE, false) == true);
 
+        if(!_wasLauncherRunBefore)
+        {
+            setFlavorDefaults();
+        }
+
         // Launcher has been run before :)
         Globals.getSharedPreferencesEditor().putBoolean(PreferenceKeys.LAUNCHER_RUN_BEFORE, true);
         Globals.getSharedPreferencesEditor().apply();
 
         _permissionStateMachineStep = LAUNCH_STEP_CHECK_DOZE;
         doLaunchStateTransition();
+    }
+
+    private void setFlavorDefaults()
+    {
+        String[] ar = getResources().getStringArray(R.array.flavor_defaults);
+        if(ar == null || ar.length == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            SharedPreferences.Editor ed = Globals.getSharedPreferencesEditor();
+
+            for (String s : ar)
+            {
+                String[] elems = s.split(",");
+                if (elems.length != 3)
+                {
+                    throw new Exception("Corrupted flavor default " + s);
+                }
+
+                String nm = elems[0].trim();
+                String type = elems[1].trim();
+
+                if (Utils.isEmptyString(nm) || Utils.isEmptyString(type))
+                {
+                    throw new Exception("Corrupted flavor default " + s);
+                }
+
+                if (type.compareToIgnoreCase("string") == 0)
+                {
+                    ed.putString(nm, elems[2].trim());
+                }
+                else if (type.compareToIgnoreCase("boolean") == 0)
+                {
+                    ed.putBoolean(nm, Boolean.parseBoolean(elems[2].trim()));
+                }
+                else if (type.compareToIgnoreCase("integer") == 0)
+                {
+                    // TODO: This should be an INT!!!!!!
+                    ed.putString(nm, elems[2].trim());
+                }
+                else if (type.compareToIgnoreCase("float") == 0)
+                {
+                    // TODO: This should be a float!!!
+                    ed.putString(nm, elems[2].trim());
+                }
+                else
+                {
+                    throw new Exception("Corrupted flavor default " + s);
+                }
+            }
+
+            ed.apply();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+        /*
+
+
+        ed.putString(PreferenceKeys.USER_TONE_LEVEL_PTT, "1.0");
+        ed.putBoolean(PreferenceKeys.USER_NOTIFY_PTT_EVERY_TIME, true);
+        ed.putBoolean(PreferenceKeys.USER_UI_PTT_LATCHING, true);
+        ed.putBoolean(PreferenceKeys.USER_UI_PTT_VOICE_CONTROL, true);
+
+        ed.apply();
+        */
     }
 
     private void showIssueAndFinish(final String title, final String message)
@@ -412,31 +489,35 @@ public class LauncherActivity extends AppCompatActivity
                     {
                         public void onClick(DialogInterface dialog, int id)
                         {
-                            String val;
+                            String userId;
+                            String displayName;
+                            String alias;
 
-                            // User ID
-                            val = etUserId.getText().toString().trim();
-                            if(Utils.isEmptyString(val))
-                            {
-                                val = Globals.getSharedPreferences().getString(PreferenceKeys.USER_ALIAS_ID, null) + getString(R.string.generated_user_id_email_domain);
-                            }
-                            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_ID, val);
-
-                            // Display Name
-                            val = etDisplayName.getText().toString().trim();
-                            if(Utils.isEmptyString(val))
-                            {
-                                val = String.format(getString(R.string.fmt_user_display_name_generate), Globals.getSharedPreferences().getString(PreferenceKeys.USER_ID, "?"));
-                            }
-                            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_DISPLAY_NAME, val);
+                            userId = etUserId.getText().toString().trim();
+                            displayName = etDisplayName.getText().toString().trim();
+                            alias = etAlias.getText().toString().trim();
 
                             // Alias
-                            val = etAlias.getText().toString().trim();
-                            if(Utils.isEmptyString(val))
+                            if(Utils.isEmptyString(alias))
                             {
-                                val = Utils.generateUserAlias(getString(R.string.fmt_user_alias_id_generate));
+                                alias = Utils.generateUserAlias(getString(R.string.fmt_user_alias_id_generate));
                             }
-                            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_ALIAS_ID, val);
+
+                            // User ID
+                            if(Utils.isEmptyString(userId))
+                            {
+                                userId = Globals.getSharedPreferences().getString(PreferenceKeys.USER_ID, alias) + getString(R.string.generated_user_id_email_domain);
+                            }
+
+                            // Display Name
+                            if(Utils.isEmptyString(displayName))
+                            {
+                                displayName = String.format(getString(R.string.fmt_user_display_name_generate), Globals.getSharedPreferences().getString(PreferenceKeys.USER_DISPLAY_NAME, alias));
+                            }
+
+                            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_ALIAS_ID, alias);
+                            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_ID, userId);
+                            Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_DISPLAY_NAME, displayName);
 
                             // Save it
                             Globals.getSharedPreferencesEditor().apply();

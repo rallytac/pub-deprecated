@@ -13,6 +13,8 @@ public class Constants
 
     public enum UiMode {vSingle, vMulti}
 
+    public final static int PTT_KEY_DOUBLE_CLICK_LATCH_THRESHOLD_MS = 500;
+
     public final static int LAUNCH_TIMEOUT_MS = 5000;
 
     public final static int MIN_IP_PORT = 1;
@@ -45,6 +47,9 @@ public class Constants
     public final static int DEF_LOCATION_MIN_INTERVAL_SECS = 60;
     public final static float DEF_LOCATION_MIN_DISPLACEMENT = (float)5.0;
 
+    public final static boolean DEF_MULTICAST_FAILOVER_ENABLED = true;
+    public final static int DEF_MULTICAST_FAILOVER_THRESHOLD_SECS = 10;
+
     public final static int QR_CODE_WIDTH = 800;
     public final static int QR_CODE_HEIGHT = 800;
 
@@ -70,4 +75,7 @@ public class Constants
     public static final long MAX_LICENSE_ACTIVATION_DELAY_MS = (86400 * 1000);
 
     public final static boolean DEF_USER_UI_PTT_LATCHING = false;
+    public final static boolean DEF_USER_UI_PTT_VOICE_CONTROL = false;
+
+    public final static int TX_UNMUTE_DELAY_MS_AFTER_GRANT_TONE = 120;
 }

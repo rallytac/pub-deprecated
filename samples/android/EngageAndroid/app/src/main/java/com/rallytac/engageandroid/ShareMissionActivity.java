@@ -11,9 +11,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.content.FileProvider;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -233,9 +233,12 @@ public class ShareMissionActivity extends AppCompatActivity
             // Finally, we can create our QR code!
             buildBitmap();
             setBitmap();
+
+            Globals.getEngageApplication().logEvent(Analytics.MISSION_QR_CODE_DISPLAYED_FOR_SHARE);
         }
         else
         {
+            Globals.getEngageApplication().logEvent(Analytics.MISSION_QR_CODE_FAILED_CREATE);
             Utils.showPopupMsg(ShareMissionActivity.this,getString(R.string.share_failed_to_create_shareable_configuration_package));
             finish();
         }
@@ -266,6 +269,8 @@ public class ShareMissionActivity extends AppCompatActivity
                     }
                 }
             });
+
+            Globals.getEngageApplication().logEvent(Analytics.MISSION_UPLOAD_REQUESTED);
 
             String urlBase = getString(R.string.mission_hub_address);
             String fn = ac.getMissionId() + ".json";
@@ -307,6 +312,8 @@ public class ShareMissionActivity extends AppCompatActivity
 
                 fd.deleteOnExit();
                 data.addUri(u);
+
+                Globals.getEngageApplication().logEvent(Analytics.MISSION_SHARE_JSON);
             }
             else
             {
@@ -335,6 +342,8 @@ public class ShareMissionActivity extends AppCompatActivity
 
                 fd.deleteOnExit();
                 data.addUri(u);
+
+                Globals.getEngageApplication().logEvent(Analytics.MISSION_SHARE_QR);
             }
 
             data.setText(String.format(getString(R.string.share_mission_email_subject), getString(R.string.app_name), ac.getMissionName()));
@@ -346,6 +355,7 @@ public class ShareMissionActivity extends AppCompatActivity
         }
         catch (Exception e)
         {
+            Globals.getEngageApplication().logEvent(Analytics.MISSION_SHARE_EXCEPTION);
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }

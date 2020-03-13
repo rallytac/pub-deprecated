@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -66,9 +66,20 @@
         android:layout_height="48dp"
         android:layout_marginEnd="42dp"
         android:layout_marginBottom="24dp"
-        android:visibility="visible"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="@+id/ivCard"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_net_error" />
 
-</android.support.constraint.ConstraintLayout>
+    <ImageView
+        android:id="@+id/ivNetFailover"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="42dp"
+        android:layout_marginBottom="24dp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@+id/ivCard"
+        app:layout_constraintEnd_toStartOf="@+id/ivNetError"
+        app:srcCompat="@drawable/ic_net_failover" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

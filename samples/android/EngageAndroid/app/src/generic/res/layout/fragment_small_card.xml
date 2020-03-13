@@ -48,7 +48,7 @@
         android:layout_marginEnd="8dp"
         android:text="Group 1"
         android:textColor="@android:color/white"
-        android:textSize="18sp"
+        android:textSize="12sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/ivSpeaker"
         app:layout_constraintHorizontal_bias="0.0"
@@ -65,7 +65,7 @@
         android:layout_marginBottom="8dp"
         android:text="[Talkers]"
         android:textColor="@android:color/white"
-        android:textSize="12sp"
+        android:textSize="10sp"
         app:layout_constraintBottom_toBottomOf="@+id/ivCard"
         app:layout_constraintEnd_toStartOf="@+id/ivSpeaker"
         app:layout_constraintHorizontal_bias="0.0"
@@ -84,6 +84,7 @@
         app:layout_constraintTop_toTopOf="@+id/ivPttEnable"
         app:srcCompat="@drawable/ic_net_error"
         android:visibility="invisible"/>
+
 
     <ImageView
         android:id="@+id/ivNetFailover"

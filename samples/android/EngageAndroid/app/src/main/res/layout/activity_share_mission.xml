@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     tools:context=".ShareMissionActivity">
 
-    <android.support.constraint.ConstraintLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -88,7 +88,7 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
-                <android.support.constraint.ConstraintLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/layoutQrCodeXXX"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -156,8 +156,8 @@
                         app:layout_constraintTop_toBottomOf="@+id/tvQrCodeDescription" />
 
 
-                </android.support.constraint.ConstraintLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </LinearLayout>
         </LinearLayout>
-    </android.support.constraint.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

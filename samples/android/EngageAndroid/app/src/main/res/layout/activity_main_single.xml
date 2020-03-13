@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -96,6 +96,15 @@
         app:srcCompat="@drawable/ic_history" />
 
     <ImageView
+        android:id="@+id/ivGroups"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="32dp"
+        app:layout_constraintStart_toEndOf="@+id/ivTimeline"
+        app:layout_constraintTop_toTopOf="@+id/ivTimeline"
+        app:srcCompat="@drawable/ic_group_list" />
+
+    <ImageView
         android:id="@+id/ivMainScreenMenu"
         android:layout_width="32dp"
         android:layout_height="32dp"
@@ -119,13 +128,14 @@
         android:layout_height="32dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
+        android:onClick="onClickPreviousGroup"
         android:scaleType="fitXY"
-        app:layout_constraintTop_toTopOf="@+id/ivPtt"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@+id/ivPtt"
         app:layout_constraintEnd_toStartOf="@+id/ivPtt"
         app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/ic_previous_group"
-        android:onClick="onClickPreviousGroup"/>
+        app:layout_constraintTop_toTopOf="@+id/ivPtt"
+        app:srcCompat="@drawable/ic_previous_group" />
 
     <ImageView
         android:id="@+id/ivPtt"
@@ -145,13 +155,14 @@
         android:layout_height="32dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
+        android:onClick="onClickNextGroup"
         android:scaleType="fitXY"
-        app:layout_constraintTop_toTopOf="@+id/ivPtt"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@+id/ivPtt"
-        app:layout_constraintStart_toEndOf="@+id/ivPtt"
         app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/ic_next_group"
-        android:onClick="onClickNextGroup"/>
+        app:layout_constraintStart_toEndOf="@+id/ivPtt"
+        app:layout_constraintTop_toTopOf="@+id/ivPtt"
+        app:srcCompat="@drawable/ic_next_group" />
 
 
     <ImageView
@@ -164,4 +175,4 @@
         app:layout_constraintTop_toBottomOf="@+id/tvNotificationBar"
         app:srcCompat="@drawable/ic_team" />
 
-</android.support.constraint.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

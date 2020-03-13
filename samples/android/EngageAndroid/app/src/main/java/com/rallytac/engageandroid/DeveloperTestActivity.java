@@ -21,28 +21,14 @@
 
 package com.rallytac.engageandroid;
 
-import android.content.Context;
-import android.content.DialogInterface;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.rallytac.engage.engine.Engine;
-import com.rallytac.engageandroid.ActiveConfiguration;
 import com.rallytac.engageandroid.Biometrics.DataSeries;
-import com.rallytac.engageandroid.Constants;
-import com.rallytac.engageandroid.DatabaseMission;
-import com.rallytac.engageandroid.EngageApplication;
-import com.rallytac.engageandroid.Globals;
-import com.rallytac.engageandroid.GroupDescriptor;
-import com.rallytac.engageandroid.MissionDatabase;
-import com.rallytac.engageandroid.Utils;
 
 import org.json.JSONObject;
 

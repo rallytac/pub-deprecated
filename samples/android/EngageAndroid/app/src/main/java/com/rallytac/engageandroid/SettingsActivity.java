@@ -17,7 +17,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
-import android.support.v7.app.ActionBar;
+import androidx.appcompat.app.ActionBar;
 import android.util.Log;
 import android.view.MenuItem;
 
@@ -219,9 +219,23 @@ public class SettingsActivity extends AppCompatPreferenceActivity
         }
     }
 
+
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class GeneralPreferenceFragment extends BasePreferenceFragment
     {
+        private void hidePreferenceCategory(String nm)
+        {
+            Preference pc = this.findPreference(nm);
+            if(pc != null)
+            {
+                PreferenceScreen ps = this.getPreferenceScreen();
+                if(ps != null)
+                {
+                    ps.removePreference(pc);
+                }
+            }
+        }
+
         @Override
         public void onCreate(Bundle savedInstanceState)
         {
@@ -235,15 +249,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity
             }
             else
             {
-                Preference pc = this.findPreference("prefcat_developer_options");
-                if(pc != null)
-                {
-                    PreferenceScreen ps = this.getPreferenceScreen();
-                    if(ps != null)
-                    {
-                        ps.removePreference(pc);
-                    }
-                }
+                hidePreferenceCategory("prefcat_developer_options");
             }
 
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_ID));
@@ -265,6 +271,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_PTT_EVERY_TIME));
 
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_UI_PTT_LATCHING));
+            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_UI_PTT_VOICE_CONTROL));
 
             // NICs
             {
@@ -321,6 +328,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity
                     listPreference.setEntryValues(entryValues);
                     bindPreferenceSummaryToValue(findPreference(PreferenceKeys.NETWORK_BINDING_NIC_NAME));
                 }
+
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_ENABLED));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_SECS));
             }
 
 
@@ -401,26 +411,41 @@ public class SettingsActivity extends AppCompatPreferenceActivity
                 bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_BT_DEVICE_ADDRESS));
             }
 
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_SSDP_DISCOVERY));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_CISTECH_GV1_DISCOVERY));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_CISTECH_GV1_DISCOVERY_ADDRESS));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_CISTECH_GV1_DISCOVERY_PORT));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_CISTECH_GV1_DISCOVERY_TIMEOUT_SECS));
+            if(!Utils.boolOpt(getString(R.string.opt_experimental_general_enabled), false))
+            {
+                hidePreferenceCategory("prefcat_experimental_general");
+            }
+            else
+            {
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_SSDP_DISCOVERY));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_CISTECH_GV1_DISCOVERY));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_CISTECH_GV1_DISCOVERY_ADDRESS));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_CISTECH_GV1_DISCOVERY_PORT));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_CISTECH_GV1_DISCOVERY_TIMEOUT_SECS));
 
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_TRELLISWARE_DISCOVERY));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_TRELLISWARE_DISCOVERY));
 
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_DEVICE_REPORT_CONNECTIVITY));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_DEVICE_REPORT_POWER));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_DEVICE_REPORT_CONNECTIVITY));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_DEVICE_REPORT_POWER));
+            }
 
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_HBM));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_INTERVAL_SECS));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_HEART_RATE));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_SKIN_TEMP));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_CORE_TEMP));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_BLOOD_OXY));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_BLOOD_HYDRO));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_FATIGUE_LEVEL));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_TASK_EFFECTIVENESS_LEVEL));
+
+            if(!Utils.boolOpt(getString(R.string.opt_experimental_human_biometrics_enabled), false))
+            {
+                hidePreferenceCategory("prefcat_experimental_human_biometrics");
+            }
+            else
+            {
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_ENABLE_HBM));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_INTERVAL_SECS));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_HEART_RATE));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_SKIN_TEMP));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_CORE_TEMP));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_BLOOD_OXY));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_BLOOD_HYDRO));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_FATIGUE_LEVEL));
+                bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_EXPERIMENT_HBM_ENABLE_TASK_EFFECTIVENESS_LEVEL));
+            }
         }
     }
 }

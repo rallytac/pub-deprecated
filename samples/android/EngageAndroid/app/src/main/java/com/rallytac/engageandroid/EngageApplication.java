@@ -31,16 +31,16 @@ import android.os.Message;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
-import com.journeyapps.barcodescanner.Util;
 import com.rallytac.engage.engine.Engine;
 import com.rallytac.engageandroid.Biometrics.DataSeries;
 import com.rallytac.engageandroid.Biometrics.RandomHumanBiometricGenerator;
@@ -49,6 +49,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.RandomAccessFile;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -136,6 +139,7 @@ public class EngageApplication
 
     private long _lastAudioActivity = 0;
     private long _lastTxActivity = 0;
+    private boolean _delayTxUnmuteToCaterForSoundPropogation = false;
     private Timer _groupHealthCheckTimer = null;
     private long _lastNetworkErrorNotificationPlayed = 0;
     private HashMap<String, GroupDescriptor> _dynamicGroups = new HashMap<>();
@@ -174,6 +178,9 @@ public class EngageApplication
     private boolean _enableDeviceConnectivityMonitor = false;
 
     private MyApplicationIntentReceiver _appIntentReceiver = null;
+	
+	private FirebaseAnalytics _firebaseAnalytics = null;
+
 
     private class MyApplicationIntentReceiver extends BroadcastReceiver
     {
@@ -387,6 +394,39 @@ public class EngageApplication
         }
     }
 
+    private void startFirebaseAnalytics()
+    {
+        try
+        {
+            _firebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        }
+        catch (Exception e)
+        {
+            _firebaseAnalytics = null;
+            e.printStackTrace();
+        }
+    }
+
+    private void stopFirebaseAnalytics()
+    {
+        _firebaseAnalytics = null;
+    }
+
+    public void logEvent(String eventName)
+    {
+        try
+        {
+            if (_firebaseAnalytics != null)
+            {
+                _firebaseAnalytics.logEvent(eventName, null);
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
 
     @Override
     public void onCreate()
@@ -395,10 +435,12 @@ public class EngageApplication
 
         super.onCreate();
 
-        // Its important to set this as soon as possible!
-         Engine.setApplicationContext(this.getApplicationContext());
+        startFirebaseAnalytics();
 
-        // Note: This is for developer gtesting only!!
+        // Its important to set this as soon as possible!
+        Engine.setApplicationContext(this.getApplicationContext());
+
+        // Note: This is for developer testing only!!
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
             try
@@ -436,6 +478,7 @@ public class EngageApplication
     {
         Log.d(TAG, "onTerminate");
         stop();
+        stopFirebaseAnalytics();
 
         super.onTerminate();
     }
@@ -1016,10 +1059,11 @@ public class EngageApplication
         {
             JSONObject obj = new JSONObject();
 
-            obj.put("flags", flags);
-            obj.put("priority", priority);
-            obj.put("subchannelTag", subchannelTag);
-            obj.put("includeNodeId", includeNodeId);
+            obj.put(Engine.JsonFields.AdvancedTxParams.flags, flags);
+            obj.put(Engine.JsonFields.AdvancedTxParams.priority, priority);
+            obj.put(Engine.JsonFields.AdvancedTxParams.subchannelTag, subchannelTag);
+            obj.put(Engine.JsonFields.AdvancedTxParams.includeNodeId, includeNodeId);
+            obj.put(Engine.JsonFields.AdvancedTxParams.muted, true);
 
             if(!Utils.isEmptyString(alias))
             {
@@ -1077,14 +1121,17 @@ public class EngageApplication
                 host.put("port", _activeConfiguration.getRpPort());
 
                 rallypoint.put("host", host);
-                rallypoint.put("certificate", Utils.getStringResource(this, R.raw.android_rts_factory_default_engage_certificate));
-                rallypoint.put("certificateKey", Utils.getStringResource(this, R.raw.android_rts_factory_default_engage_private_key));
-
+                rallypoint.put("certificate", "@certstore://" + Globals.getContext().getString(R.string.certstore_default_certificate_id));
+                rallypoint.put("certificateKey", "@certstore://" + Globals.getContext().getString(R.string.certstore_default_certificate_id));
 
                 JSONArray rallypoints = new JSONArray();
                 rallypoints.put(rallypoint);
 
                 group.put("rallypoints", rallypoints);
+
+                // Multicast failover only applies when rallypoints are present
+                group.put("enableMulticastFailover", _activeConfiguration.getMulticastFailoverConfiguration().enabled);
+                group.put("multicastFailoverSecs", _activeConfiguration.getMulticastFailoverConfiguration().thresholdSecs);
             }
 
             {
@@ -1093,7 +1140,6 @@ public class EngageApplication
                 timeline.put("enabled", true);
                 group.put("timeline", timeline);
             }
-
 
             rc = group.toString();
         }
@@ -1228,7 +1274,7 @@ public class EngageApplication
         {
             for (GroupDescriptor gd : _activeConfiguration.getMissionGroups())
             {
-                if (gd.created && gd.joined && !gd.connected)
+                if (gd.created && gd.joined && !gd.isConnectedInSomeForm())
                 {
                     long now = Utils.nowMs();
                     if(now - _lastNetworkErrorNotificationPlayed >= Constants.GROUP_HEALTH_CHECK_NETWORK_ERROR_NOTIFICATION_MIN_INTERVAL_MS)
@@ -1408,6 +1454,118 @@ public class EngageApplication
         startEngine();
     }
 
+    public String getCertStoreCacheDir()
+    {
+        return Globals.getContext().getFilesDir().getAbsolutePath() + "/" + Globals.getContext().getString(R.string.certstore_cache_dir);
+    }
+
+    private String getCustomCertStoreFn()
+    {
+        String fn = null;
+
+        try
+        {
+            String tmp;
+
+            // First look in our cache if we have an active file - it would have been placed here by other parts of the app or an MDM
+            tmp = getCertStoreCacheDir() + "/" + Globals.getContext().getString(R.string.certstore_active_fn);
+            if(Utils.doesFileExist(tmp))
+            {
+               fn = tmp;
+            }
+            else
+            {
+                ArrayList<String> dirs = new ArrayList<>();
+
+                dirs.add(Globals.getContext().getFilesDir().getAbsolutePath());
+                dirs.add(Environment.getExternalStorageDirectory().getAbsolutePath());
+                dirs.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
+
+                for (String dirName : dirs)
+                {
+                    tmp = dirName + "/" + Globals.getContext().getString(R.string.certstore_default_fn);
+                    if (Utils.doesFileExist(tmp))
+                    {
+                        fn = tmp;
+                        break;
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            fn = null;
+        }
+
+        return fn;
+
+    }
+
+    private byte[] getCustomCertStoreContent()
+    {
+        byte[] rc = null;
+
+        try
+        {
+            String fn = getCustomCertStoreFn();
+            if(fn != null)
+            {
+                RandomAccessFile raf = new RandomAccessFile(fn, "r");
+                rc = new byte[(int)raf.length()];
+                raf.readFully(rc);
+                raf.close();
+
+                Log.i(TAG, "Auto-importing custom certificate store '" + fn + "'");
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            rc = null;
+        }
+
+        return rc;
+    }
+
+    private String createCertStoreForEngine()
+    {
+        String fn = null;
+
+        try
+        {
+            byte[] certStoreContent;
+
+            certStoreContent = getCustomCertStoreContent();
+
+            if(certStoreContent == null)
+            {
+                certStoreContent = Utils.getBinaryResource(Globals.getContext(), R.raw.android_engage_default_certstore);
+                if(certStoreContent == null)
+                {
+                    throw new Exception("cannot load binary resource");
+                }
+            }
+
+            String dir = Globals.getContext().getFilesDir().toString();
+            fn = dir + "/" + Globals.getContext().getString(R.string.certstore_active_fn);
+
+            File fd = new File(fn);
+            fd.deleteOnExit();
+
+            FileOutputStream fos = new FileOutputStream(fd);
+            fos.write(certStoreContent);
+            fos.close();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            fn = null;
+        }
+
+        return fn;
+    }
+
     public void startEngine()
     {
         Log.d(TAG, "startEngine");
@@ -1419,6 +1577,13 @@ public class EngageApplication
             String enginePolicyJson = getActiveConfiguration().makeEnginePolicyObject(Utils.getStringResource(this, R.raw.sample_engine_policy)).toString();
             String identityJson = getActiveConfiguration().makeIdentityObject().toString();
             String tempDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
+
+            String certStoreFn = createCertStoreForEngine();
+
+            if(!Utils.isEmptyString(certStoreFn))
+            {
+                getEngine().engageOpenCertStore(certStoreFn, "");
+            }
 
             getEngine().engageInitialize(enginePolicyJson,
                     identityJson,
@@ -1659,33 +1824,34 @@ public class EngageApplication
                     return;
                 }
 
-                Runnable txTask = new Runnable()
+                // Start TX - in TX muted mode!!
+                synchronized (_groupsSelectedForTx)
                 {
-                    @Override
-                    public void run()
+                    if(!_groupsSelectedForTx.isEmpty())
                     {
-                        synchronized (_groupsSelectedForTx)
+                        if(_groupsSelectedForTx.size() == 1)
                         {
-                            if(!_groupsSelectedForTx.isEmpty())
-                            if(!_groupsSelectedForTx.isEmpty())
+                            logEvent(Analytics.GROUP_TX_REQUESTED_SINGLE);
+                        }
+                        else
+                        {
+                            logEvent(Analytics.GROUP_TX_REQUESTED_MULTIPLE);
+                        }
+
+                        for (GroupDescriptor g : _groupsSelectedForTx)
+                        {
+                            if(getActiveConfiguration().getUiMode() == Constants.UiMode.vSingle ||
+                                    (getActiveConfiguration().getUiMode() == Constants.UiMode.vMulti) && (!g.txMuted) )
                             {
-                                for (GroupDescriptor g : _groupsSelectedForTx)
-                                {
-                                    if(getActiveConfiguration().getUiMode() == Constants.UiMode.vSingle ||
-                                            (getActiveConfiguration().getUiMode() == Constants.UiMode.vMulti) && (!g.txMuted) )
-                                    {
-                                        //getEngine().engageBeginGroupTx(g.id, priority, flags);
-                                        getEngine().engageBeginGroupTxAdvanced(g.id, buildAdvancedTxJson(flags, priority, 0, true, _activeConfiguration.getUserAlias()));
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                Log.w(TAG, "tx task runnable found no groups to tx on");
+                                getEngine().engageBeginGroupTxAdvanced(g.id, buildAdvancedTxJson(flags, priority, 0, true, _activeConfiguration.getUserAlias()));
                             }
                         }
                     }
-                };
+                    else
+                    {
+                        Log.w(TAG, "tx task runnable found no groups to tx on");
+                    }
+                }
 
                 // TODO: we're already in a sync, now going into another.  is this dangerous
                 // considering what we're calling (maybe not...?)
@@ -1695,24 +1861,6 @@ public class EngageApplication
                     {
                         listener.onAnyTxPending();
                     }
-                }
-
-                long now = Utils.nowMs();
-
-                if(_activeConfiguration.getNotifyPttEveryTime() ||
-                        ((now - _lastTxActivity) > (Constants.TX_IDLE_SECS_BEFORE_NOTIFICATION * 1000)))
-                {
-                    _lastTxActivity = now;
-                    if(!playTxOnNotification(txTask))
-                    {
-                        txTask.run();
-                    }
-                }
-                else
-                {
-                    _lastTxActivity = now;
-                    vibrate();
-                    txTask.run();
                 }
             }
         }
@@ -2122,8 +2270,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onEngineStarted()
+    public void onEngineStarted(String eventExtraJson)
     {
+        logEvent(Analytics.ENGINE_STARTED);
+
         Log.d(TAG, "onEngineStarted");
         _engineRunning = true;
         createAllGroupObjects();
@@ -2133,24 +2283,30 @@ public class EngageApplication
     }
 
     @Override
-    public void onEngineStartFailed()
+    public void onEngineStartFailed(String eventExtraJson)
     {
+        logEvent(Analytics.ENGINE_START_FAILED);
+
         Log.e(TAG, "onEngineStartFailed");
         _engineRunning = false;
         stop();
     }
 
     @Override
-    public void onEngineStopped()
+    public void onEngineStopped(String eventExtraJson)
     {
+        logEvent(Analytics.ENGINE_STOPPED);
+
         Log.d(TAG, "onEngineStopped");
         _engineRunning = false;
         goIdle();
     }
 
     @Override
-    public void onGroupCreated(String id)
+    public void onGroupCreated(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_CREATED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2165,14 +2321,17 @@ public class EngageApplication
         gd.createError = false;
         gd.joined = false;
         gd.joinError = false;
-        gd.connected = false;
+        gd.hasMulticastConnection = false;
+        gd.hasRpConnection = false;
 
         notifyGroupUiListeners(gd);
     }
 
     @Override
-    public void onGroupCreateFailed(String id)
+    public void onGroupCreateFailed(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_CREATE_FAILED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2190,8 +2349,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupDeleted(String id)
+    public void onGroupDeleted(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_DELETED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2206,13 +2367,14 @@ public class EngageApplication
         gd.createError = false;
         gd.joined = false;
         gd.joinError = false;
-        gd.connected = false;
+        gd.hasMulticastConnection = false;
+        gd.hasRpConnection = false;
 
         notifyGroupUiListeners(gd);
     }
 
     @Override
-    public void onGroupConnected(String id)
+    public void onGroupConnected(String id, String eventExtraJson)
     {
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
@@ -2221,9 +2383,57 @@ public class EngageApplication
             return;
         }
 
-        Log.d(TAG, "onGroupConnected: id='" + id + "', n='" + gd.name + "'");
+        Log.d(TAG, "onGroupConnected: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
 
-        gd.connected = true;
+        try
+        {
+            if(!Utils.isEmptyString(eventExtraJson))
+            {
+                JSONObject eej = new JSONObject(eventExtraJson);
+                JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
+                if(gcd != null)
+                {
+                    Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
+                    if(ct == Engine.ConnectionType.ipMulticast)
+                    {
+                        if(gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false))
+                        {
+                            logEvent(Analytics.GROUP_CONNECTED_MC_FAILOVER);
+                        }
+                        else
+                        {
+                            logEvent(Analytics.GROUP_CONNECTED_MC);
+                        }
+
+                        gd.hasMulticastConnection = true;
+                    }
+                    else if(ct == Engine.ConnectionType.rallypoint)
+                    {
+                        logEvent(Analytics.GROUP_CONNECTED_RP);
+                        gd.hasRpConnection = true;
+                    }
+
+                    gd.operatingInMulticastFailover = gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false);
+                }
+                else
+                {
+                    logEvent(Analytics.GROUP_CONNECTED_OTHER);
+                }
+            }
+            else
+            {
+                logEvent(Analytics.GROUP_CONNECTED_OTHER);
+            }
+        }
+        catch(Exception e)
+        {
+            logEvent(Analytics.GROUP_CONNECTED_OTHER);
+
+            // If we have no specializer, assume the following (the Engine should always tell us though)
+            gd.hasMulticastConnection = true;
+            gd.hasRpConnection = true;
+            gd.operatingInMulticastFailover = false;
+        }
 
         // If we get connected to a presence group ...
         if(gd.type == GroupDescriptor.Type.gtPresence)
@@ -2238,7 +2448,7 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupConnectFailed(String id)
+    public void onGroupConnectFailed(String id, String eventExtraJson)
     {
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
@@ -2247,15 +2457,63 @@ public class EngageApplication
             return;
         }
 
-        Log.d(TAG, "onGroupConnectFailed: id='" + id + "', n='" + gd.name + "'");
+        Log.d(TAG, "onGroupConnectFailed: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
 
-        gd.connected = false;
+        try
+        {
+            if(!Utils.isEmptyString(eventExtraJson))
+            {
+                JSONObject eej = new JSONObject(eventExtraJson);
+                JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
+                if(gcd != null)
+                {
+                    Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
+                    if(ct == Engine.ConnectionType.ipMulticast)
+                    {
+                        if(gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false))
+                        {
+                            logEvent(Analytics.GROUP_CONNECT_FAILED_MC_FAILOVER);
+                        }
+                        else
+                        {
+                            logEvent(Analytics.GROUP_CONNECT_FAILED_MC);
+                        }
+
+                        gd.hasMulticastConnection = false;
+                    }
+                    else if(ct == Engine.ConnectionType.rallypoint)
+                    {
+                        logEvent(Analytics.GROUP_CONNECT_FAILED_RP);
+                        gd.hasRpConnection = false;
+                    }
+
+                    gd.operatingInMulticastFailover = false;
+                }
+                else
+                {
+                    logEvent(Analytics.GROUP_CONNECT_FAILED_OTHER);
+                }
+            }
+            else
+            {
+                logEvent(Analytics.GROUP_CONNECT_FAILED_OTHER);
+            }
+        }
+        catch(Exception e)
+        {
+            logEvent(Analytics.GROUP_CONNECT_FAILED_OTHER);
+
+            // If we have no specializer, assume the following (the Engine should always tell us though)
+            gd.hasMulticastConnection = false;
+            gd.hasRpConnection = false;
+            gd.operatingInMulticastFailover = false;
+        }
 
         notifyGroupUiListeners(gd);
     }
 
     @Override
-    public void onGroupDisconnected(String id)
+    public void onGroupDisconnected(String id, String eventExtraJson)
     {
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
@@ -2264,16 +2522,66 @@ public class EngageApplication
             return;
         }
 
-        Log.d(TAG, "onGroupDisconnected: id='" + id + "', n='" + gd.name + "'");
+        Log.d(TAG, "onGroupDisconnected: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
 
-        gd.connected = false;
+        try
+        {
+            if(!Utils.isEmptyString(eventExtraJson))
+            {
+                JSONObject eej = new JSONObject(eventExtraJson);
+                JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
+                if(gcd != null)
+                {
+                    Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
+                    if(ct == Engine.ConnectionType.ipMulticast)
+                    {
+                        if(gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false))
+                        {
+                            logEvent(Analytics.GROUP_DISCONNECTED_MC_FAILOVER);
+                        }
+                        else
+                        {
+                            logEvent(Analytics.GROUP_DISCONNECTED_MC);
+                        }
+
+                        gd.hasMulticastConnection = false;
+                    }
+                    else if(ct == Engine.ConnectionType.rallypoint)
+                    {
+                        logEvent(Analytics.GROUP_DISCONNECTED_RP);
+                        gd.hasRpConnection = false;
+                    }
+
+                    gd.operatingInMulticastFailover = false;
+                }
+                else
+                {
+                    logEvent(Analytics.GROUP_DISCONNECTED_OTHER);
+                }
+            }
+            else
+            {
+                logEvent(Analytics.GROUP_DISCONNECTED_OTHER);
+            }
+        }
+        catch(Exception e)
+        {
+            logEvent(Analytics.GROUP_DISCONNECTED_OTHER);
+
+            // If we have no specializer, assume the following (the Engine should always tell us though)
+            gd.hasMulticastConnection = false;
+            gd.hasRpConnection = false;
+            gd.operatingInMulticastFailover = false;
+        }
 
         notifyGroupUiListeners(gd);
     }
 
     @Override
-    public void onGroupJoined(String id)
+    public void onGroupJoined(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_JOINED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2290,8 +2598,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupJoinFailed(String id)
+    public void onGroupJoinFailed(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_JOIN_FAILED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2308,8 +2618,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupLeft(String id)
+    public void onGroupLeft(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_LEFT);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2327,8 +2639,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupMemberCountChanged(String id, long newCount)
+    public void onGroupMemberCountChanged(String id, long newCount, String eventExtraJson)
     {
+        //logEvent(Analytics.GROUP_MEMBER_COUNT_CHANGED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2342,8 +2656,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupRxStarted(String id)
+    public void onGroupRxStarted(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_RX_STARTED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2379,8 +2695,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupRxEnded(String id)
+    public void onGroupRxEnded(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_RX_ENDED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2397,8 +2715,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupRxSpeakersChanged(String id, String groupTalkerJson)
+    public void onGroupRxSpeakersChanged(String id, String groupTalkerJson, String eventExtraJson)
     {
+        //logEvent(Analytics.GROUP_RX_SPEAKER_COUNT_CHANGED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2453,8 +2773,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupRxMuted(String id)
+    public void onGroupRxMuted(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_RX_MUTED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2470,8 +2792,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupRxUnmuted(String id)
+    public void onGroupRxUnmuted(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_RX_UNMUTED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2487,9 +2811,11 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupTxStarted(String id)
+    public void onGroupTxStarted(final String id, String eventExtraJson)
     {
-        GroupDescriptor gd = getGroup(id);
+        logEvent(Analytics.GROUP_TX_STARTED);
+
+        final GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
             Log.e(TAG, "onGroupTxStarted: cannot find group id='" + id + "'");
@@ -2498,27 +2824,75 @@ public class EngageApplication
 
         Log.d(TAG, "onGroupTxStarted: id='" + id + "', n='" + gd.name + "'");
 
-        gd.tx = true;
-        gd.txPending = false;
-        gd.txError = false;
-        gd.txUsurped = false;
-
-        _lastAudioActivity = Utils.nowMs();
-
-        notifyGroupUiListeners(gd);
-
-        synchronized (_uiUpdateListeners)
+        // Run this task either right away or after we've played our grant tone
+        Runnable txTask = new Runnable()
         {
-            for(IUiUpdateListener listener : _uiUpdateListeners)
+            @Override
+            public void run()
             {
-                listener.onAnyTxActive();
+                gd.tx = true;
+                gd.txPending = false;
+                gd.txError = false;
+                gd.txUsurped = false;
+
+                // Our TX is always starting in mute, so unmute it here if we're not (still) playing a sound
+                if(_delayTxUnmuteToCaterForSoundPropogation)
+                {
+                    Timer tmr = new Timer();
+                    tmr.schedule(new TimerTask()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            getEngine().engageUnmuteGroupTx(id);
+                        }
+                    }, Constants.TX_UNMUTE_DELAY_MS_AFTER_GRANT_TONE);
+                }
+                else
+                {
+                    getEngine().engageUnmuteGroupTx(id);
+                }
+
+                _lastAudioActivity = Utils.nowMs();
+
+                notifyGroupUiListeners(gd);
+
+                synchronized (_uiUpdateListeners)
+                {
+                    for(IUiUpdateListener listener : _uiUpdateListeners)
+                    {
+                        listener.onAnyTxActive();
+                    }
+                }
             }
+        };
+
+        long now = Utils.nowMs();
+
+        if(_activeConfiguration.getNotifyPttEveryTime() ||
+                ((now - _lastTxActivity) > (Constants.TX_IDLE_SECS_BEFORE_NOTIFICATION * 1000)))
+        {
+            _lastTxActivity = now;
+            _delayTxUnmuteToCaterForSoundPropogation = true;
+            if(!playTxOnNotification(txTask))
+            {
+                txTask.run();
+            }
+        }
+        else
+        {
+            _lastTxActivity = now;
+            _delayTxUnmuteToCaterForSoundPropogation = true;
+            vibrate();
+            txTask.run();
         }
     }
 
     @Override
-    public void onGroupTxEnded(String id)
+    public void onGroupTxEnded(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_TX_ENDED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2543,8 +2917,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupTxFailed(String id)
+    public void onGroupTxFailed(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_TX_FAILED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2571,8 +2947,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupTxUsurpedByPriority(String id)
+    public void onGroupTxUsurpedByPriority(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_TX_USURPED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2608,8 +2986,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupMaxTxTimeExceeded(String id)
+    public void onGroupMaxTxTimeExceeded(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_TX_MAX_EXCEEDED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2644,8 +3024,50 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupNodeDiscovered(String id, String nodeJson)
+    public void onGroupTxMuted(String id, String eventExtraJson)
     {
+        //logEvent(Analytics.GROUP_TX_MUTED);
+
+        GroupDescriptor gd = getGroup(id);
+        if(gd == null)
+        {
+            Log.e(TAG, "onGroupTxMuted: cannot find group id='" + id + "'");
+            return;
+        }
+
+        Log.d(TAG, "onGroupTxMuted: id='" + id + "', n='" + gd.name + "'");
+
+        // TX muted means something else here
+        //gd.txMuted = true;
+
+        notifyGroupUiListeners(gd);
+    }
+
+    @Override
+    public void onGroupTxUnmuted(String id, String eventExtraJson)
+    {
+        //logEvent(Analytics.GROUP_TX_UNMUTED);
+
+        GroupDescriptor gd = getGroup(id);
+        if(gd == null)
+        {
+            Log.e(TAG, "onGroupTxUnmuted: cannot find group id='" + id + "'");
+            return;
+        }
+
+        Log.d(TAG, "onGroupTxUnmuted: id='" + id + "', n='" + gd.name + "'");
+
+        // TX muted means something else here
+        //gd.txMuted = false;
+
+        notifyGroupUiListeners(gd);
+    }
+
+    @Override
+    public void onGroupNodeDiscovered(String id, String nodeJson, String eventExtraJson)
+    {
+        //logEvent(Analytics.GROUP_NODE_DISCOVERED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2686,8 +3108,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupNodeRediscovered(String id, String nodeJson)
+    public void onGroupNodeRediscovered(String id, String nodeJson, String eventExtraJson)
     {
+        //logEvent(Analytics.GROUP_NODE_REDISCOVERED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2713,8 +3137,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupNodeUndiscovered(String id, String nodeJson)
+    public void onGroupNodeUndiscovered(String id, String nodeJson, String eventExtraJson)
     {
+        //logEvent(Analytics.GROUP_NODE_UNDISCOVERED);
+
         GroupDescriptor gd = getGroup(id);
         if(gd == null)
         {
@@ -2765,8 +3191,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onLicenseChanged()
+    public void onLicenseChanged(String eventExtraJson)
     {
+        logEvent(Analytics.LICENSE_CHANGED);
+
         Log.d(TAG, "onLicenseChanged");
         _licenseExpired = false;
         _licenseSecondsLeft = 0;
@@ -2782,8 +3210,13 @@ public class EngageApplication
     }
 
     @Override
-    public void onLicenseExpired()
+    public void onLicenseExpired(String eventExtraJson)
     {
+        if(!_licenseExpired)
+        {
+            logEvent(Analytics.LICENSE_EXPIRED);
+        }
+
         Log.d(TAG, "onLicenseExpired");
         _licenseExpired = true;
         _licenseSecondsLeft = 0;
@@ -2799,8 +3232,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onLicenseExpiring(double secondsLeft)
+    public void onLicenseExpiring(double secondsLeft, String eventExtraJson)
     {
+        //logEvent(Analytics.LICENSE_EXPIRING);
+
         Log.d(TAG, "onLicenseExpiring - " + secondsLeft + " seconds remaining");
         _licenseExpired = false;
         _licenseSecondsLeft = secondsLeft;
@@ -2866,7 +3301,7 @@ public class EngageApplication
 
             String json = group.toString();
 
-            onGroupAssetDiscovered(__devOnly__groupId, json);
+            onGroupAssetDiscovered(__devOnly__groupId, json, "");
             getEngine().engageCreateGroup(buildFinalGroupJsonConfiguration(json));
         }
         catch (Exception e)
@@ -2912,7 +3347,7 @@ public class EngageApplication
 
             String json = group.toString();
 
-            onGroupAssetUndiscovered(__devOnly__groupId, json);
+            onGroupAssetUndiscovered(__devOnly__groupId, json, "");
             getEngine().engageDeleteGroup(__devOnly__groupId);
         }
         catch (Exception e)
@@ -3077,8 +3512,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupAssetDiscovered(String id, String nodeJson)
+    public void onGroupAssetDiscovered(String id, String nodeJson, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_ASSET_DISCOVERED);
+
         Log.d(TAG, "onGroupAssetDiscovered: id='" + id + "', json='" + nodeJson + "'");
 
         synchronized (_assetChangeListeners)
@@ -3125,8 +3562,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupAssetRediscovered(String id, String nodeJson)
+    public void onGroupAssetRediscovered(String id, String nodeJson, String eventExtraJson)
     {
+        //logEvent(Analytics.GROUP_ASSET_REDISCOVERED);
+
         synchronized (_assetChangeListeners)
         {
             for(IAssetChangeListener listener : _assetChangeListeners)
@@ -3171,8 +3610,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupAssetUndiscovered(String id, String nodeJson)
+    public void onGroupAssetUndiscovered(String id, String nodeJson, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_ASSET_UNDISCOVERED);
+
         synchronized (_assetChangeListeners)
         {
             for(IAssetChangeListener listener : _assetChangeListeners)
@@ -3205,19 +3646,19 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupBlobSent(String id)
+    public void onGroupBlobSent(String id, String eventExtraJson)
     {
         Log.d(TAG, "onGroupBlobSent");
     }
 
     @Override
-    public void onGroupBlobSendFailed(String id)
+    public void onGroupBlobSendFailed(String id, String eventExtraJson)
     {
         Log.e(TAG, "onGroupBlobSendFailed");
     }
 
     @Override
-    public void onGroupBlobReceived(String id, String blobInfoJson, byte[] blob, long blobSize)
+    public void onGroupBlobReceived(String id, String blobInfoJson, byte[] blob, long blobSize, String eventExtraJson)
     {
         Log.d(TAG, "onGroupBlobReceived: blobInfoJson=" + blobInfoJson);
 
@@ -3273,42 +3714,42 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupRtpSent(String id)
+    public void onGroupRtpSent(String id, String eventExtraJson)
     {
         Log.d(TAG, "onGroupRtpSent");
     }
 
     @Override
-    public void onGroupRtpSendFailed(String id)
+    public void onGroupRtpSendFailed(String id, String eventExtraJson)
     {
         Log.e(TAG, "onGroupRtpSendFailed");
     }
 
     @Override
-    public void onGroupRtpReceived(String id, String rtpHeaderJson, byte[] payload, long payloadSize)
+    public void onGroupRtpReceived(String id, String rtpHeaderJson, byte[] payload, long payloadSize, String eventExtraJson)
     {
         Log.d(TAG, "onGroupRtpReceived: rtpHeaderJson=" + rtpHeaderJson);
     }
 
-    public void onGroupRawSent(String id)
+    public void onGroupRawSent(String id, String eventExtraJson)
     {
         Log.d(TAG, "onGroupRawSent");
     }
 
     @Override
-    public void onGroupRawSendFailed(String id)
+    public void onGroupRawSendFailed(String id, String eventExtraJson)
     {
         Log.e(TAG, "onGroupRawSendFailed");
     }
 
     @Override
-    public void onGroupRawReceived(String id, byte[] raw, long rawsize)
+    public void onGroupRawReceived(String id, byte[] raw, long rawsize, String eventExtraJson)
     {
         Log.d(TAG, "onGroupRawReceived");
     }
 
     @Override
-    public void onGroupTimelineEventStarted(String id, String eventJson)
+    public void onGroupTimelineEventStarted(String id, String eventJson, String eventExtraJson)
     {
         Log.d(TAG, "onGroupTimelineEventStarted: " + id);
 
@@ -3329,7 +3770,7 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupTimelineEventUpdated(String id, String eventJson)
+    public void onGroupTimelineEventUpdated(String id, String eventJson, String eventExtraJson)
     {
         Log.d(TAG, "onGroupTimelineEventUpdated: " + id);
 
@@ -3350,7 +3791,7 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupTimelineEventEnded(String id, String eventJson)
+    public void onGroupTimelineEventEnded(String id, String eventJson, String eventExtraJson)
     {
         Log.d(TAG, "onGroupTimelineEventEnded: " + id);
 
@@ -3371,8 +3812,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupTimelineReport(String id, String reportJson)
+    public void onGroupTimelineReport(String id, String reportJson, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_TIMELINE_REPORT);
+
         Log.d(TAG, "onGroupTimelineReport: " + id);
 
         final GroupDescriptor gd = getGroup(id);
@@ -3392,8 +3835,10 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupTimelineReportFailed(String id)
+    public void onGroupTimelineReportFailed(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_TIMELINE_REPORT_FAILED);
+
         Log.d(TAG, "onGroupTimelineReportFailed: " + id);
 
         final GroupDescriptor gd = getGroup(id);
@@ -3413,36 +3858,65 @@ public class EngageApplication
     }
 
     @Override
-    public void onRallypointPausingConnectionAttempt(String id)
+    public void onRallypointPausingConnectionAttempt(String id, String eventExtraJson)
     {
         Log.d(TAG, "onRallypointPausingConnectionAttempt");
         // Stub
     }
 
     @Override
-    public void onRallypointConnecting(String id)
+    public void onRallypointConnecting(String id, String eventExtraJson)
     {
         Log.d(TAG, "onRallypointConnecting: " + id);
         // Stub
     }
 
     @Override
-    public void onRallypointConnected(String id)
+    public void onRallypointConnected(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_RP_CONNECTED);
+
         Log.d(TAG, "onRallypointConnected: " + id);
         // Stub
     }
 
     @Override
-    public void onRallypointDisconnected(String id)
+    public void onRallypointDisconnected(String id, String eventExtraJson)
     {
+        logEvent(Analytics.GROUP_RP_DISCONNECTED);
+
         Log.d(TAG, "onRallypointDisconnected: " + id);
         // Stub
     }
 
     @Override
-    public void onRallypointRoundtripReport(String id, long rtMs, long rtQualityRating)
+    public void onRallypointRoundtripReport(String id, long rtMs, long rtQualityRating, String eventExtraJson)
     {
+        if(rtQualityRating >= 100)
+        {
+            logEvent(Analytics.GROUP_RP_RT_100);
+        }
+        else if(rtQualityRating >= 75)
+        {
+            logEvent(Analytics.GROUP_RP_RT_75);
+        }
+        else if(rtQualityRating >= 50)
+        {
+            logEvent(Analytics.GROUP_RP_RT_50);
+        }
+        else if(rtQualityRating >= 25)
+        {
+            logEvent(Analytics.GROUP_RP_RT_25);
+        }
+        else if(rtQualityRating >= 10)
+        {
+            logEvent(Analytics.GROUP_RP_RT_10);
+        }
+        else
+        {
+            logEvent(Analytics.GROUP_RP_RT_0);
+        }
+
         Log.d(TAG, "onRallypointRoundtripReport: " + id + ", ms=" + rtMs + ", qual=" + rtQualityRating);
         // Stub
     }
@@ -3635,7 +4109,12 @@ public class EngageApplication
                             String ac = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, "");
                             if (ac.compareTo(activationCode) == 0)
                             {
+                                logEvent(Analytics.LICENSE_ACT_OK_ALREADY);
                                 Log.w(TAG, "onLicenseActivationTaskComplete: new activation code matches existing activation code");
+                            }
+                            else
+                            {
+                                logEvent(Analytics.LICENSE_ACT_OK);
                             }
 
                             Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, activationCode);
@@ -3644,12 +4123,14 @@ public class EngageApplication
                         }
                         else
                         {
+                            logEvent(Analytics.LICENSE_ACT_FAILED_NO_KEY);
                             Log.e(TAG, "onLicenseActivationTaskComplete: no license key present");
                             needScheduling = true;
                         }
                     }
                     else
                     {
+                        logEvent(Analytics.LICENSE_ACT_FAILED);
                         Log.e(TAG, "onLicenseActivationTaskComplete: attempting failed - " + resultMessage);
                         needScheduling = true;
                     }

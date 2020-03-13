@@ -36,6 +36,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning">
+
         <meta-data
             android:name="Launcher.LAUNCH_ACTIVITY"
             android:value="com.rallytac.engageandroid.SimpleUiMainActivity" />
@@ -51,9 +52,16 @@
         <activity android:name=".OfflineActivationActivity" />
         <activity android:name=".OfflineDeactivationActivity" />
 
+        <activity android:name=".CertificateManagerActivity">
+            <intent-filter>
+                <action android:name="com.rallytac.engageandroid.ACTION_CERTIFICATE_MANAGER_ACTIVITY"/>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <!-- Sharing out -->
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="@string/file_content_provider"
             android:exported="false"
             android:grantUriPermissions="true">

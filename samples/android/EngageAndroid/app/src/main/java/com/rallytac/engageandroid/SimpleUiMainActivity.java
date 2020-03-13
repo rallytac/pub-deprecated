@@ -12,26 +12,23 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.SoundPool;
-import android.support.annotation.ColorInt;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.res.ResourcesCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.ColorInt;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatDelegate;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.PopupMenu;
-import android.support.v7.widget.RecyclerView;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.PopupMenu;
+import androidx.recyclerview.widget.RecyclerView;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
@@ -46,13 +43,9 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
-import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -132,9 +125,7 @@ public class SimpleUiMainActivity
     private RecyclerView _groupSelectorView = null;
     private GroupSelectorAdapter _groupSelectorAdapter = null;
 
-    private int _keycodePttToggle = 0;
-    private int _keycodePttOn = 0;
-    private int _keycodePttOff = 0;
+    private int _keycodePtt = 0;
 
     @Override
     public void onMapReady(final GoogleMap googleMap)
@@ -546,9 +537,7 @@ public class SimpleUiMainActivity
         _optAllowMultipleChannelView = Utils.boolOpt(getString(R.string.opt_allow_multiple_channel_view), true);
         setRequestedOrientation(Utils.intOpt(getString(R.string.opt_lock_orientation), ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
 
-        _keycodePttToggle = Utils.intOpt(getString(R.string.app_keycode_ptt_toggle), 0);
-        _keycodePttOn = Utils.intOpt(getString(R.string.app_keycode_ptt_on), 0);
-        _keycodePttOff = Utils.intOpt(getString(R.string.app_keycode_ptt_off), 0);
+        _keycodePtt = Utils.intOpt(getString(R.string.app_keycode_ptt), 0);
 
         super.onCreate(savedInstanceState);
 
@@ -750,38 +739,57 @@ public class SimpleUiMainActivity
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
     }
 
+    private long _lastKeydown = 0;
+    private boolean _pttRequestIsLatched = false;
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event)
     {
-        //Log.d(TAG, "---onKeyDown keyCode=" + keyCode + ", event=" + event.toString() + ", _lastHeadsetKeyhookDown=" + _lastHeadsetKeyhookDown);
+        //Log.d(TAG, "---onKeyDown keyCode=" + keyCode + ", repeat=" + event.getRepeatCount() + ", event=" + event.toString() + ", _lastHeadsetKeyhookDown=" + _lastHeadsetKeyhookDown);
 
-        if(_ac.getPttLatching() &&  _keycodePttToggle != 0)
+        if(_keycodePtt != 0 && keyCode == _keycodePtt)
         {
-            if (keyCode == _keycodePttToggle && !_pttHardwareButtonDown)
+            if(event.getRepeatCount() == 0)
             {
-                _pttRequested = !_pttRequested;
-                _pttHardwareButtonDown = true;
+                long diff = (event.getDownTime() - _lastKeydown);
 
-                if (_pttRequested)
+                if (diff <= Constants.PTT_KEY_DOUBLE_CLICK_LATCH_THRESHOLD_MS)
                 {
-                    Log.d(TAG, "---onKeyDown requesting startTx due to ptt keycode toggle");
-                    Globals.getEngageApplication().startTx(0, 0);
+                    _pttRequested = !_pttRequested;
+
+                    if (_pttRequested)
+                    {
+                        Log.d(TAG, "---onKeyDown requesting startTx (latched)");
+                        _pttRequestIsLatched = true;
+                        Globals.getEngageApplication().startTx(0, 0);
+                    }
+                    else
+                    {
+                        Log.d(TAG, "---onKeyDown requesting endTx");
+                        _pttRequestIsLatched = false;
+                        Globals.getEngageApplication().endTx();
+                    }
                 }
                 else
                 {
-                    Log.d(TAG, "---onKeyDown requesting endTx due to ptt keycode toggle");
-                    Globals.getEngageApplication().endTx();
+                    if(_pttRequested || _anyTxActive || _anyTxPending)
+                    {
+                        _pttRequested = false;
+                        _pttRequestIsLatched = false;
+                        Log.d(TAG, "---onKeyDown requesting endTx");
+                        Globals.getEngageApplication().endTx();
+                    }
                 }
+
+                _lastKeydown = event.getDownTime();
             }
-        }
-        else if(!_ac.getPttLatching() && _keycodePttOn != 0)
-        {
-            if (keyCode == _keycodePttOn)
+            else
             {
-                if (!_pttRequested)
+                if(!_pttRequested)
                 {
                     _pttRequested = true;
-                    Log.d(TAG, "---onKeyDown requesting startTx due to ptt keycode on");
+                    _pttRequestIsLatched = false;
+                    Log.d(TAG, "---onKeyDown requesting startTx (ptt hold)");
                     Globals.getEngageApplication().startTx(0, 0);
                 }
             }
@@ -818,7 +826,6 @@ public class SimpleUiMainActivity
             }
         }
 
-
         /*
         // Handle repeat counts - for those headsets that can generate a long-push
         if(keyCode == KeyEvent.KEYCODE_HEADSETHOOK && event.getRepeatCount() > 2)
@@ -839,30 +846,21 @@ public class SimpleUiMainActivity
     public boolean onKeyUp(int keyCode, KeyEvent event)
     {
         long diffTime = (event.getEventTime() - event.getDownTime());
-        //Log.d(TAG, "---onKeyUp keyCode=" + keyCode + ", event=" + event.toString() + ", diff=" + diffTime);
+        //Log.d(TAG, "---onKeyUp keyCode=" + keyCode + ", repeat=" + event.getRepeatCount() + ", event=" + event.toString() + ", diff=" + diffTime);
 
-        if(_keycodePttToggle != 0 && _ac.getPttLatching())
+        if(_keycodePtt != 0 && keyCode == _keycodePtt)
         {
-            if (keyCode == _keycodePttToggle && _pttHardwareButtonDown)
+            if((_pttRequested || _anyTxPending || _anyTxActive) && !_pttRequestIsLatched)
             {
-                _pttHardwareButtonDown = false;
-            }
-        }
-
-        if(!_ac.getPttLatching() && _keycodePttOff != 0)
-        {
-            if (keyCode == _keycodePttOff)
-            {
-                if (_pttRequested)
-                {
-                    _pttRequested = false;
-                    Log.d(TAG, "---onKeyDown requesting endTx due to ptt keycode up");
-                    Globals.getEngageApplication().endTx();
-                }
+                _pttRequested = false;
+                _pttRequestIsLatched = false;
+                Log.d(TAG, "---onKeyUp requesting endTx");
+                Globals.getEngageApplication().endTx();
             }
         }
         else
         {
+            /*
             // Handle PTT indication via specialized key
             if (keyCode == KeyEvent.KEYCODE_HEADSETHOOK)
             {
@@ -891,6 +889,7 @@ public class SimpleUiMainActivity
                     }
                 }
             }
+            */
         }
 
         return super.onKeyUp(keyCode, event);
@@ -1131,6 +1130,7 @@ public class SimpleUiMainActivity
     @Override
     public void onMissionChanged()
     {
+        Globals.getEngageApplication().logEvent(Analytics.MISSION_CHANGED);
         runOnUiThread(new Runnable()
             {
                 @Override
@@ -1691,8 +1691,88 @@ public class SimpleUiMainActivity
         }
     }
 
+    private class GroupListAdapter extends ArrayAdapter<GroupDescriptor>
+    {
+        private Context _ctx;
+        private int _resId;
+
+        public GroupListAdapter(Context ctx, int resId, ArrayList<GroupDescriptor> list)
+        {
+            super(ctx, resId, list);
+            _ctx = ctx;
+            _resId = resId;
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent)
+        {
+            LayoutInflater inflator = LayoutInflater.from(_ctx);
+            convertView = inflator.inflate(_resId, parent, false);
+
+            final GroupDescriptor item = getItem(position);
+
+            ImageView iv = convertView.findViewById(R.id.ivGroupEncrypted);
+
+            if(item.isEncrypted)
+            {
+                iv.setImageDrawable(ContextCompat.getDrawable(_ctx, R.drawable.ic_single_channel_background_secure_idle));
+            }
+            else
+            {
+                iv.setImageDrawable(ContextCompat.getDrawable(_ctx, R.drawable.ic_single_channel_background_clear_idle));
+            }
+
+            TextView tv = convertView.findViewById(R.id.tvGroupName);
+            tv.setText(item.name);
+
+            convertView.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View v)
+                {
+                    showSingleView(item.id);
+                }
+            });
+
+            return convertView;
+        }
+    }
+
+    public void showGroupList()
+    {
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_GROUP_LIST);
+
+        if(_ac == null)
+        {
+            return;
+        }
+
+        final ArrayList<GroupDescriptor> theList = new ArrayList<>();
+
+        for(GroupDescriptor gd : _ac.getMissionGroups())
+        {
+            if(gd.type == GroupDescriptor.Type.gtAudio)
+            {
+                theList.add(gd);
+            }
+        }
+
+        if(!theList.isEmpty())
+        {
+            final GroupListAdapter arrayAdapter = new GroupListAdapter(this, R.layout.group_list_row_item, theList);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setAdapter(arrayAdapter, null);
+            builder.setPositiveButton(R.string.button_close, null);
+            builder.show();
+        }
+    }
+
     public void showTeamList()
     {
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_TEAM);
+
         if(_ac == null || _ac.getMissionNodeCount() == 0)
         {
             Utils.showPopupMsg(this, getString(R.string.no_team_members_present));
@@ -1734,42 +1814,49 @@ public class SimpleUiMainActivity
 
     private void startContactActivity()
     {
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_CONTACT);
         Intent intent = new Intent(this, ContactActivity.class);
         startActivity(intent);
     }
 
     private void startAboutActivity()
     {
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_ABOUT);
         Intent intent = new Intent(this, AboutActivity.class);
         startActivity(intent);
     }
 
     private void startMissionListActivity()
     {
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_MISSION_LIST);
         Intent intent = new Intent(this, MissionListActivity.class);
         startActivityForResult(intent, MISSION_LISTING_REQUEST_CODE);
     }
 
     private void startSettingsActivity()
     {
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_SETTINGS);
         Intent intent = new Intent(this, SettingsActivity.class);
         startActivityForResult(intent, SETTINGS_REQUEST_CODE);
     }
 
     private void startShareMissionActivity()
     {
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_SHARE_MISSION);
         Intent intent = new Intent(this, ShareMissionActivity.class);
         startActivity(intent);
     }
 
     private void startMapActivity()
     {
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_MAP);
         Intent intent = new Intent(this, MapActivity.class);
         startActivity(intent);
     }
 
     private void requestGroupTimeline(String groupId)
     {
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_TIMELINE);
         if(!Utils.isEmptyString(groupId))
         {
             try
@@ -1853,11 +1940,30 @@ public class SimpleUiMainActivity
 
     public void showSingleView(String groupId)
     {
+        if(groupId == null)
+        {
+            groupId = "";
+        }
+
+        String currentId = getIdOfSingleViewGroup();
+
+        if(currentId == null)
+        {
+            currentId = "";
+        }
+
+        if(currentId.compareTo(groupId) != 0)
+        {
+            Globals.getEngageApplication().logEvent(Analytics.SINGLE_VIEW_GROUP_CHANGED);
+        }
+
         if(!Utils.isEmptyString(groupId))
         {
             Globals.getSharedPreferencesEditor().putString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_SELECTED_GROUPS_SINGLE, groupId);
             Globals.getSharedPreferencesEditor().apply();
         }
+
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_SINGLE_MODE);
 
         _ac.setUiMode(Constants.UiMode.vSingle);
         runOnUiThread(new Runnable()
@@ -1872,6 +1978,8 @@ public class SimpleUiMainActivity
 
     public void showMultiView()
     {
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_MULTI_MODE);
+
         _ac.setUiMode(Constants.UiMode.vMulti);
         runOnUiThread(new Runnable()
         {
@@ -1988,6 +2096,8 @@ public class SimpleUiMainActivity
         {
             return;
         }
+
+        Globals.getEngageApplication().logEvent(Analytics.TOGGLE_NETWORKING);
 
         _ac.setUseRp(useRp);
 
@@ -2146,6 +2256,20 @@ public class SimpleUiMainActivity
             });
         }
 
+        // Group list
+        iv = findViewById(R.id.ivGroups);
+        if(iv != null)
+        {
+            iv.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View v)
+                {
+                    showGroupList();
+                }
+            });
+        }
+
         // Setting
         iv = findViewById(R.id.ivMainScreenMenu);
         if(iv != null)
@@ -2165,21 +2289,24 @@ public class SimpleUiMainActivity
 
         if(_ac.getPttLatching())
         {
+            if(_ac.getPttVoiceControl())
+            {
+                ivPtt.setContentDescription(getString(R.string.app_ptt_voice_control_on));
+            }
+
             ivPtt.setOnClickListener(new View.OnClickListener()
             {
                 @Override
                 public void onClick(View v)
                 {
-                    if(!_pttRequested)
+                    _pttRequested = !_pttRequested;
+
+                    if(_pttRequested)
                     {
-                        ivPtt.setContentDescription("disengage");
-                        _pttRequested = true;
                         Globals.getEngageApplication().startTx(0, 0);
                     }
                     else
                     {
-                        ivPtt.setContentDescription("engage");
-                        _pttRequested = false;
                         Globals.getEngageApplication().endTx();
                     }
                 }
@@ -2216,17 +2343,46 @@ public class SimpleUiMainActivity
             @Override
             public void run()
             {
+                ImageView ivPtt = findViewById(R.id.ivPtt);
+
                 if(_anyTxActive)
                 {
-                    ((ImageView) findViewById(R.id.ivPtt)).setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_ptt_active));
+                    if(_ac.getPttVoiceControl())
+                    {
+                        ivPtt.setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_ptt_active_voice_control));
+                        ivPtt.setContentDescription(getString(R.string.app_ptt_voice_control_off));
+                    }
+                    else
+                    {
+                        ivPtt.setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_ptt_active));
+                        ivPtt.setContentDescription(null);
+                    }
                 }
                 else if(_anyTxPending)
                 {
-                    ((ImageView) findViewById(R.id.ivPtt)).setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_ptt_transition));
+                    if(_ac.getPttVoiceControl())
+                    {
+                        ivPtt.setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_ptt_transition_voice_control));
+                        ivPtt.setContentDescription(getString(R.string.app_ptt_voice_control_off));
+                    }
+                    else
+                    {
+                        ivPtt.setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_ptt_transition));
+                        ivPtt.setContentDescription(null);
+                    }
                 }
                 else
                 {
-                    ((ImageView) findViewById(R.id.ivPtt)).setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_ptt_idle));
+                    if(_ac.getPttVoiceControl())
+                    {
+                        ivPtt.setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_ptt_idle_voice_control));
+                        ivPtt.setContentDescription(getString(R.string.app_ptt_voice_control_on));
+                    }
+                    else
+                    {
+                        ivPtt.setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_ptt_idle));
+                        ivPtt.setContentDescription(null);
+                    }
                 }
             }
         });
@@ -2323,18 +2479,6 @@ public class SimpleUiMainActivity
                     startSettingsActivity();
                     return true;
                 }
-                /*
-                else if (id == R.id.action_team_list)
-                {
-                    showTeamList();
-                    return true;
-                }
-                else if (id == R.id.action_map)
-                {
-                    startMapActivity();
-                    return true;
-                }
-                */
                 else if (id == R.id.action_missions)
                 {
                     startMissionListActivity();

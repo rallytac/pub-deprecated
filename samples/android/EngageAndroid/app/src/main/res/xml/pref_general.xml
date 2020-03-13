@@ -9,6 +9,16 @@
             android:title="Use development licensing system"/>
     </PreferenceCategory>
 
+    <!--
+    <PreferenceCategory android:title="Security">
+        <PreferenceScreen android:title="Certificate Manager"
+            android:summary="Manage certificates">
+
+            <intent android:action="com.rallytac.engageandroid.ACTION_CERTIFICATE_MANAGER_ACTIVITY"/>
+        </PreferenceScreen>
+    </PreferenceCategory>
+    -->
+
     <PreferenceCategory android:title="Identity">
         <EditTextPreference
             android:key="user_id"
@@ -44,6 +54,21 @@
             android:negativeButtonText="@null"
             android:positiveButtonText="@null"
             android:title="Network Interface"/>
+
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="network_multicastFailover.enabled"
+            android:title="Enable Multicast Failover"/>
+
+        <ListPreference
+            android:defaultValue="10"
+            android:entries="@array/multicast_failover_secs_names"
+            android:entryValues="@array/multicast_failover_secs_values"
+            android:key="network_multicastFailover.secs"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="Failover Threshold"
+            android:dependency="network_multicastFailover.enabled"/>
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Location">
@@ -162,10 +187,14 @@
             android:defaultValue="false"
             android:key="user_ui.pttLatching"
             android:title="Latch/unlatch the PTT button"/>
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="user_ui.pttButtonVoiceControl"
+            android:title="PTT using voice control"/>
     </PreferenceCategory>
 
 
-    <PreferenceCategory android:title="Experimental Features">
+    <PreferenceCategory android:title="Experimental Features" android:key="prefcat_experimental_general">
         <SwitchPreference
             android:key="user_experiment.discovery.ssdp.enable"
             android:title="Discover SSDP Assets"
@@ -238,7 +267,7 @@
     </PreferenceCategory>
 
 
-    <PreferenceCategory android:title="User Human Biometrics (Experimental)">
+    <PreferenceCategory android:title="User Human Biometrics (Experimental)" android:key="prefcat_experimental_human_biometrics">
         <SwitchPreference
             android:key="user_experiment.hbm.simulate.enable"
             android:title="Simulate human biometrics readings"

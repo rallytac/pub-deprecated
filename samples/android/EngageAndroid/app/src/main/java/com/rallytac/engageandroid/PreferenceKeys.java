@@ -13,6 +13,9 @@ public class PreferenceKeys
     public static String UI_MODE = "ui.mode";
 
     public static String NETWORK_BINDING_NIC_NAME = "network_bindingNic";
+    public static String NETWORK_MULTICAST_FAILOVER_ENABLED = "network_multicastFailover.enabled";
+    public static String NETWORK_MULTICAST_FAILOVER_SECS = "network_multicastFailover.secs";
+
     public static String ACTIVE_MISSION_CONFIGURATION_JSON = "activeConfiguration_jsonTemplate";
     public static String ACTIVE_MISSION_CONFIGURATION_SELECTED_GROUPS_SINGLE = "activeConfiguration_selectedGroups_single";
     public static String ACTIVE_MISSION_CONFIGURATION_SELECTED_GROUPS_MULTI = "activeConfiguration_selectedGroups_multi";
@@ -31,6 +34,7 @@ public class PreferenceKeys
     public static String USER_SPEAKER_OUTPUT_BOOST_FACTOR = "user_audio.output.boostFactor";
 
     public static String USER_UI_PTT_LATCHING = "user_ui.pttLatching";
+    public static String USER_UI_PTT_VOICE_CONTROL = "user_ui.pttButtonVoiceControl";
 
     public static String LAST_QRCODE_DEFLECTION_URL = "lastQrCodeDeflectionUrl";
     public static String QR_CODE_SCAN_PASSWORD = "qrCodeScanPassword";

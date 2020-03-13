@@ -1,10 +1,11 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
 
 // The directory where Engage-specific items are stored
 def engageEngineDir = "libs/"
 
 // The version of the Engage Engine we want to use
-def engageEngineVersion = "1.118.8877"
+def engageEngineVersion = "1.133.8893"
 
 // The build type of the Engage Engine we want
 def engageEngineBuildType = "release"
@@ -37,9 +38,9 @@ android {
         applicationId "com.rallytac.engageandroid"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 118
-        versionName "1.118"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        versionCode 1200
+        versionName "1200"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -76,12 +77,13 @@ dependencies {
     implementation fileTree(dir: engageEngineDir, include: ["engage-engine-" + engageEngineBuildType + "-" + engageEngineVersion + ".aar"])
 
     // Android goodies
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.android.support:preference-v7:28.0.0'
-    implementation 'com.android.support:support-vector-drawable:28.0.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.android.support:support-v4:28.0.0'
-    implementation 'com.android.support:design:28.0.0'
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'androidx.preference:preference:1.0.0'
+    implementation 'androidx.vectordrawable:vectordrawable:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
 
     // QR codes
     implementation 'com.journeyapps:zxing-android-embedded:3.5.0'
@@ -97,6 +99,10 @@ dependencies {
 
     // Testing
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
+
+    // Firebase
+    implementation 'com.google.firebase:firebase-analytics:17.2.2'
+    implementation 'com.google.firebase:firebase-core:17.2.3'
 }

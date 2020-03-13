@@ -47,6 +47,23 @@ public class ActiveConfiguration
         }
     }
 
+    public static class MulticastFailoverConfiguration
+    {
+        public boolean enabled;
+        public int thresholdSecs;
+
+        public MulticastFailoverConfiguration()
+        {
+            MulticastFailoverConfiguration.this.clear();
+        }
+
+        public void clear()
+        {
+            enabled = Constants.DEF_MULTICAST_FAILOVER_ENABLED;
+            thresholdSecs = Constants.DEF_MULTICAST_FAILOVER_THRESHOLD_SECS;
+        }
+    }
+
     private String _missionId;
     private String _missionName;
     private String _missionDescription;
@@ -79,6 +96,7 @@ public class ActiveConfiguration
     private boolean _enableVibrations;
     private boolean _notifyPttEveryTx;
     private boolean _pttLatching;
+    private boolean _pttVoiceControl;
 
     private boolean _discoverSsdpAssets;
     private boolean _discoverTrelliswareAssets;
@@ -91,6 +109,7 @@ public class ActiveConfiguration
     private String _inputJson;
 
     private LocationConfiguration _locationConfiguration = new LocationConfiguration();
+    private MulticastFailoverConfiguration _multicastFailoverConfiguration = new MulticastFailoverConfiguration();
 
     public boolean getPttLatching()
     {
@@ -105,6 +124,18 @@ public class ActiveConfiguration
         Globals.getSharedPreferencesEditor().apply();
     }
 
+    public boolean getPttVoiceControl()
+    {
+        return _pttVoiceControl;
+    }
+
+    public void setPttVoiceControl(boolean pttVoiceControl)
+    {
+        _pttVoiceControl = pttVoiceControl;
+
+        Globals.getSharedPreferencesEditor().putBoolean(PreferenceKeys.USER_UI_PTT_VOICE_CONTROL, _pttVoiceControl);
+        Globals.getSharedPreferencesEditor().apply();
+    }
 
     public String getInputJson()
     {
@@ -302,6 +333,21 @@ public class ActiveConfiguration
 
         Globals.getSharedPreferencesEditor().putInt(PreferenceKeys.UI_MODE, _uiMode.ordinal());
         Globals.getSharedPreferencesEditor().apply();
+    }
+
+
+    public void setMulticastFailoverConfiguration(MulticastFailoverConfiguration mc)
+    {
+        _multicastFailoverConfiguration = mc;
+
+        Globals.getSharedPreferencesEditor().putBoolean(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_ENABLED, _multicastFailoverConfiguration.enabled);
+        Globals.getSharedPreferencesEditor().putString(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_SECS, Integer.toString(_multicastFailoverConfiguration.thresholdSecs));
+        Globals.getSharedPreferencesEditor().apply();
+    }
+
+    public MulticastFailoverConfiguration getMulticastFailoverConfiguration()
+    {
+        return _multicastFailoverConfiguration;
     }
 
     public void setLocationConfiguration(LocationConfiguration lc)
@@ -572,6 +618,7 @@ public class ActiveConfiguration
         _rpAddress = "";
         _rpPort = 0;
         _locationConfiguration.clear();
+        _multicastFailoverConfiguration.clear();
 
         _uiMode = Constants.DEF_UI_MODE;
         _pttToneNotificationLevel = Constants.DEF_PTT_TONE_LEVEL;
@@ -825,8 +872,8 @@ public class ActiveConfiguration
                     certificate = new JSONObject();
                 }
 
-                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.certificate, Utils.getStringResource(Globals.getEngageApplication(), R.raw.android_rts_factory_default_engage_certificate));
-                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.key, Utils.getStringResource(Globals.getEngageApplication(), R.raw.android_rts_factory_default_engage_private_key));
+                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.certificate, "@certstore://" + Globals.getContext().getString(R.string.certstore_default_certificate_id));
+                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.key, "@certstore://" + Globals.getContext().getString(R.string.certstore_default_certificate_id));
 
                 security.put(Engine.JsonFields.EnginePolicy.Certificate.objectName, certificate);
                 rc.put(Engine.JsonFields.EnginePolicy.Security.objectName, security);

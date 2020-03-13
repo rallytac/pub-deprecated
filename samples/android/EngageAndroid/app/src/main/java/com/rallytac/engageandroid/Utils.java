@@ -281,6 +281,27 @@ public class Utils
         return rc;
     }
 
+    public static byte[] getBinaryResource(Context ctx, int id)
+    {
+        byte[] rc = null;
+
+        try
+        {
+            Resources res = ctx.getResources();
+            InputStream in_s = res.openRawResource(id);
+
+            rc = new byte[in_s.available()];
+            in_s.read(rc);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            rc = null;
+        }
+
+        return rc;
+    }
+
     public static String getStringResource(Context ctx, int id)
     {
         String rc = null;
@@ -528,13 +549,14 @@ public class Utils
                 rc.setUserAlias(Globals.getSharedPreferences().getString(PreferenceKeys.USER_ALIAS_ID, Constants.DEF_USER_ALIAS_ID));
 
                 rc.setPttLatching(Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_UI_PTT_LATCHING, Constants.DEF_USER_UI_PTT_LATCHING));
-
+                rc.setPttVoiceControl(Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_UI_PTT_VOICE_CONTROL, Constants.DEF_USER_UI_PTT_VOICE_CONTROL));
 
                 if(rc.getUserAlias().isEmpty())
                 {
                     rc.setUserAlias(generateUserAlias(Constants.DEF_USER_ALIAS_ID));
                 }
 
+                // Location
                 ActiveConfiguration.LocationConfiguration lc = new ActiveConfiguration.LocationConfiguration();
 
                 lc.enabled = Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_LOCATION_SHARED, Constants.DEF_LOCATION_ENABLED);
@@ -546,6 +568,13 @@ public class Utils
                 lc.minDisplacement = Float.parseFloat(Globals.getSharedPreferences().getString(PreferenceKeys.USER_LOCATION_MIN_DISPLACEMENT, Float.toString(Constants.DEF_LOCATION_MIN_DISPLACEMENT)));
 
                 rc.setLocationConfiguration(lc);
+
+                // Multicast failover
+                ActiveConfiguration.MulticastFailoverConfiguration mc = new ActiveConfiguration.MulticastFailoverConfiguration();
+
+                mc.enabled = Globals.getSharedPreferences().getBoolean(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_ENABLED, Constants.DEF_MULTICAST_FAILOVER_ENABLED);
+                mc.thresholdSecs = Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_SECS, Integer.toString(Constants.DEF_MULTICAST_FAILOVER_THRESHOLD_SECS)));
+                rc.setMulticastFailoverConfiguration(mc);
 
                 selectPreviouslySavedSelectedGroups(rc);
             }
@@ -1110,6 +1139,22 @@ public class Utils
         {
             e.printStackTrace();
             rc = null;
+        }
+
+        return rc;
+    }
+
+    public static boolean doesFileExist(String fn)
+    {
+        boolean rc = false;
+
+        try
+        {
+            rc = new File(fn).exists();
+        }
+        catch (Exception e)
+        {
+            rc = false;
         }
 
         return rc;

@@ -11,9 +11,9 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.TextWatcher;
@@ -269,6 +269,8 @@ public class AboutActivity extends
 
             // Put the new license into effect
             Globals.getEngageApplication().getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), key, ac);
+
+            Globals.getEngageApplication().logEvent(Analytics.NEW_LICENSE_FROM_USER);
         }
     }
 

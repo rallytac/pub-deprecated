@@ -6,8 +6,8 @@
 package com.rallytac.engageandroid;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -25,6 +25,7 @@ public abstract class CardFragment extends Fragment
 
     protected GroupDescriptor _gd = null;
     private Animation _networkErrorAnimation = null;
+    private Animation _networkFailoverAnimation = null;
     private Animation _speakerAnimation = null;
 
     public String getGroupId()
@@ -100,6 +101,34 @@ public abstract class CardFragment extends Fragment
             });
         }
 
+        // Network error (maybe...?)
+        iv = view.findViewById(R.id.ivNetError);
+        if(iv != null)
+        {
+            iv.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View v)
+                {
+                    Utils.showLongPopupMsg(getActivity(), getString(R.string.experiencing_network_problems));
+                }
+            });
+        }
+
+        // Network failover (maybe...?)
+        iv = view.findViewById(R.id.ivNetFailover);
+        if(iv != null)
+        {
+            iv.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View v)
+                {
+                    Utils.showLongPopupMsg(getActivity(), getString(R.string.currently_operating_in_mc_failover_mode));
+                }
+            });
+        }
+
         setupGestures(view);
 
         return view;
@@ -168,6 +197,29 @@ public abstract class CardFragment extends Fragment
         getView().findViewById(R.id.ivNetError).clearAnimation();
     }
 
+    private void startNetworkFailoverAnimation()
+    {
+        if(_networkFailoverAnimation == null)
+        {
+            _networkFailoverAnimation = AnimationUtils.loadAnimation(getActivity(), R.anim.network_failover_pulse);
+            getView().findViewById(R.id.ivNetFailover).startAnimation(_networkFailoverAnimation);
+            getView().findViewById(R.id.ivNetFailover).setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void stopNetworkFailoverAnimation()
+    {
+        if(_networkFailoverAnimation != null)
+        {
+            _networkFailoverAnimation.cancel();
+            _networkFailoverAnimation.reset();
+            _networkFailoverAnimation = null;
+        }
+
+        getView().findViewById(R.id.ivNetFailover).setVisibility(View.INVISIBLE);
+        getView().findViewById(R.id.ivNetFailover).clearAnimation();
+    }
+
     private void startSpeakerErrorAnimation()
     {
         if(_speakerAnimation == null)
@@ -199,9 +251,18 @@ public abstract class CardFragment extends Fragment
             {
                 if(_gd != null)
                 {
-                    if(_gd.connected)
+                    if(_gd.isConnectedInSomeForm())
                     {
                         stopNetworkErrorAnimation();
+
+                        if(_gd.operatingInMulticastFailover)
+                        {
+                            startNetworkFailoverAnimation();
+                        }
+                        else
+                        {
+                            stopNetworkFailoverAnimation();
+                        }
                     }
                     else
                     {
