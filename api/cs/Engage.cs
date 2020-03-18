@@ -807,10 +807,10 @@ public class Engage
     private static extern IntPtr engageGetActiveLicenseDescriptor();
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr engageGetLicenseDescriptor(string entitlement, string key, string activationCode);
+    private static extern IntPtr engageGetLicenseDescriptor(string entitlement, string key, string activationCode, string manufacturerId);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int engageUpdateLicense(string entitlement, string key, string activationCode);
+    private static extern int engageUpdateLicense(string entitlement, string key, string activationCode, string manufacturerId);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageSendGroupBlob(string id, byte[] blob, int blobSize, string jsonBlobParams);
