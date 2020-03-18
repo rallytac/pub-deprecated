@@ -768,7 +768,7 @@ NAN_METHOD(getActiveLicenseDescriptor)
 //--------------------------------------------------------
 NAN_METHOD(getLicenseDescriptor)
 {
-    const char *rc = engageGetLicenseDescriptor(STRVAL(0), STRVAL(1), STRVAL(2));
+    const char *rc = engageGetLicenseDescriptor(STRVAL(0), STRVAL(1), STRVAL(2), STRVAL(3));
 
     if(rc == nullptr)
     {
@@ -781,7 +781,7 @@ NAN_METHOD(getLicenseDescriptor)
 //--------------------------------------------------------
 NAN_METHOD(updateLicense)
 {
-    engageUpdateLicense(STRVAL(0), STRVAL(1), STRVAL(2));
+    engageUpdateLicense(STRVAL(0), STRVAL(1), STRVAL(2), STRVAL(3));
 }
 
 // TODO: engageSendGroupRtp
@@ -828,7 +828,10 @@ NAN_METHOD(getAudioDevices)
 }
 
 // TODO: engageGenerateMission
-// TODO: engageSetMissionId
+NAN_METHOD(setMissionId)
+{
+    engageSetMissionId(STRVAL(0))
+}
 
 //--------------------------------------------------------
 NAN_METHOD(openCertStore)
@@ -900,6 +903,8 @@ NAN_MODULE_INIT(Init)
 
     ENGAGE_BINDING(openCertStore);
     ENGAGE_BINDING(closeCertStore);
+
+    ENGAGE_BINDING(setMissionId);
 }
 
 NODE_MODULE(engage, Init)
