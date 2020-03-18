@@ -830,7 +830,7 @@ NAN_METHOD(getAudioDevices)
 // TODO: engageGenerateMission
 NAN_METHOD(setMissionId)
 {
-    engageSetMissionId(STRVAL(0))
+    engageSetMissionId(STRVAL(0));
 }
 
 //--------------------------------------------------------
