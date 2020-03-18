@@ -1561,10 +1561,10 @@ public final class Engine
     public native String engageGetActiveLicenseDescriptor();
 
     @Keep
-    public native String engageGetLicenseDescriptor(String entitlement, String key, String activationCode);
+    public native String engageGetLicenseDescriptor(String entitlement, String key, String activationCode, String manufacturerId);
 
     @Keep
-    public native int engageUpdateLicense(String entitlement, String key, String activationCode);
+    public native int engageUpdateLicense(String entitlement, String key, String activationCode, String manufacturerId);
 
     @Keep
     public native void engagePlatformServiceDiscovered(String id, String jsonParams);
