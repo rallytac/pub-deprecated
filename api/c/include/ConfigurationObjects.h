@@ -4364,7 +4364,7 @@ namespace ConfigurationObjects
         
     public:
 
-        /** @brief A unqiue identifier for the Rallpoint */
+        /** @brief A unqiue identifier for the Rallypoint */
         std::string                                 id;
 
         /** @brief TCP port to listen on.  Default is 7443. */
@@ -4454,6 +4454,12 @@ namespace ConfigurationObjects
         /** @brief Tx options for multicast. */
         NetworkTxOptions                            multicastTxOptions;
 
+        /** @brief Path to the certificate store */
+        std::string                                 certStoreFileName;
+
+        /** @brief Hex password for the certificate store (if any) */
+        std::string                                 certStorePasswordHex;
+
         RallypointServer()
         {
             clear();
@@ -4491,6 +4497,8 @@ namespace ConfigurationObjects
             requiredMulticasts.clear();
             txOptions.clear();
             multicastTxOptions.clear();
+            certStoreFileName.clear();
+            certStorePasswordHex.clear();
         }
     };
     
@@ -4527,7 +4535,9 @@ namespace ConfigurationObjects
             TOJSON_IMPL(igmpSnooping),
             TOJSON_IMPL(requiredMulticasts),
             TOJSON_IMPL(txOptions),
-            TOJSON_IMPL(multicastTxOptions)
+            TOJSON_IMPL(multicastTxOptions),
+            TOJSON_IMPL(certStoreFileName),
+            TOJSON_IMPL(certStorePasswordHex)
         };
     }
     static void from_json(const nlohmann::json& j, RallypointServer& p)
@@ -4563,6 +4573,8 @@ namespace ConfigurationObjects
         getOptional<std::vector<NetworkAddressRxTx>>("requiredMulticasts", p.requiredMulticasts, j);
         getOptional<NetworkTxOptions>("txOptions", p.txOptions, j);
         getOptional<NetworkTxOptions>("multicastTxOptions", p.multicastTxOptions, j);
+        getOptional<std::string>("certStoreFileName", p.certStoreFileName, j);
+        getOptional<std::string>("certStorePasswordHex", p.certStorePasswordHex, j);
     }    
 
     

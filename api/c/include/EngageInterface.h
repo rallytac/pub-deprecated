@@ -819,13 +819,14 @@ ENGAGE_API const char * _Nonnull engageGetActiveLicenseDescriptor();
  * @param entitlement The application's entitlement key
  * @param key The license key
  * @param activationCode The activation code for the license on the current device (if any)
+ * @param manufacturerId OEM-specific manufacturer ID or null foir default
  * @return Zero-terminated string representing a JSON object of type ConfigurationObjects::LicenseDescriptor 
  * <P> 
  * Example: @include[doc] examples/LicenseDescriptor.json 
  * </P>
  * @see ConfigurationObjects::LicenseDescriptor, engageGetActiveLicenseDescriptor(), engageUpdateLicense()
  */
-ENGAGE_API const char * _Nonnull engageGetLicenseDescriptor(const char * _Nonnull entitlement, const char * _Nonnull key, const char * _Nullable activationCode);
+ENGAGE_API const char * _Nonnull engageGetLicenseDescriptor(const char * _Nonnull entitlement, const char * _Nonnull key, const char * _Nullable activationCode, const char * _Nullable manufacturerId);
 
 
 /**
@@ -842,9 +843,10 @@ ENGAGE_API const char * _Nonnull engageGetLicenseDescriptor(const char * _Nonnul
  * @param entitlement The application's entitlement key
  * @param key The license key
  * @param activationCode The activation code for the license on the current device (if any)
+ * @param manufacturerId OEM-specific manufacturer ID or null foir default
  * @return ENGAGE_RESULT_OK if the submission request was successful 
  */
-ENGAGE_API int engageUpdateLicense(const char * _Nonnull entitlement, const char * _Nonnull key, const char * _Nullable activationCode);
+ENGAGE_API int engageUpdateLicense(const char * _Nonnull entitlement, const char * _Nonnull key, const char * _Nullable activationCode, const char * _Nullable manufacturerId);
 
 
 /**
