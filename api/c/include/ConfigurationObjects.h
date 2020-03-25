@@ -3744,6 +3744,13 @@ namespace ConfigurationObjects
         EnginePolicyTimelines       timelines;
         EnginePolicyDatabase        database;
 
+        /** @brief Path to the certificate store */
+        std::string                 certStoreFileName;
+
+        /** @brief Hex password for the certificate store (if any) */
+        std::string                 certStorePasswordHex;
+
+
         EnginePolicy()
         {
             clear();
@@ -3761,6 +3768,8 @@ namespace ConfigurationObjects
             internals.clear();
             timelines.clear();
             database.clear();
+            certStoreFileName.clear();
+            certStorePasswordHex.clear();
         }
     };
 
@@ -3776,7 +3785,9 @@ namespace ConfigurationObjects
             TOJSON_IMPL(logging),
             TOJSON_IMPL(internals),
             TOJSON_IMPL(timelines),
-            TOJSON_IMPL(database)
+            TOJSON_IMPL(database),
+            TOJSON_IMPL(certStoreFileName),
+            TOJSON_IMPL(certStorePasswordHex)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicy& p)
@@ -3792,6 +3803,8 @@ namespace ConfigurationObjects
         FROMJSON_IMPL_SIMPLE(internals);
         FROMJSON_IMPL_SIMPLE(timelines);
         FROMJSON_IMPL_SIMPLE(database);
+        FROMJSON_IMPL_SIMPLE(certStoreFileName);
+        FROMJSON_IMPL_SIMPLE(certStorePasswordHex);
     } 
 
 
@@ -3954,6 +3967,104 @@ namespace ConfigurationObjects
         getOptional<NetworkAddress>("host", p.host, j);
         getOptional<SecurityCertificate>("certificate", p.certificate, j);
     }
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(RallypointServerLimits)
+    /**
+    * @brief TODO: Configuration for Rallypoint limits
+    * 
+    * Helper C++ class to serialize and de-serialize RallypointServerLimits JSON 
+    * 
+    * Example: @include[doc] examples/RallypointServerLimits.json 
+    *    
+    * @see RallypointServer  
+    */       
+    class RallypointServerLimits : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(RallypointServerLimits)
+
+    public:
+        /** @brief Maximum number of clients (0 = unlimited) */ 
+        uint32_t            maxClients;
+
+        /** @brief Maximum number of peers (0 = unlimited) */
+        uint32_t            maxPeers;
+
+        /** @brief Maximum number of multicastReflectors (0 = unlimited) */
+        uint32_t            maxMulticastReflectors;
+
+        /** @brief Maximum number of registered streams (0 = unlimited) */ 
+        uint32_t            maxRegisteredStreams;
+
+        /** @brief Maximum number of bidirectional stream paths (0 = unlimited) */ 
+        uint32_t            maxStreamPaths;
+
+        /** @brief Maximum number of packets received per second (0 = unlimited) */
+        uint32_t            maxRxPacketsPerSec;
+
+        /** @brief Maximum number of packets transmitted per second (0 = unlimited) */
+        uint32_t            maxTxPacketsPerSec;
+
+        /** @brief Maximum number of bytes received per second (0 = unlimited) */
+        uint32_t            maxRxBytesPerSec;
+
+        /** @brief Maximum number of bytes transmitted per second (0 = unlimited) */
+        uint32_t            maxTxBytesPerSec;
+
+        /** @brief Maximum number of queue operations per second (0 = unlimited) */
+        uint32_t            maxQOpsPerSec;
+
+        RallypointServerLimits()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            maxClients = 0;
+            maxPeers = 0;
+            maxMulticastReflectors = 0;
+            maxRegisteredStreams = 0;
+            maxStreamPaths = 0;
+            maxRxPacketsPerSec = 0;
+            maxTxPacketsPerSec = 0;
+            maxRxBytesPerSec = 0;
+            maxTxBytesPerSec = 0;
+            maxQOpsPerSec = 0;
+        }
+    };
+    
+    static void to_json(nlohmann::json& j, const RallypointServerLimits& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(maxClients),
+            TOJSON_IMPL(maxPeers),
+            TOJSON_IMPL(maxMulticastReflectors),
+            TOJSON_IMPL(maxRegisteredStreams),
+            TOJSON_IMPL(maxStreamPaths),
+            TOJSON_IMPL(maxRxPacketsPerSec),
+            TOJSON_IMPL(maxTxPacketsPerSec),
+            TOJSON_IMPL(maxRxBytesPerSec),
+            TOJSON_IMPL(maxTxBytesPerSec),
+            TOJSON_IMPL(maxQOpsPerSec)
+        };
+    }
+    static void from_json(const nlohmann::json& j, RallypointServerLimits& p)
+    {
+        p.clear();
+        getOptional<uint32_t>("maxClients", p.maxClients, j, 0);
+        getOptional<uint32_t>("maxPeers", p.maxPeers, j, 0);
+        getOptional<uint32_t>("maxMulticastReflectors", p.maxMulticastReflectors, j, 0);
+        getOptional<uint32_t>("maxRegisteredStreams", p.maxRegisteredStreams, j, 0);
+        getOptional<uint32_t>("maxStreamPaths", p.maxStreamPaths, j, 0);
+        getOptional<uint32_t>("maxRxPacketsPerSec", p.maxRxPacketsPerSec, j, 0);
+        getOptional<uint32_t>("maxTxPacketsPerSec", p.maxTxPacketsPerSec, j, 0);
+        getOptional<uint32_t>("maxRxBytesPerSec", p.maxRxBytesPerSec, j, 0);
+        getOptional<uint32_t>("maxTxBytesPerSec", p.maxTxBytesPerSec, j, 0);
+        getOptional<uint32_t>("maxQOpsPerSec", p.maxQOpsPerSec, j, 0);
+    }   
+
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointServerStatusReport)
@@ -4229,23 +4340,17 @@ namespace ConfigurationObjects
         
     public:
 
-        /** @brief TODO: Shaun, not sure what this Id is */
+        /** @brief An identifier useful for organizations that track different mesh configurations by ID */
         std::string                     id;
 
-        /** @brief TODO: Shaun, help */
+        /** @brief TODO: A version number for the mesh configuration.  Change this whenever you update your configuration */
         int                             version;
 
         /** @brief Comments */ 
         std::string                     comments;
 
-        /** @brief X509 Certificate to use for peer connectivity. */
-        SecurityCertificate             certificate;
-
         /** @brief List of Rallypoint peers to connect to */
         std::vector<RallypointPeer>     peers;
-
-        /** @brief Transport Layer Security(TLS) settings for the peer connection. */
-        Tls                             tls;
 
         PeeringConfiguration()
         {
@@ -4257,9 +4362,6 @@ namespace ConfigurationObjects
             id.clear();
             version = 0;
             comments.clear();
-            certificate.clear();
-            peers.clear();
-            tls.clear();
         }
     };
 
@@ -4269,9 +4371,7 @@ namespace ConfigurationObjects
             TOJSON_IMPL(id),
             TOJSON_IMPL(version),
             TOJSON_IMPL(comments),
-            TOJSON_IMPL(certificate),
-            TOJSON_IMPL(peers),
-            TOJSON_IMPL(tls)
+            TOJSON_IMPL(peers)
         };
     }
     static void from_json(const nlohmann::json& j, PeeringConfiguration& p)
@@ -4280,9 +4380,7 @@ namespace ConfigurationObjects
         getOptional<std::string>("id", p.id, j);
         getOptional<int>("version", p.version, j, 0);
         getOptional<std::string>("comments", p.comments, j);
-        getOptional<SecurityCertificate>("certificate", p.certificate, j);
         getOptional<std::vector<RallypointPeer>>("peers", p.peers, j);
-        getOptional<Tls>("tls", p.tls, j);
     }
 
     //-----------------------------------------------------------
@@ -4394,6 +4492,9 @@ namespace ConfigurationObjects
         /** @brief Details for producing a status report. @see RallypointServerStatusReport */
         RallypointServerStatusReport                statusReport;
 
+        /** @brief Details for capacity limits and determining processing load. @see RallypointServerLimits */
+        RallypointServerLimits                      limits;
+
         /** @brief Details for producing a Graphviz-compatible link graph. @see RallypointServerLinkGraph */
         RallypointServerLinkGraph                   linkGraph;
 
@@ -4478,6 +4579,7 @@ namespace ConfigurationObjects
             peeringConfigurationFileCheckSecs = 60;
             ioPools = -1;
             statusReport.clear();
+            limits.clear();
             linkGraph.clear();
             externalHealthCheckResponder.clear();
             allowPeerForwarding = false;
@@ -4516,6 +4618,7 @@ namespace ConfigurationObjects
             TOJSON_IMPL(peeringConfigurationFileCheckSecs),
             TOJSON_IMPL(ioPools),
             TOJSON_IMPL(statusReport),
+            TOJSON_IMPL(limits),
             TOJSON_IMPL(linkGraph),
             TOJSON_IMPL(externalHealthCheckResponder),
             TOJSON_IMPL(allowPeerForwarding),
@@ -4554,11 +4657,12 @@ namespace ConfigurationObjects
         getOptional<int>("peeringConfigurationFileCheckSecs", p.peeringConfigurationFileCheckSecs, j, 60);
         getOptional<int>("ioPools", p.ioPools, j, -1);
         getOptional<RallypointServerStatusReport>("statusReport", p.statusReport, j);
+        getOptional<RallypointServerLimits>("limits", p.limits, j);
         getOptional<RallypointServerLinkGraph>("linkGraph", p.linkGraph, j);
         getOptional<RallypointExternalHealthCheckResponder>("externalHealthCheckResponder", p.externalHealthCheckResponder, j);
         getOptional<bool>("allowPeerForwarding", p.allowPeerForwarding, j, false);        
         getOptional<std::string>("multicastInterfaceName", p.multicastInterfaceName, j);
-        getOptional<Tls>("clientTls", p.tls, j);
+        getOptional<Tls>("tls", p.tls, j);
         getOptional<DiscoveryConfiguration>("discovery", p.discovery, j);   
         getOptional<bool>("forwardDiscoveredGroups", p.forwardDiscoveredGroups, j, false);
         getOptional<bool>("isMeshLeaf", p.isMeshLeaf, j, false);
@@ -5214,6 +5318,7 @@ namespace ConfigurationObjects
         PeeringConfiguration::document(path);
         RallypointPeer::document(path);
         RallypointServerStatusReport::document(path);
+        RallypointServerLimits::document(path);
         RallypointExternalHealthCheckResponder::document(path);
         Tls::document(path);
         RallypointServer::document(path);
