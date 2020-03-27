@@ -24,6 +24,7 @@
 
     <string name="license_key"></string>
     <string name="activation_code"></string>
+    <string name="manufacturer_id"></string>
 
     <string name="preload_rp_use"></string>
     <string name="preload_rp_address"></string>

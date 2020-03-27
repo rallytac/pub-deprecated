@@ -1,5 +1,10 @@
 # Change List
 
+## March 27, 2020 - 1.140.8903
+- Corrects an Engine shutdown issue when running under node.js.
+- Corrects an X.509 certificate exchange issue Rallypoint peer links under certain Linux distros.
+- Add the ability to disable multicast failover at the Engine policy level.
+
 ## March 22, 2020 - 1.133.8893
 - Corrects an issue on some Windows network drivers related to multicast receive on a QoS-enabled socket.
 

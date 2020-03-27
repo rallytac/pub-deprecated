@@ -46,6 +46,7 @@ public class Analytics
     public static final String GROUP_TX_ENDED = "GRP_TX_ENDED";
     public static final String GROUP_TX_MAX_EXCEEDED = "GRP_TX_MAX_EXC";
     public static final String GROUP_TX_USURPED = "GRP_TX_USURPED";
+    public static final String GROUP_TX_DURATION = "GROUP_TX_DURATION";
 
     //public static final String GROUP_TX_MUTED = "GRP_TX_MUTED";
     //public static final String GROUP_TX_UNMUTED = "GRP_TX_UNMUTED";

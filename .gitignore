@@ -7,3 +7,5 @@ samples/cs/engage-sample-cs-console/packages/*
 .build/
 .engage/
 *.o
+.t/
+*.swp

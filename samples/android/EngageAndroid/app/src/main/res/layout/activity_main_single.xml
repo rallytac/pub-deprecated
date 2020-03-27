@@ -84,7 +84,8 @@
         android:layout_marginStart="32dp"
         app:layout_constraintStart_toEndOf="@+id/ivMap"
         app:layout_constraintTop_toTopOf="@+id/ivMap"
-        app:srcCompat="@drawable/ic_net_local" />
+        app:srcCompat="@drawable/ic_net_local"
+        android:onClick="onClickNetworkIcon"/>
 
     <ImageView
         android:id="@+id/ivTimeline"
@@ -93,7 +94,8 @@
         android:layout_marginStart="32dp"
         app:layout_constraintStart_toEndOf="@+id/ivNetwork"
         app:layout_constraintTop_toTopOf="@+id/ivNetwork"
-        app:srcCompat="@drawable/ic_history" />
+        app:srcCompat="@drawable/ic_history"
+        android:onClick="onClickTimelineIcon"/>
 
     <ImageView
         android:id="@+id/ivGroups"
@@ -102,7 +104,8 @@
         android:layout_marginStart="32dp"
         app:layout_constraintStart_toEndOf="@+id/ivTimeline"
         app:layout_constraintTop_toTopOf="@+id/ivTimeline"
-        app:srcCompat="@drawable/ic_group_list" />
+        app:srcCompat="@drawable/ic_group_list"
+        android:onClick="onClickGroupsIcon"/>
 
     <ImageView
         android:id="@+id/ivMainScreenMenu"
@@ -111,7 +114,8 @@
         android:layout_marginEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/ivNetwork"
-        app:srcCompat="@drawable/ic_main_screen_menu" />
+        app:srcCompat="@drawable/ic_main_screen_menu"
+        android:onClick="onClickMenuIcon"/>
 
     <ImageView
         android:id="@+id/ivMap"
@@ -120,7 +124,8 @@
         android:layout_marginStart="32dp"
         app:layout_constraintStart_toEndOf="@+id/ivTeam"
         app:layout_constraintTop_toTopOf="@+id/ivTeam"
-        app:srcCompat="@drawable/ic_map" />
+        app:srcCompat="@drawable/ic_map"
+        android:onClick="onClickMapIcon"/>
 
     <ImageView
         android:id="@+id/ivPreviousGroup"
@@ -173,6 +178,7 @@
         android:layout_marginTop="8dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvNotificationBar"
-        app:srcCompat="@drawable/ic_team" />
+        app:srcCompat="@drawable/ic_team"
+        android:onClick="onClickTeamIcon"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

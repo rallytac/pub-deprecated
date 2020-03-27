@@ -167,7 +167,7 @@ public class AboutActivity extends
         // Get the active license descriptor using the existing license key and activation code (if any)
         _activeLd = parseIntoInternalDescriptor(Globals.getEngageApplication()
                                                 .getEngine()
-                                                .engageGetLicenseDescriptor(getString(R.string.licensing_entitlement), key, ac));
+                                                .engageGetLicenseDescriptor(getString(R.string.licensing_entitlement), key, ac, getString(R.string.manufacturer_id)));
 
         // At this point, the new one is the same as the active one
         _newLd = new InternalDescriptor(_activeLd);
@@ -268,7 +268,7 @@ public class AboutActivity extends
             Globals.getSharedPreferencesEditor().apply();
 
             // Put the new license into effect
-            Globals.getEngageApplication().getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), key, ac);
+            Globals.getEngageApplication().getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), key, ac, getString(R.string.manufacturer_id));
 
             Globals.getEngageApplication().logEvent(Analytics.NEW_LICENSE_FROM_USER);
         }
@@ -327,7 +327,7 @@ public class AboutActivity extends
 
         _newLd = parseIntoInternalDescriptor(Globals.getEngageApplication()
                                                     .getEngine()
-                                                    .engageGetLicenseDescriptor(getString(R.string.licensing_entitlement), key, ac));
+                                                    .engageGetLicenseDescriptor(getString(R.string.licensing_entitlement), key, ac, getString(R.string.manufacturer_id)));
 
         _newLd._needsSaving = true;
     }

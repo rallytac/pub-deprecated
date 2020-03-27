@@ -46,6 +46,7 @@ public class GroupDescriptor implements Parcelable
     public boolean operatingInMulticastFailover;
     public boolean hasMulticastConnection;
     public boolean hasRpConnection;
+    public long lastTxStartTime;
 
     public static final Creator CREATOR = new Creator()
     {
@@ -72,6 +73,7 @@ public class GroupDescriptor implements Parcelable
         hasRpConnection = false;
         _isDynamic = false;
         operatingInMulticastFailover = false;
+        lastTxStartTime = 0;
 
         this.type = Type.gtUnknown;
     }
@@ -88,6 +90,7 @@ public class GroupDescriptor implements Parcelable
         hasRpConnection = false;
         _isDynamic = false;
         operatingInMulticastFailover = false;
+        lastTxStartTime = 0;
 
 
         this.jsonConfiguration = in.readString();
@@ -115,6 +118,7 @@ public class GroupDescriptor implements Parcelable
 
         this._isDynamic = (in.readInt() == 1);
         this.operatingInMulticastFailover = (in.readInt() == 1);
+        this.lastTxStartTime = in.readLong();
     }
 
     public boolean isDynamic()
@@ -144,6 +148,7 @@ public class GroupDescriptor implements Parcelable
         talkerList.clear();
         hasMulticastConnection = false;
         hasRpConnection = false;
+        lastTxStartTime = 0;
     }
 
     @Override
@@ -180,6 +185,7 @@ public class GroupDescriptor implements Parcelable
 
         dest.writeInt(this._isDynamic ? 1 : 0);
         dest.writeInt(this.operatingInMulticastFailover ? 1 : 0);
+        dest.writeLong(this.lastTxStartTime);
     }
 
     public void updateTalkers(ArrayList<TalkerDescriptor> list)

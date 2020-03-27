@@ -77,6 +77,11 @@ public class EngageApplication
 {
     private static String TAG = EngageApplication.class.getSimpleName();
 
+    public interface IGroupTextMessageListener
+    {
+        void onGroupTextMessageRx(PresenceDescriptor sourcePd, String message);
+    }
+
     public interface IPresenceChangeListener
     {
         void onPresenceAdded(PresenceDescriptor pd);
@@ -136,6 +141,8 @@ public class EngageApplication
     private HashSet<IConfigurationChangeListener> _configurationChangeListeners = new HashSet<>();
     private HashSet<ILicenseChangeListener> _licenseChangeListeners = new HashSet<>();
     private HashSet<IGroupTimelineListener> _groupTimelineListeners = new HashSet<>();
+    private HashSet<IGroupTextMessageListener> _groupTextMessageListeners = new HashSet<>();
+
 
     private long _lastAudioActivity = 0;
     private long _lastTxActivity = 0;
@@ -396,14 +403,17 @@ public class EngageApplication
 
     private void startFirebaseAnalytics()
     {
-        try
+        if(Utils.boolOpt(getString(R.string.opt_firebase_analytics_enabled), false))
         {
-            _firebaseAnalytics = FirebaseAnalytics.getInstance(this);
-        }
-        catch (Exception e)
-        {
-            _firebaseAnalytics = null;
-            e.printStackTrace();
+            try
+            {
+                _firebaseAnalytics = FirebaseAnalytics.getInstance(this);
+            }
+            catch (Exception e)
+            {
+                _firebaseAnalytics = null;
+                e.printStackTrace();
+            }
         }
     }
 
@@ -414,11 +424,30 @@ public class EngageApplication
 
     public void logEvent(String eventName)
     {
+        logEvent(eventName, null);
+    }
+
+    public void logEvent(String eventName, String key, int value)
+    {
+        Bundle b = new Bundle();
+        b.putInt(key, value);
+        logEvent(eventName, b);
+    }
+
+    public void logEvent(String eventName, String key, long value)
+    {
+        Bundle b = new Bundle();
+        b.putLong(key, value);
+        logEvent(eventName, b);
+    }
+
+    public void logEvent(String eventName, Bundle b)
+    {
         try
         {
             if (_firebaseAnalytics != null)
             {
-                _firebaseAnalytics.logEvent(eventName, null);
+                _firebaseAnalytics.logEvent(eventName, b);
             }
         }
         catch (Exception e)
@@ -426,7 +455,6 @@ public class EngageApplication
             e.printStackTrace();
         }
     }
-
 
     @Override
     public void onCreate()
@@ -888,6 +916,22 @@ public class EngageApplication
         synchronized (_groupTimelineListeners)
         {
             _groupTimelineListeners.remove(listener);
+        }
+    }
+
+    public void addGroupTextMessageListener(IGroupTextMessageListener listener)
+    {
+        synchronized (_groupTextMessageListeners)
+        {
+            _groupTextMessageListeners.add(listener);
+        }
+    }
+
+    public void removeGroupTextMessageListener(IGroupTextMessageListener listener)
+    {
+        synchronized (_groupTextMessageListeners)
+        {
+            _groupTextMessageListeners.remove(listener);
         }
     }
 
@@ -2125,6 +2169,11 @@ public class EngageApplication
         alert.show();
     }
 
+    public void initiateSimpleQrCodeScan(Activity activity)
+    {
+        invokeQrCodeScanner(activity);
+    }
+
     private void invokeQrCodeScanner(Activity activity)
     {
         IntentIntegrator ii = new IntentIntegrator(activity);
@@ -2834,6 +2883,7 @@ public class EngageApplication
                 gd.txPending = false;
                 gd.txError = false;
                 gd.txUsurped = false;
+                gd.lastTxStartTime = Utils.nowMs();
 
                 // Our TX is always starting in mute, so unmute it here if we're not (still) playing a sound
                 if(_delayTxUnmuteToCaterForSoundPropogation)
@@ -2902,9 +2952,16 @@ public class EngageApplication
 
         Log.d(TAG, "onGroupTxEnded: id='" + id + "', n='" + gd.name + "'");
 
+        if(gd.lastTxStartTime > 0)
+        {
+            long txDuration = (Utils.nowMs() - gd.lastTxStartTime);
+            logEvent(Analytics.GROUP_TX_DURATION, "ms", txDuration);
+        }
+
         gd.tx = false;
         gd.txPending = false;
         gd.txError = false;
+        gd.lastTxStartTime = 0;
 
         _lastAudioActivity = Utils.nowMs();
 
@@ -3666,9 +3723,19 @@ public class EngageApplication
         {
             JSONObject blobInfo = new JSONObject(blobInfoJson);
 
-            int payloadType = blobInfo.getInt("payloadType");
-            String nodeId = blobInfo.getString("source");
-            PresenceDescriptor pd = _activeConfiguration.getPresenceDescriptor(nodeId);
+            int payloadType = blobInfo.getInt(Engine.JsonFields.BlobHeader.payloadType);
+            String source = blobInfo.getString(Engine.JsonFields.BlobHeader.source);
+            String target = blobInfo.getString(Engine.JsonFields.BlobHeader.target);
+
+            PresenceDescriptor pd = _activeConfiguration.getPresenceDescriptor(source);
+
+            // Make a super basic PD if we couldn't find one for some reason
+            if(pd == null)
+            {
+                pd = new PresenceDescriptor();
+                pd.self = false;
+                pd.nodeId = source;
+            }
 
             // Human biometrics ... ?
             if (Engine.BlobType.fromInt(payloadType) == Engine.BlobType.engageHumanBiometrics)
@@ -3705,6 +3772,21 @@ public class EngageApplication
                         }
                     }
                 }
+            }
+            else if (Engine.BlobType.fromInt(payloadType) == Engine.BlobType.appTextUtf8)
+            {
+                // TODO: only pass on if for this node or for everyone!
+
+                String message = new String(blob, Constants.CHARSET);
+
+                synchronized (_groupTextMessageListeners)
+                {
+                    for (IGroupTextMessageListener listener : _groupTextMessageListeners)
+                    {
+                        listener.onGroupTextMessageRx(pd, message);
+                    }
+                }
+
             }
         }
         catch (Exception e)
@@ -4119,7 +4201,7 @@ public class EngageApplication
 
                             Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, activationCode);
                             Globals.getSharedPreferencesEditor().apply();
-                            getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), key, activationCode);
+                            getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), key, activationCode, getString(R.string.manufacturer_id));
                         }
                         else
                         {

@@ -2746,6 +2746,9 @@ namespace ConfigurationObjects
         int                 rallypointRtTestIntervalMs;
         bool                logRtpJitterBufferStats;
 
+        /** @brief [Optional, Default: true] Overrides/cancels group-level multicast failover if set to true */ 
+        bool                preventMulticastFailover;
+
         EnginePolicyNetworking()
         {
             clear();
@@ -2769,6 +2772,7 @@ namespace ConfigurationObjects
             sendFailurePauseMs = 1000;
             rallypointRtTestIntervalMs = 60000;
             logRtpJitterBufferStats = false;
+            preventMulticastFailover = false;
         }
     };
 
@@ -2790,7 +2794,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(reconnectFailurePauseIncrementMs),
             TOJSON_IMPL(sendFailurePauseMs),
             TOJSON_IMPL(rallypointRtTestIntervalMs),
-            TOJSON_IMPL(logRtpJitterBufferStats)
+            TOJSON_IMPL(logRtpJitterBufferStats),
+            TOJSON_IMPL(preventMulticastFailover)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyNetworking& p)
@@ -2812,6 +2817,7 @@ namespace ConfigurationObjects
         FROMJSON_IMPL(sendFailurePauseMs, int, 1000);
         FROMJSON_IMPL(rallypointRtTestIntervalMs, int, 60000);
         FROMJSON_IMPL(logRtpJitterBufferStats, bool, false);
+        FROMJSON_IMPL(preventMulticastFailover, bool, false);
     }           
 
 

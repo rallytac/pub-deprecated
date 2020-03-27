@@ -84,8 +84,9 @@ public class SimpleUiMainActivity
                                 EngageApplication.IConfigurationChangeListener,
                                 EngageApplication.ILicenseChangeListener,
                                 EngageApplication.IGroupTimelineListener,
-                                OnMapReadyCallback,
                                 EngageApplication.IPresenceChangeListener,
+                                EngageApplication.IGroupTextMessageListener,
+                                OnMapReadyCallback,
                                 GroupSelectorAdapter.SelectionClickListener
 {
     private static String TAG = SimpleUiMainActivity.class.getSimpleName();
@@ -126,6 +127,7 @@ public class SimpleUiMainActivity
     private GroupSelectorAdapter _groupSelectorAdapter = null;
 
     private int _keycodePtt = 0;
+    private SoundPool _soundpool = null;
 
     @Override
     public void onMapReady(final GoogleMap googleMap)
@@ -1334,6 +1336,7 @@ public class SimpleUiMainActivity
         Globals.getEngageApplication().addLicenseChangeListener(this);
         Globals.getEngageApplication().addGroupTimelineListener(this);
         Globals.getEngageApplication().addPresenceChangeListener(this);
+        Globals.getEngageApplication().addGroupTextMessageListener(this);
     }
 
     private void unregisterFromApp()
@@ -1344,6 +1347,7 @@ public class SimpleUiMainActivity
         Globals.getEngageApplication().removeLicenseChangeListener(this);
         Globals.getEngageApplication().removeGroupTimelineListener(this);
         Globals.getEngageApplication().removePresenceChangeListener(this);
+        Globals.getEngageApplication().removeGroupTextMessageListener(this);
     }
 
     private void saveState(Bundle bundle)
@@ -1401,7 +1405,37 @@ public class SimpleUiMainActivity
         });
     }
 
-    SoundPool _soundpool = null;
+    @Override
+    public void onGroupTextMessageRx(final PresenceDescriptor sourcePd, final String message)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                StringBuilder sb = new StringBuilder();
+
+                if(!Utils.isEmptyString(sourcePd.displayName))
+                {
+                    sb.append(sourcePd.displayName);
+                }
+                else if(!Utils.isEmptyString(sourcePd.userId))
+                {
+                    sb.append(sourcePd.userId);
+                }
+                else
+                {
+                    sb.append(sourcePd.nodeId);
+                }
+
+                sb.append(":\n\n");
+                sb.append(message);
+
+                Toast.makeText(SimpleUiMainActivity.this, sb.toString(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
 
     @Override
     public void onGroupSelectorClick(String id)
@@ -1413,6 +1447,7 @@ public class SimpleUiMainActivity
             showSingleView(id);
         }
     }
+
 
     private class TimelineEvent
     {
@@ -2165,28 +2200,86 @@ public class SimpleUiMainActivity
         }
     }
 
+    public void onClickTeamIcon(View view)
+    {
+        showTeamList();
+    }
+
+    public void onClickGroupsIcon(View view)
+    {
+        showGroupList();
+    }
+
+    public void onClickShareIcon(View view)
+    {
+        try
+        {
+            /*
+            JSONObject obj = _ac.makeTemplate();
+            if(obj == null)
+            {
+                throw new Exception("No template available");
+            }
+
+            String json = obj.toString();
+            String textRecord = (Constants.QR_CODE_HEADER + Constants.QR_VERSION) + json;
+            byte[] dataBytes = textRecord.getBytes(Utils.getEngageCharSet());
+
+            String compressedDataString = new String(Utils.compress(dataBytes, 0, dataBytes.length));
+            String qrDataString = "@EbQr:" + compressedDataString;
+            Bitmap bm = Utils.stringToQrCodeBitmap(qrDataString, Constants.QR_CODE_WIDTH, Constants.QR_CODE_HEIGHT);
+            ImageView iv = findViewById(R.id.ivMissionQrCode);
+            iv.setImageBitmap(bm);
+            */
+        }
+        catch (Exception e)
+        {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void onClickImportIcon(View view)
+    {
+        Globals.getEngageApplication().initiateSimpleQrCodeScan(this);
+    }
+
+    public void onClickShowMenu(View view)
+    {
+        showPopupMenu();
+    }
+
+    public void onClickMenuIcon(View view)
+    {
+        showPopupMenu();
+    }
+
+    public void onClickNetworkIcon(View view)
+    {
+        handleClickOnNetworkIcon();
+    }
+
+    public void onClickMapIcon(View view)
+    {
+        startMapActivity();
+    }
+
+    public void onClickTimelineIcon(View view)
+    {
+        String gid = Globals.getSharedPreferences().getString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_SELECTED_GROUPS_SINGLE, "");
+        if(!Utils.isEmptyString(gid))
+        {
+            requestGroupTimeline(gid);
+        }
+    }
+
     private void setupMainScreen()
     {
         ImageView iv;
-        TextView tv;
-
-        // Team name
-        //tv = findViewById(R.id.tvTeamName);
-        //tv.setText(_ac.getMissionName().toUpperCase());
 
         // Network
         iv = findViewById(R.id.ivNetwork);
         if(iv != null)
         {
-            iv.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View v)
-                {
-                    handleClickOnNetworkIcon();
-                }
-            });
-
             if(_ac.getUseRp())
             {
                 iv.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_net_global));
@@ -2195,93 +2288,6 @@ public class SimpleUiMainActivity
             {
                 iv.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_net_local));
             }
-        }
-
-        // Output type
-        /*
-        iv = findViewById(R.id.ivOutputType);
-        iv.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                // TODO - get rid of this
-            }
-        });
-        */
-
-        // Team
-        iv = findViewById(R.id.ivTeam);
-        if(iv != null)
-        {
-            iv.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View v)
-                {
-                    showTeamList();
-                }
-            });
-        }
-
-        // Map
-        iv = findViewById(R.id.ivMap);
-        if(iv != null)
-        {
-            iv.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View v)
-                {
-                    startMapActivity();
-                }
-            });
-        }
-
-        // Timeline
-        iv = findViewById(R.id.ivTimeline);
-        if(iv != null)
-        {
-            iv.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View v)
-                {
-                    String gid = Globals.getSharedPreferences().getString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_SELECTED_GROUPS_SINGLE, "");
-                    if(!Utils.isEmptyString(gid))
-                    {
-                        requestGroupTimeline(gid);
-                    }
-                }
-            });
-        }
-
-        // Group list
-        iv = findViewById(R.id.ivGroups);
-        if(iv != null)
-        {
-            iv.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View v)
-                {
-                    showGroupList();
-                }
-            });
-        }
-
-        // Setting
-        iv = findViewById(R.id.ivMainScreenMenu);
-        if(iv != null)
-        {
-            iv.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View v)
-                {
-                    showPopupMenu();
-                }
-            });
         }
 
         // PTT

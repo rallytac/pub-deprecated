@@ -8,7 +8,7 @@ apply plugin: 'com.google.gms.google-services'
 def engageEngineDir = "libs/"
 
 // The version of the Engage Engine we want to use
-def engageEngineVersion = "1.133.8893"
+def engageEngineVersion = "1.140.8903"
 
 // The build type of the Engage Engine we want
 def engageEngineBuildType = "release"
@@ -16,15 +16,17 @@ def engageEngineBuildType = "release"
 // Addition flavors that we want to build for
 def additionalFlavorsFile = "flavors/flavors.gradle"
 
+// The application ID in the final APK.  Change this string for a different
+// APK package name .
+def apkPackageName = "com.rallytac.engageandroid.reference"
+
 android {
     flavorDimensions "version"
 
     productFlavors {
-        // This is the Rally Tactical Systems "generic" flavor
-        generic {
+        // This is the Rally Tactical Systems "reference" flavor
+        reference {
             dimension "version"
-            applicationIdSuffix ".generic"
-            versionNameSuffix "-generic"
         }
     }
 
@@ -38,11 +40,11 @@ android {
     compileSdkVersion 28
 
     defaultConfig {
-        applicationId "com.rallytac.engageandroid"
+        applicationId apkPackageName
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 1200
-        versionName "1200"
+        versionCode 1204
+        versionName "1204"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
