@@ -161,8 +161,6 @@ public abstract class CardFragment extends Fragment
                     {
                         ((TextView) getView().findViewById(R.id.tvGroupName)).setText(_gd.name);
 
-                        Log.d(TAG, "drawing");
-
                         updateNetworkStatus();
                         updateTalkers();
                         updateSpeakerStatus();
@@ -253,9 +251,11 @@ public abstract class CardFragment extends Fragment
                 {
                     if(_gd.isConnectedInSomeForm())
                     {
+                        EngageApplication.GroupConnectionTrackerInfo gts = Globals.getEngageApplication().getGroupConnectionState(_gd.id);
+
                         stopNetworkErrorAnimation();
 
-                        if(_gd.operatingInMulticastFailover)
+                        if(gts.operatingInMulticastFailover)
                         {
                             startNetworkFailoverAnimation();
                         }

@@ -608,6 +608,8 @@ public class SimpleUiMainActivity
             _groupSelectorView.setAdapter(_groupSelectorAdapter);
         }
         */
+
+        redrawCardFragments();
     }
 
     @Override

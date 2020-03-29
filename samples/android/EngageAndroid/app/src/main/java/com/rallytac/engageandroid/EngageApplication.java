@@ -53,6 +53,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
 import java.net.NetworkInterface;
+import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -188,6 +189,53 @@ public class EngageApplication
 	
 	private FirebaseAnalytics _firebaseAnalytics = null;
 
+	public class GroupConnectionTrackerInfo
+    {
+        public GroupConnectionTrackerInfo(boolean mc, boolean mcfo, boolean rp)
+        {
+            hasMulticastConnection = mc;
+            operatingInMulticastFailover = mcfo;
+            hasRpConnection = rp;
+        }
+
+        public boolean hasMulticastConnection;
+        public boolean operatingInMulticastFailover;
+        public boolean hasRpConnection;
+    }
+
+    private HashMap<String, GroupConnectionTrackerInfo> _groupConnections = new HashMap<>();
+
+	private void eraseGroupConnectionState(String id)
+    {
+        _groupConnections.remove(id);
+    }
+
+	private void setGroupConnectionState(String id, boolean mc, boolean mcfo, boolean rp)
+    {
+        setGroupConnectionState(id, new GroupConnectionTrackerInfo(mc, mcfo, rp));
+    }
+
+    private void setGroupConnectionState(String id, GroupConnectionTrackerInfo gts)
+    {
+        _groupConnections.put(id, gts);
+    }
+
+    public GroupConnectionTrackerInfo getGroupConnectionState(String id)
+    {
+        GroupConnectionTrackerInfo rc =  _groupConnections.get(id);
+        if(rc == null)
+        {
+            rc = new GroupConnectionTrackerInfo(false, false, false);
+        }
+
+        return rc;
+    }
+
+    public boolean isGroupConnectedInSomeWay(String id)
+    {
+        GroupConnectionTrackerInfo chk = getGroupConnectionState(id);
+        return (chk.hasMulticastConnection || chk.hasRpConnection);
+    }
 
     private class MyApplicationIntentReceiver extends BroadcastReceiver
     {
@@ -1674,6 +1722,33 @@ public class EngageApplication
             }
         }
 
+        ArrayList<String> toBeTrashed = new ArrayList<>();
+        ArrayList<GroupDescriptor> groups = _activeConfiguration.getMissionGroups();
+        for(String id : _groupConnections.keySet())
+        {
+            boolean found;
+
+            found = false;
+            for (GroupDescriptor gd : groups)
+            {
+                if(gd.id.compareTo(id) == 0)
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if(!found)
+            {
+                toBeTrashed.add(id);
+            }
+        }
+
+        for(String id : toBeTrashed)
+        {
+            eraseGroupConnectionState(id);
+        }
+
         restartStartHumanBiometricsReporting();
         restartDeviceMonitoring();
 
@@ -2370,8 +2445,7 @@ public class EngageApplication
         gd.createError = false;
         gd.joined = false;
         gd.joinError = false;
-        gd.hasMulticastConnection = false;
-        gd.hasRpConnection = false;
+        setGroupConnectionState(id, false, false, false);
 
         notifyGroupUiListeners(gd);
     }
@@ -2416,8 +2490,7 @@ public class EngageApplication
         gd.createError = false;
         gd.joined = false;
         gd.joinError = false;
-        gd.hasMulticastConnection = false;
-        gd.hasRpConnection = false;
+        eraseGroupConnectionState(id);
 
         notifyGroupUiListeners(gd);
     }
@@ -2442,6 +2515,8 @@ public class EngageApplication
                 JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
                 if(gcd != null)
                 {
+                    GroupConnectionTrackerInfo gts = getGroupConnectionState(id);
+
                     Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
                     if(ct == Engine.ConnectionType.ipMulticast)
                     {
@@ -2454,15 +2529,17 @@ public class EngageApplication
                             logEvent(Analytics.GROUP_CONNECTED_MC);
                         }
 
-                        gd.hasMulticastConnection = true;
+                        gts.hasMulticastConnection = true;
                     }
                     else if(ct == Engine.ConnectionType.rallypoint)
                     {
                         logEvent(Analytics.GROUP_CONNECTED_RP);
-                        gd.hasRpConnection = true;
+                        gts.hasRpConnection = true;
                     }
 
-                    gd.operatingInMulticastFailover = gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false);
+                    gts.operatingInMulticastFailover = gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false);
+
+                    setGroupConnectionState(id, gts);
                 }
                 else
                 {
@@ -2479,9 +2556,7 @@ public class EngageApplication
             logEvent(Analytics.GROUP_CONNECTED_OTHER);
 
             // If we have no specializer, assume the following (the Engine should always tell us though)
-            gd.hasMulticastConnection = true;
-            gd.hasRpConnection = true;
-            gd.operatingInMulticastFailover = false;
+            setGroupConnectionState(id, true, false, true);
         }
 
         // If we get connected to a presence group ...
@@ -2516,6 +2591,8 @@ public class EngageApplication
                 JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
                 if(gcd != null)
                 {
+                    GroupConnectionTrackerInfo gts = getGroupConnectionState(id);
+
                     Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
                     if(ct == Engine.ConnectionType.ipMulticast)
                     {
@@ -2528,15 +2605,17 @@ public class EngageApplication
                             logEvent(Analytics.GROUP_CONNECT_FAILED_MC);
                         }
 
-                        gd.hasMulticastConnection = false;
+                        gts.hasMulticastConnection = false;
                     }
                     else if(ct == Engine.ConnectionType.rallypoint)
                     {
                         logEvent(Analytics.GROUP_CONNECT_FAILED_RP);
-                        gd.hasRpConnection = false;
+                        gts.hasRpConnection = false;
                     }
 
-                    gd.operatingInMulticastFailover = false;
+                    gts.operatingInMulticastFailover = false;
+
+                    setGroupConnectionState(id, gts);
                 }
                 else
                 {
@@ -2553,9 +2632,7 @@ public class EngageApplication
             logEvent(Analytics.GROUP_CONNECT_FAILED_OTHER);
 
             // If we have no specializer, assume the following (the Engine should always tell us though)
-            gd.hasMulticastConnection = false;
-            gd.hasRpConnection = false;
-            gd.operatingInMulticastFailover = false;
+            eraseGroupConnectionState(id);
         }
 
         notifyGroupUiListeners(gd);
@@ -2581,6 +2658,8 @@ public class EngageApplication
                 JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
                 if(gcd != null)
                 {
+                    GroupConnectionTrackerInfo gts = getGroupConnectionState(id);
+
                     Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
                     if(ct == Engine.ConnectionType.ipMulticast)
                     {
@@ -2593,15 +2672,17 @@ public class EngageApplication
                             logEvent(Analytics.GROUP_DISCONNECTED_MC);
                         }
 
-                        gd.hasMulticastConnection = false;
+                        gts.hasMulticastConnection = false;
                     }
                     else if(ct == Engine.ConnectionType.rallypoint)
                     {
                         logEvent(Analytics.GROUP_DISCONNECTED_RP);
-                        gd.hasRpConnection = false;
+                        gts.hasRpConnection = false;
                     }
 
-                    gd.operatingInMulticastFailover = false;
+                    gts.operatingInMulticastFailover = false;
+
+                    setGroupConnectionState(id, gts);
                 }
                 else
                 {
@@ -2618,9 +2699,7 @@ public class EngageApplication
             logEvent(Analytics.GROUP_DISCONNECTED_OTHER);
 
             // If we have no specializer, assume the following (the Engine should always tell us though)
-            gd.hasMulticastConnection = false;
-            gd.hasRpConnection = false;
-            gd.operatingInMulticastFailover = false;
+            setGroupConnectionState(id, false, false, false);
         }
 
         notifyGroupUiListeners(gd);

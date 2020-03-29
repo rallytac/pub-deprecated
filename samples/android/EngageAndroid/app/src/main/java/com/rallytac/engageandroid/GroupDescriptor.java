@@ -7,6 +7,7 @@ package com.rallytac.engageandroid;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import com.rallytac.engage.engine.Engine;
 
@@ -16,6 +17,8 @@ import java.util.ArrayList;
 
 public class GroupDescriptor implements Parcelable
 {
+    private static String TAG = GroupDescriptor.class.getSimpleName();
+
     public enum Type {gtUnknown, gtAudio, gtPresence, gtRaw}
 
     // Config
@@ -43,9 +46,6 @@ public class GroupDescriptor implements Parcelable
     public boolean rxMuted;
     public boolean txMuted;
     public ArrayList<TalkerDescriptor> talkerList = new ArrayList<>();
-    public boolean operatingInMulticastFailover;
-    public boolean hasMulticastConnection;
-    public boolean hasRpConnection;
     public long lastTxStartTime;
 
     public static final Creator CREATOR = new Creator()
@@ -69,10 +69,7 @@ public class GroupDescriptor implements Parcelable
         createError = false;
         joined = false;
         joinError = false;
-        hasMulticastConnection = false;
-        hasRpConnection = false;
         _isDynamic = false;
-        operatingInMulticastFailover = false;
         lastTxStartTime = 0;
 
         this.type = Type.gtUnknown;
@@ -86,10 +83,7 @@ public class GroupDescriptor implements Parcelable
         createError = false;
         joined = false;
         joinError = false;
-        hasMulticastConnection = false;
-        hasRpConnection = false;
         _isDynamic = false;
-        operatingInMulticastFailover = false;
         lastTxStartTime = 0;
 
 
@@ -106,8 +100,6 @@ public class GroupDescriptor implements Parcelable
         this.createError = (in.readInt() == 1);
         this.joined = (in.readInt() == 1);
         this.joinError = (in.readInt() == 1);
-        this.hasMulticastConnection = (in.readInt() == 1);
-        this.hasRpConnection = (in.readInt() == 1);
         this.rx = (in.readInt() == 1);
         this.tx = (in.readInt() == 1);
         this.txPending = (in.readInt() == 1);
@@ -117,7 +109,6 @@ public class GroupDescriptor implements Parcelable
         this.txMuted = (in.readInt() == 1);
 
         this._isDynamic = (in.readInt() == 1);
-        this.operatingInMulticastFailover = (in.readInt() == 1);
         this.lastTxStartTime = in.readLong();
     }
 
@@ -133,7 +124,7 @@ public class GroupDescriptor implements Parcelable
 
     public boolean isConnectedInSomeForm()
     {
-        return (hasMulticastConnection || hasRpConnection);
+        return Globals.getEngageApplication().isGroupConnectedInSomeWay(id);
     }
 
     public void resetState()
@@ -146,8 +137,6 @@ public class GroupDescriptor implements Parcelable
         rxMuted = false;
         txMuted = false;
         talkerList.clear();
-        hasMulticastConnection = false;
-        hasRpConnection = false;
         lastTxStartTime = 0;
     }
 
@@ -173,8 +162,6 @@ public class GroupDescriptor implements Parcelable
         dest.writeInt(this.createError ? 1 : 0);
         dest.writeInt(this.joined ? 1 : 0);
         dest.writeInt(this.joinError ? 1 : 0);
-        dest.writeInt(this.hasMulticastConnection ? 1 : 0);
-        dest.writeInt(this.hasRpConnection ? 1 : 0);
         dest.writeInt(this.rx ? 1 : 0);
         dest.writeInt(this.tx ? 1 : 0);
         dest.writeInt(this.txPending ? 1 : 0);
@@ -184,7 +171,6 @@ public class GroupDescriptor implements Parcelable
         dest.writeInt(this.txMuted ? 1 : 0);
 
         dest.writeInt(this._isDynamic ? 1 : 0);
-        dest.writeInt(this.operatingInMulticastFailover ? 1 : 0);
         dest.writeLong(this.lastTxStartTime);
     }
 
