@@ -10,6 +10,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
 
+import com.rallytac.engage.engine.Engine;
+
 import org.json.JSONObject;
 
 import java.io.BufferedOutputStream;
@@ -86,6 +88,33 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
         _result = -1;
         _resultActivationCode = null;
         _resultMessage = null;
+
+        // Test the data to make sure we're at least sending over good information
+        try
+        {
+            LicenseDescriptor testDescriptor = LicenseDescriptor.fromJson(Globals.getEngageApplication()
+                    .getEngine()
+                    .engageGetLicenseDescriptor(Globals.getEngageApplication().getString(R.string.licensing_entitlement),
+                            _key,
+                            _activationCode,
+                            Globals.getEngageApplication().getString(R.string.manufacturer_id)));
+
+            if(testDescriptor == null)
+            {
+                throw new Exception("cannot parse into testDescriptor");
+            }
+
+            if(testDescriptor._status != Engine.LicensingStatusCode.requiresActivation)
+            {
+                throw new Exception("license type does not require activation");
+            }
+        }
+        catch (Exception e)
+        {
+            Log.e(TAG, "exception: _result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);
+            return null;
+        }
+
 
         HttpURLConnection httpConnection = null;
         JSONObject deviceInfo;
@@ -181,9 +210,12 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
                 _result = rc.getInt("returnCode");
                 _resultMessage = rc.optString("returnCodeDescr", null);
                 _resultActivationCode = rc.optString("activationCode", null);
+
+                Log.d(TAG, "_result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);
             }
             else
             {
+                Log.e(TAG, "exception: HTTP failure " + httpResultCode);
                 throw new Exception("HTTP failure " + httpResultCode);
             }
         }
@@ -192,6 +224,7 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
             _result = -1;
             _activationCode = null;
             _resultMessage = ex.getLocalizedMessage();
+            Log.e(TAG, "exception: _result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);
         }
         finally
         {
@@ -200,6 +233,8 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
                 httpConnection.disconnect();
             }
         }
+
+        Log.d(TAG, "_result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);
 
         return null;
     }

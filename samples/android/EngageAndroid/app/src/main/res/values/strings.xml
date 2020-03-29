@@ -190,6 +190,8 @@
     <string name="identity_description4">Finally, a short \'alias\' that is useful for displaying in constrained/small user interfaces.</string>
     <string name="experiencing_network_problems">Experiencing network problems</string>
     <string name="currently_operating_in_mc_failover_mode">Currently operating in multicast failover mode</string>
+    <string name="license_type_does_not_require_activation">This license type does not require activation</string>
+    <string name="failed_to_validate_license_info">Failed to validate the license information provided</string>
 
     <string-array name="lp_tx_encoder_names">
         <item>G.711 ulaw (64 kbps)</item>
