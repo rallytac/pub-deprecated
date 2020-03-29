@@ -41,7 +41,7 @@
     "maxReconnectPauseMs":5000,
     "reconnectFailurePauseIncrementMs":500,
     "sendFailurePauseMs":1000,
-    "rallypointRtTestIntervalMs":1000,
+    "rallypointRtTestIntervalMs":30000,
     "logRtpJitterBufferStats":true
   },
 
