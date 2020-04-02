@@ -11,7 +11,7 @@ const chalk = require('chalk');
 
 logMsg("=================================================================");
 logMsg("engage-cmd for Node.js");
-logMsg("Copyright (c) 2018 Rally Tactical Systems, Inc.");
+logMsg("Copyright (c) 2020 Rally Tactical Systems, Inc.");
 logMsg("=================================================================");
 
 // Our global Engage object - its "methods" closely match the API calls in the Engine
@@ -72,7 +72,7 @@ stdin.addListener("data", function(d) {
     else if(input == "q")
     {
         engage.disableCallbacks()
-        showdownTheEngine();        
+        shutdownTheEngine();        
         process.exit();  
     }
     else if(input.startsWith("c"))
@@ -387,12 +387,12 @@ function logMsg(msg)
     console.log(chalk.magenta(dateString + "....." + msg));
 }
 
-
 //--------------------------------------------------------
-function showdownTheEngine()
+function shutdownTheEngine()
 {
     deleteAllGroups();
     engage.stop();
+    engage.shutdown();
 }
 
 //--------------------------------------------------------
