@@ -1,6 +1,6 @@
 # Change List
 
-## Coming up ...
+## April 2, 2020 - 1.142.8905
 - Corrects a TLS packet buffer overflow on Rallypoint peer registration/deregistration messages.
 - Adds the ability to throttle Rallypoint inbound connections to guard against Denial Of Service attacks.
 - Adds the ability to throttle Rallypoint inbound connections based on system CPU utilization.
@@ -8,7 +8,9 @@
 - Adds additional Rallypoint and core Engine worker queue metrics.
 - Adds Rallypoint process uptime to the status file.
 - Adds Rallypoint system CPU usage to the status file.
+- Adds support for importing certificates and keys from PKCS #12 archives.
 - Optimizes logging in Rallypoint to increase performance.
+- Offloads realtime timeline event ECDSA signing to a seperate thread so as not to impact core user experience.
 
 ## March 27, 2020 - 1.140.8903
 - Corrects an Engine shutdown issue when running under node.js.
