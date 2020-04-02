@@ -4021,6 +4021,18 @@ namespace ConfigurationObjects
         /** @brief Maximum number of queue operations per second (0 = unlimited) */
         uint32_t            maxQOpsPerSec;
 
+        /** @brief Maximum number of inbound backlog requests the Rallypoint will accept */
+        uint32_t            maxInboundBacklog;
+
+        /** @brief Number of low priority queue operations after which new connections will not be accepted */
+        uint32_t            lowPriorityQueueThreshold;
+
+        /** @brief Number of normal priority queue operations after which new connections will not be accepted */
+        uint32_t            normalPriorityQueueThreshold;
+
+        /** @brief The CPU utilization threshold percentage (0-100) beyond which new connections are denied */
+        uint32_t            denyNewConnectionCpuThreshold;
+
         RallypointServerLimits()
         {
             clear();
@@ -4038,6 +4050,10 @@ namespace ConfigurationObjects
             maxRxBytesPerSec = 0;
             maxTxBytesPerSec = 0;
             maxQOpsPerSec = 0;
+            maxInboundBacklog = 64;
+            lowPriorityQueueThreshold = 64;
+            normalPriorityQueueThreshold = 256;
+            denyNewConnectionCpuThreshold = 75;
         }
     };
     
@@ -4053,7 +4069,11 @@ namespace ConfigurationObjects
             TOJSON_IMPL(maxTxPacketsPerSec),
             TOJSON_IMPL(maxRxBytesPerSec),
             TOJSON_IMPL(maxTxBytesPerSec),
-            TOJSON_IMPL(maxQOpsPerSec)
+            TOJSON_IMPL(maxQOpsPerSec),
+            TOJSON_IMPL(maxInboundBacklog),
+            TOJSON_IMPL(lowPriorityQueueThreshold),
+            TOJSON_IMPL(normalPriorityQueueThreshold),
+            TOJSON_IMPL(denyNewConnectionCpuThreshold)
         };
     }
     static void from_json(const nlohmann::json& j, RallypointServerLimits& p)
@@ -4069,8 +4089,11 @@ namespace ConfigurationObjects
         getOptional<uint32_t>("maxRxBytesPerSec", p.maxRxBytesPerSec, j, 0);
         getOptional<uint32_t>("maxTxBytesPerSec", p.maxTxBytesPerSec, j, 0);
         getOptional<uint32_t>("maxQOpsPerSec", p.maxQOpsPerSec, j, 0);
+        getOptional<uint32_t>("maxInboundBacklog", p.maxInboundBacklog, j, 64);
+        getOptional<uint32_t>("lowPriorityQueueThreshold", p.lowPriorityQueueThreshold, j, 64);
+        getOptional<uint32_t>("normalPriorityQueueThreshold", p.normalPriorityQueueThreshold, j, 256);
+        getOptional<uint32_t>("denyNewConnectionCpuThreshold", p.denyNewConnectionCpuThreshold, j, 75);
     }   
-
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointServerStatusReport)

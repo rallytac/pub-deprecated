@@ -1,9 +1,19 @@
 # Change List
 
+## Coming up ...
+- Corrects a TLS packet buffer overflow on Rallypoint peer registration/deregistration messages.
+- Adds the ability to throttle Rallypoint inbound connections to guard against Denial Of Service attacks.
+- Adds the ability to throttle Rallypoint inbound connections based on system CPU utilization.
+- Adds safeguards against Rallypoint congestion collapse due to CPU pressure.
+- Adds additional Rallypoint and core Engine worker queue metrics.
+- Adds Rallypoint process uptime to the status file.
+- Adds Rallypoint system CPU usage to the status file.
+- Optimizes logging in Rallypoint to increase performance.
+
 ## March 27, 2020 - 1.140.8903
 - Corrects an Engine shutdown issue when running under node.js.
 - Corrects an X.509 certificate exchange issue Rallypoint peer links under certain Linux distros.
-- Add the ability to disable multicast failover at the Engine policy level.
+- Adds the ability to disable multicast failover at the Engine policy level.
 
 ## March 22, 2020 - 1.133.8893
 - Corrects an issue on some Windows network drivers related to multicast receive on a QoS-enabled socket.
