@@ -1,6 +1,6 @@
 # Change List
 
-## April 5, 2020 - 1.143.8906
+## April 7, 2020 - 1.143.8906
 - Adds sourcing of Rallypoint mesh configuration from an executed command.
 - Adds command execution after updates to Rallypoint status file.
 - Adds command execution after updates to Rallypoint links file.
