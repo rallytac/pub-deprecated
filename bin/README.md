@@ -1,5 +1,12 @@
 # Change List
 
+## April 5, 2020 - 1.143.8906
+- Adds sourcing of Rallypoint mesh configuration from an executed command.
+- Adds command execution after updates to Rallypoint status file.
+- Adds command execution after updates to Rallypoint links file.
+- Adds thread name to Win32 logging output.
+- Adds process termination logic in case of Rallypoint hung shutdown.
+
 ## April 2, 2020 - 1.142.8905
 - Corrects a TLS packet buffer overflow on Rallypoint peer registration/deregistration messages.
 - Adds the ability to throttle Rallypoint inbound connections to guard against Denial Of Service attacks.

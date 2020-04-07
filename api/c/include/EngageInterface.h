@@ -31,8 +31,7 @@ extern "C"
 
 #if !defined(__clang__)
     #define _Nullable
-    #define _Nonnull
-    
+    #define _Nonnull    
 #endif
     
 /** @addtogroup resultCodes Engage Engine Result Codes

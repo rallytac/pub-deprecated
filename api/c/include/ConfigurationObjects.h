@@ -4112,15 +4112,26 @@ namespace ConfigurationObjects
         IMPLEMENT_JSON_DOCUMENTATION(RallypointServerStatusReport)
 
     public:
-        /** File name to use for the Rally Point report. */
+        /** File name to use for the status report. */
         std::string                     fileName;
 
         /** [Optional, Default: 30] The interval at which to write out the status report to file. */
         int                             intervalSecs;
+
+        /** [Optional, Default: false] Indicates if status reprting is enabled. */
         bool                            enabled;
+
+        /** [Optional, Default: false] Indicates whether summarized link information is to be included. */
         bool                            includeLinks;
+
+        /** [Optional, Default: false] Indicates whether details of peer links are to be included. */
         bool                            includePeerLinkDetails;
+
+        /** [Optional, Default: false] Indicates whether details of client links are to be included. */
         bool                            includeClientLinkDetails;
+
+        /** [Optional, Default: null] Command to be executed every time the status report is produced. */
+        std::string                     runCmd;
 
         RallypointServerStatusReport()
         {
@@ -4135,6 +4146,7 @@ namespace ConfigurationObjects
             includeLinks = false;
             includePeerLinkDetails = false;
             includeClientLinkDetails = false;
+            runCmd.clear();
         }
     };
     
@@ -4146,7 +4158,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(enabled),
             TOJSON_IMPL(includeLinks),
             TOJSON_IMPL(includePeerLinkDetails),
-            TOJSON_IMPL(includeClientLinkDetails)
+            TOJSON_IMPL(includeClientLinkDetails),
+            TOJSON_IMPL(runCmd)
         };
     }
     static void from_json(const nlohmann::json& j, RallypointServerStatusReport& p)
@@ -4158,6 +4171,7 @@ namespace ConfigurationObjects
         getOptional<bool>("includeLinks", p.includeLinks, j, false);
         getOptional<bool>("includePeerLinkDetails", p.includePeerLinkDetails, j, false);
         getOptional<bool>("includeClientLinkDetails", p.includeClientLinkDetails, j, false);
+        getOptional<std::string>("runCmd", p.runCmd, j);
     }    
 
     //-----------------------------------------------------------
@@ -4168,14 +4182,34 @@ namespace ConfigurationObjects
         IMPLEMENT_JSON_DOCUMENTATION(RallypointServerLinkGraph)
 
     public:
+        /** File name to use for the status report. */
         std::string                     fileName;
+
+        /** [Optional, Default: 5] Minimum update time for link graph updates. */
         int                             minRefreshSecs;
+
+        /** [Optional, Default: false] Indicates if link reprting is enabled. */
         bool                            enabled;
+
+        /** [Optional, Default: true] Indicates if the output should be enclosed in a digraph. */        
         bool                            includeDigraphEnclosure;
+
+        /** [Optional, Default: false] Indicates if client links should be incldued. */        
+
+        /** [Optional] GraphViz styling for nodes representing client. */        
         bool                            includeClients;
+
+        /** [Optional] GraphViz styling for nodes representing core Rallypoint peers. */                
         std::string                     coreRpStyling;
+
+        /** [Optional] GraphViz styling for nodes representing leaf Rallypoint peers. */
         std::string                     leafRpStyling;
+
+        /** [Optional] GraphViz styling for nodes representing clients. */
         std::string                     clientStyling;
+
+        /** [Optional, Default: null] Command to be executed every time the link graph is produced. */
+        std::string                     runCmd;
 
         RallypointServerLinkGraph()
         {
@@ -4188,10 +4222,11 @@ namespace ConfigurationObjects
             minRefreshSecs = 5;
             enabled = false;
             includeDigraphEnclosure = true;
-            includeClients = true;
+            includeClients = false;
             coreRpStyling = "[shape=hexagon color=firebrick style=filled]";
             leafRpStyling = "[shape=box color=gray style=filled]";
             clientStyling.clear();
+            runCmd.clear();
         }
     };
     
@@ -4205,7 +4240,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(includeClients),
             TOJSON_IMPL(coreRpStyling),
             TOJSON_IMPL(leafRpStyling),
-            TOJSON_IMPL(clientStyling)
+            TOJSON_IMPL(clientStyling),
+            TOJSON_IMPL(runCmd)
         };
     }
     static void from_json(const nlohmann::json& j, RallypointServerLinkGraph& p)
@@ -4215,10 +4251,11 @@ namespace ConfigurationObjects
         getOptional<int>("minRefreshSecs", p.minRefreshSecs, j, 5);
         getOptional<bool>("enabled", p.enabled, j, false);
         getOptional<bool>("includeDigraphEnclosure", p.includeDigraphEnclosure, j, true);
-        getOptional<bool>("includeClients", p.includeClients, j, true);
+        getOptional<bool>("includeClients", p.includeClients, j, false);
         getOptional<std::string>("coreRpStyling", p.coreRpStyling, j, "[shape=hexagon color=firebrick style=filled]");
         getOptional<std::string>("leafRpStyling", p.leafRpStyling, j, "[shape=box color=gray style=filled]");
         getOptional<std::string>("clientStyling", p.clientStyling, j);        
+        getOptional<std::string>("runCmd", p.runCmd, j);
     }    
 
     //-----------------------------------------------------------
@@ -4509,6 +4546,9 @@ namespace ConfigurationObjects
         /** @brief Name of a file containing a JSON array of Rallypoint peers to connect to. */
         std::string                                 peeringConfigurationFileName;
 
+        /** @brief Command-line to execute that returns a JSON array of Rallypoint peers to connect to. */
+        std::string                                 peeringConfigurationFileCommand;
+
         /** @brief Number of seconds between checks to see if the peering configuration has been updated.  Default is 60.*/
         int                                         peeringConfigurationFileCheckSecs;
 
@@ -4605,6 +4645,7 @@ namespace ConfigurationObjects
             allowMulticastForwarding = false;
             peeringConfiguration.clear();
             peeringConfigurationFileName.clear();
+            peeringConfigurationFileCommand.clear();
             peeringConfigurationFileCheckSecs = 60;
             ioPools = -1;
             statusReport.clear();
@@ -4644,6 +4685,7 @@ namespace ConfigurationObjects
             TOJSON_IMPL(allowMulticastForwarding),
             // TOJSON_IMPL(peeringConfiguration),               // NOTE: Not serialized!
             TOJSON_IMPL(peeringConfigurationFileName),
+            TOJSON_IMPL(peeringConfigurationFileCommand),            
             TOJSON_IMPL(peeringConfigurationFileCheckSecs),
             TOJSON_IMPL(ioPools),
             TOJSON_IMPL(statusReport),
@@ -4683,6 +4725,7 @@ namespace ConfigurationObjects
         getOptional<bool>("allowMulticastForwarding", p.allowMulticastForwarding, j, false);
         //getOptional<PeeringConfiguration>("peeringConfiguration", p.peeringConfiguration, j);         // NOTE: Not serialized!    
         getOptional<std::string>("peeringConfigurationFileName", p.peeringConfigurationFileName, j);
+        getOptional<std::string>("peeringConfigurationFileCommand", p.peeringConfigurationFileCommand, j);        
         getOptional<int>("peeringConfigurationFileCheckSecs", p.peeringConfigurationFileCheckSecs, j, 60);
         getOptional<int>("ioPools", p.ioPools, j, -1);
         getOptional<RallypointServerStatusReport>("statusReport", p.statusReport, j);
