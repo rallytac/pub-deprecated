@@ -28,6 +28,53 @@ import java.util.Enumeration;
 
 public final class Engine
 {
+    public enum TxStatus
+    {
+        undefined(0),
+        started(1),
+        ended(2),
+        notAnAudioGroup(-1),
+        notJoined(-2),
+        notConnected(-3),
+        alreadyTransmitting(-4),
+        invalidParams(-5),
+        priorityTooLow(-6),
+        rxActiveOnNonFdx(-7),
+        cannotSubscribeToMic(-8),
+        invalidId(-9),
+        ;
+
+        private final int _val;
+
+        private TxStatus(int val)
+        {
+            this._val = val;
+        }
+
+        public static TxStatus fromInt(int i)
+        {
+            for (TxStatus e : values())
+            {
+                if (e._val == i)
+                {
+                    return e;
+                }
+            }
+
+            return null;
+        }
+
+        public static int toInt(TxStatus e)
+        {
+            return e.toInt();
+        }
+
+        public int toInt()
+        {
+            return _val;
+        }        
+    } 
+
     public enum ConnectionType
     {
         undefined(0),
@@ -315,6 +362,15 @@ public final class Engine
     
     public final class JsonFields
     {        
+        public final class GroupTxDetail
+        {
+            public static final String objectName = "groupTxDetail";
+            public static final String status = "status";
+            public static final String localPriority = "localPriority";
+            public static final String remotePriority = "remotePriority";
+            public static final String nonFdxMsHangRemaining = "nonFdxMsHangRemaining";
+        }
+
         public final class RallypointConnectionDetail
         {
             public static final String objectName = "rallypointConnectionDetail";
