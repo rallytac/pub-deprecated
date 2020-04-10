@@ -827,7 +827,20 @@ NAN_METHOD(getAudioDevices)
     info.GetReturnValue().Set(New(rc).ToLocalChecked());
 }
 
-// TODO: engageGenerateMission
+//--------------------------------------------------------
+NAN_METHOD(generateMission)
+{
+    const char *rc = engageGenerateMission(STRVAL(0), INTVAL(1), STRVAL(2), STRVAL(3));
+
+    if(rc == nullptr)
+    {
+        rc = "";
+    }
+
+    info.GetReturnValue().Set(New(rc).ToLocalChecked());
+}
+
+//--------------------------------------------------------
 NAN_METHOD(setMissionId)
 {
     engageSetMissionId(STRVAL(0));
@@ -903,6 +916,8 @@ NAN_MODULE_INIT(Init)
 
     ENGAGE_BINDING(openCertStore);
     ENGAGE_BINDING(closeCertStore);
+
+    ENGAGE_BINDING(generateMission);
 
     ENGAGE_BINDING(setMissionId);
 }
