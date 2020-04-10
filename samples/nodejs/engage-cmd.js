@@ -171,6 +171,28 @@ stdin.addListener("data", function(d) {
             engage.unmuteGroupRx(groups[parseInt(p)].id, txPriority, txFlags);
         }        
     }
+    else if(input.startsWith("gm"))
+    {
+        var params = input.substring(2);
+        var tokens = params.split(",");
+
+        var passphrase = tokens[0].trim();
+
+        if(passphrase == "?")
+        {
+            console.log("example for 4 channels: gm theDogHowlsAtTheMoon,4,demo.rallytac.com,My Example Mission");
+        }
+        else
+        {
+            var groupCount = parseInt(tokens[1].trim());
+            var rallypoint = tokens[2].trim();
+            var missionName = tokens[3].trim();
+            var json = engage.generateMission(passphrase, groupCount, rallypoint, missionName);
+    
+            console.log("passphrase='" + passphrase + "', groupCount=" + groupCount + ", rallypoint='" + rallypoint + "', missionName='" + missionName + "'");
+            console.log(json);
+        }
+    }
     else
     {
         if( input != "" )
@@ -195,6 +217,7 @@ function showHelp()
     console.log("ea||e<n>............ end tx on all groups || group n");
     console.log("ma||m<n>............ mute rx on all groups || group n");
     console.log("ua||m<n>............ unmute rx on all groups || group n");
+    console.log("gm pp,gc,rp,mn...... generate mission for passphrase 'pp', with 'gc' groups, 'rp' rallypoint, named 'mn'");
 }
 
 //--------------------------------------------------------
