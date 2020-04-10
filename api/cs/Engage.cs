@@ -113,6 +113,31 @@ public class Engage
     public const int ENGAGE_RESULT_ALREADY_INITIALIZED = -3;
     public const int ENGAGE_RESULT_GENERAL_FAILURE = -4;
 
+    // Connection Types
+    public enum ConnectionType : int
+    {
+        UNDEFINED = 0,
+        IP_MULTICAST = 1,
+        RALLYPOINT = 2
+    }
+
+    // TX status codes 
+    public enum TxStatus : int
+    {
+        ERR_UNDEFINED = 0,
+        OK_STARTED = 1,
+        OK_ENDED = 2,
+        ERR_NOT_AN_AUDIO_GROUP = -1,
+        ERR_NOT_JOINED = -2,
+        ERR_NOT_CONNECTED = -3,
+        ERR_ALREADY_TRANSMITTING = -4,
+        ERR_INVALID_PARAMS = -5,
+        ERR_PRIORITY_TOO_LOW = -6,
+        ERR_RX_ACTIVE_ON_NON_FDX = -7,
+        ERR_CANNOT_SUBSCRIBE_TO_MIC = -8,
+        ERR_INVALID_ID = -9
+    }
+
     // License status codes 
     public enum LicensingStatusCode : int
     {
@@ -160,6 +185,15 @@ public class Engage
 
     public class JsonFields
     {
+        public class GroupTxDetail
+        {
+            public static String objectName = "groupTxDetail";
+            public static String status = "status";
+            public static String localPriority = "localPriority";
+            public static String remotePriority = "remotePriority";
+            public static String nonFdxMsHangRemaining = "nonFdxMsHangRemaining";
+        }
+
         public class RallypointConnectionDetail
         {
             public static String objectName = "rallypointConnectionDetail";
