@@ -5282,6 +5282,119 @@ namespace ConfigurationObjects
     }
 
     //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(GroupTxDetail)
+    /**
+    * @brief Detailed information for a group transmit
+    * 
+    * Helper C++ class to serialize and de-serialize GroupTxDetail JSON 
+    *         
+    */       
+    class GroupTxDetail : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_WRAPPED_JSON_SERIALIZATION(GroupTxDetail)
+        IMPLEMENT_JSON_DOCUMENTATION(GroupTxDetail)
+        
+    public:
+        /** @brief TxStatus */
+        typedef enum
+        {
+            /** @brief Undefined */
+            txsUndefined                    = 0,
+
+            /** @brief  TX has started */
+            txsTxStarted                    = 1,
+
+            /** @brief  TX has ended */
+            txsTxEnded                      = 2,
+
+            /** @brief  This is not an audio group */
+            txsNotAnAudioGroup              = -1,
+
+            /** @brief Group has not been joined */
+            txsNotJoined                    = -2,
+
+            /** @brief Group has not been connected */
+            txsNotConnected                 = -3,
+
+            /** @brief Group is already transmitting */
+            txsAlreadyTransmitting          = -4,
+
+            /** @brief Invalid TX JSON parameters */
+            txsInvalidParams                = -5,
+
+            /** @brief TX priority is too low @see remotePriority @see remotePriority */
+            txsPriorityTooLow               = -6,
+
+            /** @brief RX active on a non-FDX configuration @see nonFdxMsHangRemaining */
+            txsRxActiveOnNonFdx             = -7,
+
+            /** @brief Cannot subscribe to the microphone */
+            txsCannotSubscribeToMic         = -8,
+
+            /** @brief Invalid ID */
+            txsInvalidId                    = -9
+        } TxStatus_t;
+
+        /** @brief ID of the group */
+        std::string                                     id;
+
+        /** @brief The TX status */
+        TxStatus_t                                      status;
+
+        /** @brief Local TX priority (optional) */
+        int                                             localPriority;
+
+        /** @brief Remote TX priority (optional) */
+        int                                             remotePriority;
+
+        /** @brief Milliseconds of hang time remaining on a non-FDX group (optional) */
+        long                                            nonFdxMsHangRemaining;
+
+        GroupTxDetail()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            id.clear();
+            status = txsUndefined;
+            localPriority = 0;
+            remotePriority = 0;
+            nonFdxMsHangRemaining = 0;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const GroupTxDetail& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(id),
+            TOJSON_IMPL(status)
+        };
+
+        // Include priorities if status is related to that
+        if(p.status == GroupTxDetail::TxStatus_t::txsPriorityTooLow)
+        {
+            j["localPriority"] = p.localPriority;
+            j["remotePriority"] = p.remotePriority;
+        }        
+        else if(p.status == GroupTxDetail::TxStatus_t::txsRxActiveOnNonFdx)
+        {
+            j["nonFdxMsHangRemaining"] = p.nonFdxMsHangRemaining;
+        }
+    }
+    static void from_json(const nlohmann::json& j, GroupTxDetail& p)
+    {
+        p.clear();
+        getOptional<std::string>("id", p.id, j, EMPTY_STRING);
+        getOptional<GroupTxDetail::TxStatus_t>("status", p.status, j, GroupTxDetail::TxStatus_t::txsUndefined);
+        getOptional<int>("localPriority", p.localPriority, j, 0);
+        getOptional<int>("remotePriority", p.remotePriority, j, 0);
+        getOptional<long>("nonFdxMsHangRemaining", p.nonFdxMsHangRemaining, j, 0);
+    }
+
+    //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointConnectionDetail)
     /**
     * @brief Detailed information for a rallypoint connection

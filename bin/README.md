@@ -1,5 +1,10 @@
 # Change List
 
+## April 10, 2020 - 1.145.8908
+- Adds information to TX event notifications.
+- Improves transmit contention (glaring) for talkers with the same priority.
+- Exposes the mission generation for the node.js binding.
+
 ## April 7, 2020 - 1.143.8906
 - Adds sourcing of Rallypoint mesh configuration from an executed command.
 - Adds command execution after updates to Rallypoint status file.
