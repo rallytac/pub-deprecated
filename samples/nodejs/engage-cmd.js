@@ -233,171 +233,175 @@ function fireUpTheEngine()
 function setupEventHandlers()
 {
     // Engine events
-    engage.on("engineStarted", function() {
-        logMsg("engineStarted");
+    engage.on("engineStarted", function(eventExtraJson) {
+        logMsg("engineStarted" + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("engineStopped", function() {
-        logMsg("engineStopped");
+    engage.on("engineStopped", function(eventExtraJson) {
+        logMsg("engineStopped" + ", x='" + eventExtraJson + "'");
     });
 
     
     // Rallypoint events
-    engage.on("rpPausingConnectionAttempt", function(id) {
-        logMsg("rpPausingConnectionAttempt: " + id);
+    engage.on("rpPausingConnectionAttempt", function(id, eventExtraJson) {
+        logMsg("rpPausingConnectionAttempt: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("rpConnecting", function(id) {
-        logMsg("rpConnecting: " + id);
+    engage.on("rpConnecting", function(id, eventExtraJson) {
+        logMsg("rpConnecting: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("rpConnected", function(id) {
-        logMsg("rpConnected: " + id);
+    engage.on("rpConnected", function(id, eventExtraJson) {
+        logMsg("rpConnected: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("rpDisconnected", function(id) {
-        logMsg("rpDisconnected: " + id);
+    engage.on("rpDisconnected", function(id, eventExtraJson) {
+        logMsg("rpDisconnected: " + id + ", x='" + eventExtraJson + "'");
     });
 
+    engage.on("rpRoundtripReport", function(id, rtMs, rtQualityRating, eventExtraJson) {
+        logMsg("rpRoundtripReport: " + id + ", rtMs=" + rtMs + ", rtQualityRating=" + rtQualityRating + ", x='" + eventExtraJson + "'");
+    });
 
     // Group events
-    engage.on("groupCreated", function(id) {
-        logMsg("groupCreated: " + id);
+    engage.on("groupCreated", function(id, eventExtraJson) {
+        logMsg("groupCreated: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupCreateFailed", function(id) {
-        logMsg("groupCreateFailed: " + id);
+    engage.on("groupCreateFailed", function(id, eventExtraJson) {
+        logMsg("groupCreateFailed: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupDeleted", function(id) {
-        logMsg("groupDeleted: " + id);
+    engage.on("groupDeleted", function(id, eventExtraJson) {
+        logMsg("groupDeleted: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupJoined", function(id) {
-        logMsg("groupJoined: " + id);
+    engage.on("groupJoined", function(id, eventExtraJson) {
+        logMsg("groupJoined: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupJoinFailed", function(id) {
-        logMsg("groupJoinFailed: " + id);
+    engage.on("groupJoinFailed", function(id, eventExtraJson) {
+        logMsg("groupJoinFailed: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupLeft", function(id) {
-        logMsg("groupLeft: " + id);
+    engage.on("groupLeft", function(id, eventExtraJson) {
+        logMsg("groupLeft: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupConnected", function(id) {
-        logMsg("groupConnected: " + id);
+    engage.on("groupConnected", function(id, eventExtraJson) {
+        logMsg("groupConnected: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupConnectFailed", function(id) {
-        logMsg("groupConnectFailed: " + id);
+    engage.on("groupConnectFailed", function(id, eventExtraJson) {
+        logMsg("groupConnectFailed: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupDisconnected", function(id) {
-        logMsg("groupDisconnected: " + id);
+    engage.on("groupDisconnected", function(id, eventExtraJson) {
+        logMsg("groupDisconnected: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupRxStarted", function(id) {
-        logMsg("groupRxStarted: " + id);
+    engage.on("groupRxStarted", function(id, eventExtraJson) {
+        logMsg("groupRxStarted: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupRxEnded", function(id) {
-        logMsg("groupRxEnded: " + id);
+    engage.on("groupRxEnded", function(id, eventExtraJson) {
+        logMsg("groupRxEnded: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupRxMuted", function(id) {
-        logMsg("groupRxMuted: " + id);
+    engage.on("groupRxMuted", function(id, eventExtraJson) {
+        logMsg("groupRxMuted: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupRxUnmuted", function(id) {
-        logMsg("groupRxUnmuted: " + id);
+    engage.on("groupRxUnmuted", function(id, eventExtraJson) {
+        logMsg("groupRxUnmuted: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupRxSpeakersChanged", function(id, speakers) {
-        logMsg("groupRxSpeakersChanged: " + id + ", speakers=" + speakers);
+    engage.on("groupRxSpeakersChanged", function(id, speakers, eventExtraJson) {
+        logMsg("groupRxSpeakersChanged: " + id + ", speakers=" + speakers + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupNodeDiscovered", function(id, nodeJson) {
-        logMsg("groupNodeDiscovered: " + id + ", nodeJson=" + nodeJson);
+    engage.on("groupNodeDiscovered", function(id, nodeJson, eventExtraJson) {
+        logMsg("groupNodeDiscovered: " + id + ", nodeJson=" + nodeJson + ", x='" + eventExtraJson + "'");
 
         let node = JSON.parse(nodeJson);
         logMsg("node: nodeId=" + node.identity.nodeId
                     + ", userId=" + node.identity.userId
-                    + ", displayName=" + node.identity.displayName);
+                    + ", displayName=" + node.identity.displayName 
+                    + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupNodeRediscovered", function(id, nodeJson) {
-        logMsg("groupNodeRediscovered: " + id + ", nodeJson=" + nodeJson);
+    engage.on("groupNodeRediscovered", function(id, nodeJson, eventExtraJson) {
+        logMsg("groupNodeRediscovered: " + id + ", nodeJson=" + nodeJson + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupNodeUndiscovered", function(id, nodeJson) {
-        logMsg("groupNodeUndiscovered: " + id + ", nodeJson=" + nodeJson);
+    engage.on("groupNodeUndiscovered", function(id, nodeJson, eventExtraJson) {
+        logMsg("groupNodeUndiscovered: " + id + ", nodeJson=" + nodeJson + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupTxStarted", function(id) {
-        logMsg("groupTxStarted: " + id);
+    engage.on("groupTxStarted", function(id, eventExtraJson) {
+        logMsg("groupTxStarted: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupTxEnded", function(id) {
-        logMsg("groupTxEnded: " + id);
+    engage.on("groupTxEnded", function(id, eventExtraJson) {
+        logMsg("groupTxEnded: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupTxFailed", function(id) {
-        console.log("groupTxFailed: " + id);
+    engage.on("groupTxFailed", function(id, eventExtraJson) {
+        console.log("groupTxFailed: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupTxUsurpedByPriority", function(id) {
-        logMsg("groupTxUsurpedByPriority: " + id);
+    engage.on("groupTxUsurpedByPriority", function(id, eventExtraJson) {
+        logMsg("groupTxUsurpedByPriority: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupMaxTxTimeExceeded", function(id) {
-        logMsg("groupMaxTxTimeExceeded: " + id);
+    engage.on("groupMaxTxTimeExceeded", function(id, eventExtraJson) {
+        logMsg("groupMaxTxTimeExceeded: " + id + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupAssetDiscovered", function(id, assetJson) {
-        logMsg("groupAssetDiscovered: " + id + ", assetJson=" + assetJson);
+    engage.on("groupAssetDiscovered", function(id, assetJson, eventExtraJson) {
+        logMsg("groupAssetDiscovered: " + id + ", assetJson=" + assetJson + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupAssetRediscovered", function(id, assetJson) {
-        logMsg("groupAssetRediscovered: " + id + ", assetJson=" + assetJson);
+    engage.on("groupAssetRediscovered", function(id, assetJson, eventExtraJson) {
+        logMsg("groupAssetRediscovered: " + id + ", assetJson=" + assetJson + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupAssetUndiscovered", function(id, assetJson) {
-        logMsg("groupAssetUndiscovered: " + id + ", assetJson=" + assetJson);
+    engage.on("groupAssetUndiscovered", function(id, assetJson, eventExtraJson) {
+        logMsg("groupAssetUndiscovered: " + id + ", assetJson=" + assetJson + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("groupTimelineEventStarted", function(id, eventJson) {
-        logMsg("groupTimelineEventStarted: " + id + ", eventJson=" + eventJson);
+    engage.on("groupTimelineEventStarted", function(id, eventJson, eventExtraJson) {
+        logMsg("groupTimelineEventStarted: " + id + ", eventJson=" + eventJson + ", x='" + eventExtraJson + "'");
     });    
 
-    engage.on("groupTimelineEventUpdated", function(id, eventJson) {
-        logMsg("groupTimelineEventUpdated: " + id + ", eventJson=" + eventJson);
+    engage.on("groupTimelineEventUpdated", function(id, eventJson, eventExtraJson) {
+        logMsg("groupTimelineEventUpdated: " + id + ", eventJson=" + eventJson + ", x='" + eventExtraJson + "'");
     });    
 
-    engage.on("groupTimelineEventEnded", function(id, eventJson) {
-        logMsg("groupTimelineEventEnded: " + id + ", eventJson=" + eventJson);
+    engage.on("groupTimelineEventEnded", function(id, eventJson, eventExtraJson) {
+        logMsg("groupTimelineEventEnded: " + id + ", eventJson=" + eventJson + ", x='" + eventExtraJson + "'");
     });    
 
-    engage.on("groupTimelineReport", function(id, reportJson) {
-        logMsg("groupTimelineReport: " + id + ", reportJson=" + reportJson);
+    engage.on("groupTimelineReport", function(id, reportJson, eventExtraJson) {
+        logMsg("groupTimelineReport: " + id + ", reportJson=" + reportJson + ", x='" + eventExtraJson + "'");
     });    
 
-    engage.on("groupTimelineReportFailed", function(id) {
-        logMsg("groupTimelineRgroupTimelineReportFailedeport: " + id );
+    engage.on("groupTimelineReportFailed", function(id, eventExtraJson) {
+        logMsg("groupTimelineRgroupTimelineReportFailedeport: " + id + ", x='" + eventExtraJson + "'");
     });    
 
     
     // Licensing events
-    engage.on("licenseExpired", function() {
-        logMsg("licenseExpired");
+    engage.on("licenseExpired", function(eventExtraJson) {
+        logMsg("licenseExpired" + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("licenseChanged", function() {
-        logMsg("licenseChanged");
+    engage.on("licenseChanged", function(eventExtraJson) {
+        logMsg("licenseChanged" + ", x='" + eventExtraJson + "'");
     });
 
-    engage.on("licenseExpiring", function(secondsFromNow) {
-        logMsg("licenseExpiring");
+    engage.on("licenseExpiring", function(secondsFromNow, eventExtraJson) {
+        logMsg("licenseExpiring" + ", x='" + eventExtraJson + "'");
     });
 }
 

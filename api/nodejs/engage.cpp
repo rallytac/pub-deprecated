@@ -318,6 +318,10 @@ private:
 
                     argv[index] = jsArray;
                 }
+                else if((*itr)->_type == Parameter::ptInt)
+                {
+                    argv[index] = Nan::New<v8::Integer>(((IntParameter*)(*itr))->_val);
+                }
                 
                 index++;
             }
@@ -408,6 +412,23 @@ ENGAGE_CB_ID_PARAM(rpPausingConnectionAttempt)
 ENGAGE_CB_ID_PARAM(rpConnecting)
 ENGAGE_CB_ID_PARAM(rpConnected)
 ENGAGE_CB_ID_PARAM(rpDisconnected)
+void on_rpRoundtripReport(const char *id, uint32_t rtMs, uint32_t rtQualityRating, const char * eventExtraJson)
+{
+    CrossThreadCallbackWorker *cbw = getCallback("rpRoundtripReport");
+    if(!cbw)
+    {
+        return;
+    }
+
+    std::vector<CrossThreadCallbackWorker::Parameter*> *params = new std::vector<CrossThreadCallbackWorker::Parameter*>();
+    params->push_back(new CrossThreadCallbackWorker::StringParameter(id));
+    params->push_back(new CrossThreadCallbackWorker::IntParameter((int)rtMs));
+    params->push_back(new CrossThreadCallbackWorker::IntParameter((int)rtQualityRating));
+    params->push_back(new CrossThreadCallbackWorker::StringParameter(eventExtraJson));
+    cbw->enqueue(params);
+
+    cbw->RELEASE_OBJECT_REFERENCE();
+}
 
 ENGAGE_CB_ID_PARAM(groupCreated)
 ENGAGE_CB_ID_PARAM(groupCreateFailed)
@@ -516,6 +537,7 @@ NAN_METHOD(initialize)
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_RP_CONNECTING, rpConnecting);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_RP_CONNECTED, rpConnected);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_RP_DISCONNECTED, rpDisconnected);
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_RP_ROUNDTRIP_REPORT, rpRoundtripReport);
 
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_CREATED, groupCreated);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_CREATE_FAILED, groupCreateFailed);
@@ -528,37 +550,45 @@ NAN_METHOD(initialize)
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_JOINED, groupJoined);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_JOIN_FAILED, groupJoinFailed);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_LEFT, groupLeft);
-
-    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_STARTED, groupRxStarted);
-    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_ENDED, groupRxEnded);
-
-    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_MUTED, groupRxMuted);
-    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_UNMUTED, groupRxUnmuted);
-
-    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TX_MUTED, groupTxMuted);
-    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TX_UNMUTED, groupTxUnmuted);
-
-    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_SPEAKERS_CHANGED, groupRxSpeakersChanged);
+    //ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_MEMBER_COUNT_CHANGED)(const char *pId, size_t newCount);
 
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_NODE_DISCOVERED, groupNodeDiscovered);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_NODE_REDISCOVERED, groupNodeRediscovered);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_NODE_UNDISCOVERED, groupNodeUndiscovered);
+
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_STARTED, groupRxStarted);
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_ENDED, groupRxEnded);
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_SPEAKERS_CHANGED, groupRxSpeakersChanged);
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_MUTED, groupRxMuted);
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_UNMUTED, groupRxUnmuted);
 
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TX_STARTED, groupTxStarted);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TX_ENDED, groupTxEnded);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TX_FAILED, groupTxFailed);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TX_USURPED_BY_PRIORITY, groupTxUsurpedByPriority);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED, groupMaxTxTimeExceeded);
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TX_MUTED, groupTxMuted);
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TX_UNMUTED, groupTxUnmuted);
 
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_ASSET_DISCOVERED, groupAssetDiscovered);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_ASSET_REDISCOVERED, groupAssetRediscovered);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_ASSET_UNDISCOVERED, groupAssetUndiscovered);
 
-    //ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_MEMBER_COUNT_CHANGED)(const char *pId, size_t newCount);
-
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_LICENSE_CHANGED, licenseChanged);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_LICENSE_EXPIRED, licenseExpired);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_LICENSE_EXPIRING, licenseExpiring);
+
+    // TODO PFN_ENGAGE_GROUP_BLOB_SENT
+    // TODO PFN_ENGAGE_GROUP_BLOB_SEND_FAILED
+    // TODO PFN_ENGAGE_GROUP_BLOB_RECEIVED
+
+    // TODO PFN_ENGAGE_GROUP_RTP_SENT
+    // TODO PFN_ENGAGE_GROUP_RTP_SEND_FAILED
+    // TODO PFN_ENGAGE_GROUP_RTP_RECEIVED
+
+    // TODO PFN_ENGAGE_GROUP_RAW_SENT
+    // TODO PFN_ENGAGE_GROUP_RAW_SEND_FAILED
+    // TODO PFN_ENGAGE_GROUP_RAW_RECEIVED
 
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_EVENT_STARTED, groupTimelineEventStarted);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED, groupTimelineEventUpdated);
