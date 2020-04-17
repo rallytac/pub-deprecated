@@ -71,7 +71,8 @@ void onGroupCreated(const char *pId, const char *pEventExtraJson)
         if(g != nullptr)
         {
             char buff[256];
-            sprintf(buff, "onGroupCreated - %s (%s)", ((std::string)(*g)["name"]).c_str(), ((std::string)(*g)["id"]).c_str());
+            std::string name = (*g)["name"];
+            sprintf(buff, "onGroupCreated - %s (%s)", name.c_str(), id.c_str());
 
             (*g)["created"] = true;
             joinGroup(id.c_str());
@@ -109,7 +110,8 @@ void onGroupDeleted(const char *pId, const char *pEventExtraJson)
         if(g != nullptr)
         {
             char buff[256];
-            sprintf(buff, "onGroupDeleted - %s (%s)", ((std::string)(*g)["name"]).c_str(), ((std::string)(*g)["id"]).c_str());
+            std::string name = (*g)["name"];
+            sprintf(buff, "onGroupDeleted - %s (%s)", name.c_str(), id.c_str());
 
             (*g)["created"] = false;
             
@@ -157,7 +159,8 @@ void onGroupConnected(const char *pId, const char *pEventExtraJson)
         if(g != nullptr)
         {
             char buff[256];
-            sprintf(buff, "onGroupConnected - %s (%s)", ((std::string)(*g)["name"]).c_str(), ((std::string)(*g)["id"]).c_str());
+            std::string name = (*g)["name"];
+            sprintf(buff, "onGroupConnected - %s (%s)", name.c_str(), id.c_str());
 
             engageLogMsg(ENGAGE_LOG_LEVEL_INFORMATIONAL, TAG, buff);
         }
@@ -175,7 +178,8 @@ void onGroupDisconnected(const char *pId, const char *pEventExtraJson)
         if(g != nullptr)
         {
             char buff[256];
-            sprintf(buff, "onGroupDisconnected - %s (%s)", ((std::string)(*g)["name"]).c_str(), ((std::string)(*g)["id"]).c_str());
+            std::string name = (*g)["name"];
+            sprintf(buff, "onGroupDisconnected - %s (%s)", name.c_str(), id.c_str());
 
             engageLogMsg(ENGAGE_LOG_LEVEL_INFORMATIONAL, TAG, buff);
             g_currentState.connected = false;
@@ -194,7 +198,8 @@ void onGroupTxStarted(const char *pId, const char *pEventExtraJson)
         if(g != nullptr)
         {
             char buff[256];
-            sprintf(buff, "onGroupTxStarted - %s (%s)", ((std::string)(*g)["name"]).c_str(), ((std::string)(*g)["id"]).c_str());
+            std::string name = (*g)["name"];
+            sprintf(buff, "onGroupTxStarted - %s (%s)", name.c_str(), id.c_str());
 
             engageLogMsg(ENGAGE_LOG_LEVEL_INFORMATIONAL, TAG, buff);
 
@@ -214,7 +219,8 @@ void onGroupTxEnded(const char *pId, const char *pEventExtraJson)
         if(g != nullptr)
         {
             char buff[256];
-            sprintf(buff, "onGroupTxEnded - %s (%s)", ((std::string)(*g)["name"]).c_str(), ((std::string)(*g)["id"]).c_str());
+            std::string name = (*g)["name"];
+            sprintf(buff, "onGroupTxEnded - %s (%s)", name.c_str(), id.c_str());
 
             engageLogMsg(ENGAGE_LOG_LEVEL_INFORMATIONAL, TAG, buff);
 
@@ -233,7 +239,8 @@ void onGroupTxFailed(const char *pId, const char *pEventExtraJson)
         if(g != nullptr)
         {
             char buff[256];
-            sprintf(buff, "onGroupTxFailed - %s (%s)", ((std::string)(*g)["name"]).c_str(), ((std::string)(*g)["id"]).c_str());
+            std::string name = (*g)["name"];
+            sprintf(buff, "onGroupTxFailed - %s (%s)", name.c_str(), id.c_str());
 
             engageLogMsg(ENGAGE_LOG_LEVEL_ERROR, TAG, buff);
 
@@ -252,7 +259,8 @@ void onGroupTxUsurpedByPriority(const char *pId, const char *pEventExtraJson)
         if(g != nullptr)
         {
             char buff[256];
-            sprintf(buff, "onGroupTxUsurpedByPriority - %s (%s)", ((std::string)(*g)["name"]).c_str(), ((std::string)(*g)["id"]).c_str());
+            std::string name = (*g)["name"];
+            sprintf(buff, "onGroupTxUsurpedByPriority - %s (%s)", name.c_str(), id.c_str());
 
             engageLogMsg(ENGAGE_LOG_LEVEL_INFORMATIONAL, TAG, buff);
 
@@ -271,7 +279,8 @@ void onGroupMaxTxTimeExceeded(const char *pId, const char *pEventExtraJson)
         if(g != nullptr)
         {
             char buff[256];
-            sprintf(buff, "onGroupMaxTxTimeExceeded - %s (%s)", ((std::string)(*g)["name"]).c_str(), ((std::string)(*g)["id"]).c_str());
+            std::string name = (*g)["name"];
+            sprintf(buff, "onGroupMaxTxTimeExceeded - %s (%s)", name.c_str(), id.c_str());
 
             engageLogMsg(ENGAGE_LOG_LEVEL_WARNING, TAG, buff);
 

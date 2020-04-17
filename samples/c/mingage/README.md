@@ -4,6 +4,7 @@ Mingage is a minimal Engage-powered application that serves to demonstrate some 
 
 ## Building
 
+### Non-Windows Platforms
 Mingage is built using a simple make file so all you should need to do it to run the make command:
 
 ```shell
@@ -24,6 +25,32 @@ The current version of Engage to link with is "***latest***" which is a subdirec
 
 ```shell
 ENGAGE_VER ?= latest
+```
+
+### Windows Platforms
+Things are a little different on Windows.  Instead of using make as above, instead use Microsoft's nmake utility and tell it to use the win.nmake file:
+```shell
+c:\> nmake /f win.nmake
+Z:\Global\github\pub\samples\c\mingage>nmake /f win.nmake
+
+Microsoft (R) Program Maintenance Utility Version 14.16.27031.1
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+        cl /EHsc /Fe"mingage.exe" /I. /I"..\..\..\api\c\include" Mingage.cpp WorkQueue.cpp engage-shared.lib /link /LIBPATH:"..\..\..\bin\latest\win_ia32"
+Microsoft (R) C/C++ Optimizing Compiler Version 19.16.27031.1 for x86
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+Mingage.cpp
+WorkQueue.cpp
+Generating Code...
+Microsoft (R) Incremental Linker Version 14.16.27031.1
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:mingage.exe
+/LIBPATH:..\..\..\bin\latest\win_ia32
+Mingage.obj
+WorkQueue.obj
+engage-shared.lib
 ```
 
 ## Running
