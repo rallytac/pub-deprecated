@@ -76,24 +76,6 @@ void onGroupCreated(const char *pId, const char *pEventExtraJson)
 
             (*g)["created"] = true;
             joinGroup(id.c_str());
-
-            bool canProceed = true;
-
-            for(size_t i = 0; i < g_groups.size(); i++)
-            {
-                try
-                {
-                    if(g_groups[i].at("created") == false)
-                    {
-                        canProceed = false;
-                        break;
-                    }
-                }
-                catch(...)
-                {
-                    canProceed = false;
-                }
-            }
         }
     }));
 }
