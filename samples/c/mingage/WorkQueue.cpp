@@ -159,14 +159,11 @@ void WorkQueue::dispatcher()
 {
     _semReady.notify();
     
-    bool firstTime = false;
     Lambda *op;
 
     while( _running && !_fatalError )
     {
         _semSignalAction.wait();
-        
-        firstTime = true;
         
         while( _running && !_fatalError )
         {
@@ -186,8 +183,6 @@ void WorkQueue::dispatcher()
             _executorLock.unlock();
             
             // Execute
-            firstTime = false;
-
             (op->_r)();
 
             _executorLock.lock();
