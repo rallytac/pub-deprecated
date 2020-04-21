@@ -9,22 +9,22 @@ Mingage is built using a simple make file so all you should need to do it to run
 
 ```shell
 $ make
-g++ -c -Wno-psabi -Wall -std=c++11 -fPIC  -DNDEBUG -O3 -I. -I../../../api/c/include Mingage.cpp  -o Mingage.o
-warning: unknown warning option '-Wno-psabi' [-Wunknown-warning-option]
-1 warning generated.
-g++ -c -Wno-psabi -Wall -std=c++11 -fPIC  -DNDEBUG -O3 -I. -I../../../api/c/include WorkQueue.cpp  -o WorkQueue.o
-warning: unknown warning option '-Wno-psabi' [-Wunknown-warning-option]
-1 warning generated.
-g++ -Wno-psabi -Wall -std=c++11 -fPIC  -DNDEBUG -O3 -I. -I../../../api/c/include -o mingage Mingage.o WorkQueue.o -L../../../bin/1.121.8880/darwin_x64 -lengage-shared -lpthread -lstdc++
-Building mingage with Engage version latest
+//
+//
+// NOTE: libengage-shared will be copied locally from ../../../bin/latest/darwin_x64
+//
+//       Be sure to 'export LD_LIBRARY_PATH=./'
+//
+//
+g++ -c -Wall -std=c++11 -fPIC  -DNDEBUG -O3 -I. -I../../../api/c/include Mingage.cpp  -o Mingage.o
+g++ -c -Wall -std=c++11 -fPIC  -DNDEBUG -O3 -I. -I../../../api/c/include WorkQueue.cpp  -o WorkQueue.o
+g++ -Wall -std=c++11 -fPIC  -DNDEBUG -O3 -I. -I../../../api/c/include -o mingage Mingage.o WorkQueue.o -L. -lengage-shared -lpthread -lstdc++
 ```
-
 >Your compiler might produce warnings for the "***-Wno-psabi***" option.  This can be expected when compiling for non-ARM platforms and can generally be ignored.
 
-The current version of Engage to link with is "***latest***" which is a subdirectory of ***bin*** in this repository.  This value is defined in the make file as:
-
+Part of the make process is to copy the Engage runtime library from the `bin/latest` to the local directory and then link with it.  Be sure that you tell the operating system where to find it
 ```shell
-ENGAGE_VER ?= latest
+export LD_LIBRARY_PATH=./
 ```
 
 ### Windows Platforms

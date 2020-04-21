@@ -16,6 +16,7 @@
 #include <list>
 #include <forward_list>
 #include <memory.h>
+#include <condition_variable>
 
 class WorkQueue
 {
