@@ -12,8 +12,12 @@ else
 endif
 
 UNAME_S := $(shell uname -s | tr A-Z a-z)
+ARCH := $(shell uname -p | tr A-Z a-z)
+
 ifeq ($(UNAME_S), darwin)
 	LIBSRC = ../../../bin/latest/darwin_x64
+else ifeq ($(ARCH), aarch64)
+        LIBSRC := ../../../bin/latest/linux_arm64
 endif
 
 INCLUDES =  -I. -I../../../api/c/include
@@ -27,7 +31,7 @@ $(info //)
 $(info //)
 $(info // NOTE: libengage-shared will be copied locally from $(LIBSRC))
 $(info //)
-$(info //       Be sure to 'export LD_LIBRARY_PATH=./')
+$(info //       Be sure to 'export LD_LIBRARY_PATH=./ if your OS requires it')
 $(info //)
 $(info //)
 
