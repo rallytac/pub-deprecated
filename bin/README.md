@@ -1,5 +1,13 @@
 # Change List
 
+## April 28, 2020 - 1.147.8913
+- Adds static multicast reflector configuration for Rallypoints.
+- Adds the ability to import X.509 elements into a certificate store from another.
+- Adds display of certificate information by Rallypoints.
+- Adds publishing of additional headers to ease 3rd-party C++ development.
+- Removes Rallypoint reciprocal subscription - replaced by static multicast reflectors.
+- Corrects a namespace naming issue for ConfigurationObjects under certain GCC compiler versions.
+
 ## April 10, 2020 - 1.145.8908
 - Adds information to TX event notifications.
 - Improves transmit contention (glaring) for talkers with the same priority.
