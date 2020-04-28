@@ -72,8 +72,8 @@ public final class Engine
         public int toInt()
         {
             return _val;
-        }        
-    } 
+        }
+    }
 
     public enum ConnectionType
     {
@@ -110,8 +110,8 @@ public final class Engine
         public int toInt()
         {
             return _val;
-        }        
-    } 
+        }
+    }
 
     public enum LicenseType
     {
@@ -148,8 +148,8 @@ public final class Engine
         public int toInt()
         {
             return _val;
-        }        
-    }    
+        }
+    }
 
     public enum LicensingStatusCode
     {
@@ -193,7 +193,7 @@ public final class Engine
         public int toInt()
         {
             return _val;
-        }        
+        }
     }
 
     public enum NetworkDeviceFamily
@@ -359,9 +359,9 @@ public final class Engine
     public static final String GROUP_SOURCE_ENGAGE_INTERNAL = "com.rallytac.engage.internal";
     public static final String GROUP_SOURCE_ENGAGE_MAGELLAN_CISTECH = "com.rallytac.engage.magellan.cistech";
     public static final String GROUP_SOURCE_ENGAGE_MAGELLAN_TRELLISWARE = "com.rallytac.engage.magellan.trellisware";
-    
+
     public final class JsonFields
-    {        
+    {
         public final class GroupTxDetail
         {
             public static final String objectName = "groupTxDetail";
@@ -377,7 +377,7 @@ public final class Engine
             public static final String internalId = "internalId";
             public static final String host = "host";
             public static final String port = "port";
-            public static final String msToNextConnectionAttempt = "msToNextConnectionAttempt";            
+            public static final String msToNextConnectionAttempt = "msToNextConnectionAttempt";
         }
 
         public final class GroupConnectionDetail
@@ -441,7 +441,7 @@ public final class Engine
             public static final String objectName = "networkInterfaceDevice";
             public static final String name = "name";
             public static final String friendlyName = "friendlyName";
-            public static final String description = "description";            
+            public static final String description = "description";
             public static final String family = "family";
             public static final String address = "address";
             public static final String available = "available";
@@ -505,7 +505,7 @@ public final class Engine
                 public static final String watchdogIntervalMs = "watchdogIntervalMs";
                 public static final String watchdogHangDetectionMs = "watchdogHangDetectionMs";
                 public static final String housekeeperIntervalMs = "housekeeperIntervalMs";
-                public static final String logTaskQueueStatsIntervalMs = "logTaskQueueStatsIntervalMs";                
+                public static final String logTaskQueueStatsIntervalMs = "logTaskQueueStatsIntervalMs";
                 public static final String maxTxSecs = "maxTxSecs";
                 public static final String maxRxSecs = "maxRxSecs";
                 public static final String enableLazySpeakerClosure = "enableLazySpeakerClosure";
@@ -688,7 +688,7 @@ public final class Engine
         public final class NetworkTxOptions
         {
             public static final String objectName = "txOptions";
-            public static final String priority = "priority";            
+            public static final String priority = "priority";
             public static final String ttl = "ttl";
         }
 
@@ -1479,10 +1479,10 @@ public final class Engine
     public native String engageGetVersion();
 
     @Keep
-    public native String engageGetNetworkInterfaceDevices();    
+    public native String engageGetNetworkInterfaceDevices();
 
     @Keep
-    public native String engageGetAudioDevices();    
+    public native String engageGetAudioDevices();
 
     @Keep
     public native int engageInitialize(String enginePolicyConfiguration, String userIdentity, String tempStoragePath);
@@ -1632,10 +1632,10 @@ public final class Engine
     public native void engagePlatformServiceUndiscovered(String id);
 
     @Keep
-    public native void engageQueryGroupTimeline(String id, String jsonParams);    
+    public native void engageQueryGroupTimeline(String id, String jsonParams);
 
     @Keep
-    public native int engageLogMsg(int level, String msg);        
+    public native int engageLogMsg(int level, String msg);
 
     @Keep
     public native String engageGenerateMission(String keyPhrase, int audioGroupCount, String rallypointHost, String missionName);
@@ -1657,15 +1657,18 @@ public final class Engine
 
     @Keep
     public native int engageSetCertStoreCertificateP12(String id, byte[] data, int size, String password);
-    
+
     @Keep
     public native int engageDeleteCertStoreCertificate(String id);
-    
+
     @Keep
     public native String engageGetCertStoreCertificatePem(String id);
 
     @Keep
     public native String engageGetCertificateDescriptorFromPem(String pem);
+
+    @Keep
+    public native int engageImportCertStoreElementFromCertStore(String id, String srcId, String srcFileName, String srcPasswordHexByteString);
 
     // Platform services requests ("upcalls" from the Engine)
     @Keep
@@ -1801,7 +1804,7 @@ public final class Engine
 
         return rc;
     }
-    
+
     @Keep
     private String onPlatformGetNetworkInterfaceDeviceList()
     {
@@ -2676,7 +2679,7 @@ public final class Engine
             }
         });
     }
-    
+
     @Keep
     private void onGroupTimelineEventStarted(final String id, final String eventJson, final String eventExtraJson)
     {
@@ -2691,7 +2694,7 @@ public final class Engine
                 }
             }
         });
-    }    
+    }
 
     @Keep
     private void onGroupTimelineEventUpdated(final String id, final String eventJson, final String eventExtraJson)
@@ -2707,7 +2710,7 @@ public final class Engine
                 }
             }
         });
-    }    
+    }
 
     @Keep
     private void onGroupTimelineEventEnded(final String id, final String eventJson, final String eventExtraJson)
@@ -2723,7 +2726,7 @@ public final class Engine
                 }
             }
         });
-    }    
+    }
 
     @Keep
     private void onGroupTimelineReport(final String id, final String reportJson, final String eventExtraJson)
@@ -2739,7 +2742,7 @@ public final class Engine
                 }
             }
         });
-    }    
+    }
 
     @Keep
     private void onGroupTimelineReportFailed(final String id, final String eventExtraJson)
@@ -2755,5 +2758,5 @@ public final class Engine
                 }
             }
         });
-    }    
+    }
 }

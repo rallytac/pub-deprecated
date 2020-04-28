@@ -7,6 +7,7 @@
 - Adds publishing of additional headers to ease 3rd-party C++ development.
 - Removes Rallypoint reciprocal subscription - replaced by static multicast reflectors.
 - Corrects a namespace naming issue for ConfigurationObjects under certain GCC compiler versions.
+- Corrects a syntax error in Rallypoint post-installation script.
 
 ## April 10, 2020 - 1.145.8908
 - Adds information to TX event notifications.
