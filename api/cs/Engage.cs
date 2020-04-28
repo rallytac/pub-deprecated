@@ -90,12 +90,12 @@ public class Engage
         void onGroupTimelineEventEnded(string id, string eventJson, string eventExtraJson);
         void onGroupTimelineReport(string id, string reportJson, string eventExtraJson);
         void onGroupTimelineReportFailed(string id, string eventExtraJson);
-    }	
+    }
 
     public interface IHumanBiometricsNotifications
     {
         void onHumanBiometricsReceived(string groupId, string nodeId, string hbmJson, string eventExtraJson);
-	}	
+	}
     #endregion
 
 
@@ -121,7 +121,7 @@ public class Engage
         RALLYPOINT = 2
     }
 
-    // TX status codes 
+    // TX status codes
     public enum TxStatus : int
     {
         ERR_UNDEFINED = 0,
@@ -138,7 +138,7 @@ public class Engage
         ERR_INVALID_ID = -9
     }
 
-    // License status codes 
+    // License status codes
     public enum LicensingStatusCode : int
     {
         OK = 0,
@@ -200,7 +200,7 @@ public class Engage
             public static String internalId = "internalId";
             public static String host = "host";
             public static String port = "port";
-            public static String msToNextConnectionAttempt = "msToNextConnectionAttempt";            
+            public static String msToNextConnectionAttempt = "msToNextConnectionAttempt";
         }
 
         public class GroupConnectionDetail
@@ -317,7 +317,7 @@ public class Engage
                 public static String watchdogIntervalMs = "watchdogIntervalMs";
                 public static String watchdogHangDetectionMs = "watchdogHangDetectionMs";
                 public static String housekeeperIntervalMs = "housekeeperIntervalMs";
-                public static String logTaskQueueStatsIntervalMs = "logTaskQueueStatsIntervalMs";                
+                public static String logTaskQueueStatsIntervalMs = "logTaskQueueStatsIntervalMs";
                 public static String maxTxSecs = "maxTxSecs";
                 public static String maxRxSecs = "maxRxSecs";
                 public static String enableLazySpeakerClosure = "enableLazySpeakerClosure";
@@ -853,19 +853,19 @@ public class Engage
     private static extern int engageSendGroupRtp(string id, byte[] payload, int payloadSize, string jsonRtpHeader);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int engageSendGroupRaw(string id, byte[] raw, int rawSize,string jsonRtpHeader);    
+    private static extern int engageSendGroupRaw(string id, byte[] raw, int rawSize,string jsonRtpHeader);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int engageQueryGroupTimeline(string id, string jsonParams);        
+    private static extern int engageQueryGroupTimeline(string id, string jsonParams);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int engageLogMsg(int level, string tag, string msg);          
+    private static extern int engageLogMsg(int level, string tag, string msg);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr engageGetNetworkInterfaceDevices();
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr engageGetAudioDevices();    
+    private static extern IntPtr engageGetAudioDevices();
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr engageGenerateMission(string keyPhrase, int audioGroupCount, string rallypointHost, string missionName);
@@ -896,6 +896,9 @@ public class Engage
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr engageGetCertificateDescriptorFromPem(string pem);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageImportCertStoreElementFromCertStore(string id, string srcId, string srcFileName, string srcPasswordHexByteString);
     #endregion
 
     #region Internal functions
@@ -1029,7 +1032,7 @@ public class Engage
     {
         StringBuilder sb = new StringBuilder();
 
-        // Note:  Alias is maxed at 16, so if we precede it with "C#", we 
+        // Note:  Alias is maxed at 16, so if we precede it with "C#", we
         // can only use 14 hex characters for our random number portion of the ID.
 
         string myAlias = alias;
@@ -1481,7 +1484,7 @@ public class Engage
             }
         }
     };
-    
+
     private EngageStringCallback on_ENGAGE_LICENSE_EXPIRING = (string secondsLeft, string eventExtraJson) =>
     {
         lock (_licenseNotificationSubscribers)
@@ -1765,7 +1768,7 @@ public class Engage
         {
             _humanBiometricsNotifications.Remove(n);
         }
-    }    
+    }
 
     public int initialize(string enginePolicyConfiguration, string userIdentity, string tempStoragePath)
     {
@@ -1838,22 +1841,22 @@ public class Engage
     public int muteGroupRx(string id)
     {
         return engageMuteGroupRx(id);
-    }    
+    }
 
     public int unmuteGroupRx(string id)
     {
         return engageUnmuteGroupRx(id);
-    }    
+    }
 
     public int muteGroupTx(string id)
     {
         return engageMuteGroupTx(id);
-    }    
+    }
 
     public int unmuteGroupTx(string id)
     {
         return engageUnmuteGroupTx(id);
-    }    
+    }
 
     public int setGroupRxVolume(string id, int left, int right)
     {
@@ -1953,7 +1956,7 @@ public class Engage
     public int openCertStore(string fileName, string passwordHexByteString)
     {
         return engageOpenCertStore(fileName, passwordHexByteString);
-    }   
+    }
 
     public String getCertStoreDescriptor()
     {
@@ -2017,6 +2020,12 @@ public class Engage
             return Marshal.PtrToStringAnsi(ptr);
         }
     }
+    
+    public int importCertStoreElementFromCertStore(string id, string srcId, string srcFileName, string srcPasswordHexByteString)
+    {
+        return engageImportCertStoreElementFromCertStore(id, srcId, srcFileName, srcPasswordHexByteString;)
+    }
+
     #endregion
 
     #region Helpers
@@ -2077,7 +2086,7 @@ public class Engage
                 if (hdr.ss > 0)
                 {
                     JArray s = new JArray();
-                    
+
                     if (hdr.vt == 1)
                     {
                         for (byte x = 0; x < hdr.ss; x++)
@@ -2106,7 +2115,7 @@ public class Engage
 
                     // Plug the series array into the current seriesElement
                     se["s"] = s;
-                }                
+                }
 
                 // Add the series elemement
                 dataSeriesArray.Add(se);
@@ -2118,7 +2127,7 @@ public class Engage
         {
             dataSeriesArray = null;
             Console.WriteLine(e.StackTrace);
-        }  
+        }
 
         string rc = null;
 
@@ -2127,7 +2136,7 @@ public class Engage
             JObject hbmData = new JObject();
             hbmData["data"] = dataSeriesArray;
             rc = hbmData.ToString();
-        }      
+        }
 
         return rc;
     }
