@@ -10,7 +10,7 @@
 /**
  * Detailed description of the ConfigurationObjects.h file
  *
- * This file contains all the configuration objects 
+ * This file contains all the configuration objects
  *
  *  Copyright (c) 2018 Rally Tactical Systems, Inc.
  *  All rights reserved.
@@ -43,15 +43,21 @@
     #endif
 #endif  // ENGAGE_IGNORE_COMPILER_UNUSED_WARNING
 
+// We'll use a different namespace depending on whether we're building the RTS core code
+// or if this is being included in an app-land project.
+#if defined(RTS_CORE_BUILD)
 namespace ConfigurationObjects
-{   
+#else
+namespace AppConfigurationObjects
+#endif
+{
     //-----------------------------------------------------------
     #pragma pack(push, 1)
         typedef struct
         {
             /** @brief DataSeries Type.
              * Currently supported types
-             * 
+             *
              * Type | Value | Range | JSON Object Name | Detail
              * --- | ---  | ---  | --- | ---
              * Heart Rate | 1 | 0-255 | heartRate | Beats per minute
@@ -63,89 +69,89 @@ namespace ConfigurationObjects
              * Task Effectiveness Level | 7 | 0-10 | taskEffectiveness | 0 = minimal effectiveness, 10 = maximum effectiveness
              *
              */
-            uint8_t     t;          
+            uint8_t     t;
 
-            /** 
+            /**
              * @brief Timestamp representing the number of seconds elapsed since January 1, 1970 -  based on traditional Unix time
              */
             uint32_t    ts;
 
             /** @brief Increment type.
              *  Valid Types:
-             * 
+             *
              * Type  | Value
              * ------------- | -------------
-             * 0 | Seconds 
+             * 0 | Seconds
              * 1 | Milliseconds
              * 2 | Minutes
              * 3 | Hours
-             * 4 | Days 
-             * 
+             * 4 | Days
+             *
              */
-            uint8_t     it;         
+            uint8_t     it;
 
-            /** 
+            /**
              * @brief Increment multiplier.
-             * The increment multiplier is an additional field that allows you apply a multiplier of 1-255 for time offset increments. 
-             * For example: let's assume that our data is being gathered at 20-millisecond intervals. We could certainly represent the 
+             * The increment multiplier is an additional field that allows you apply a multiplier of 1-255 for time offset increments.
+             * For example: let's assume that our data is being gathered at 20-millisecond intervals. We could certainly represent the
              * data as [0,37,60,38,20,42,140,36] where the time offset "3" becomes "60", "1" becomes "20", and "7" becomes "140".
-             * 
+             *
              * Valid range is 1 to 255
-             */ 
-            uint8_t     im;        
-            
-            /** 
+             */
+            uint8_t     im;
+
+            /**
              * @brief Value type
-             */  
-            uint8_t     vt;    
-            
-            /** 
+             */
+            uint8_t     vt;
+
+            /**
              * @brief Series size (element count)
-             */  
-            uint8_t     ss; 
+             */
+            uint8_t     ss;
         } DataSeriesHeader_t;
 
-        typedef struct 
+        typedef struct
         {
             uint8_t     ofs;
             uint8_t     val;
-        } DataElementUint8_t;        
+        } DataElementUint8_t;
 
-        typedef struct 
+        typedef struct
         {
             uint8_t     ofs;
             uint16_t    val;
-        } DataElementUnint16_t;      
+        } DataElementUnint16_t;
 
-        typedef struct 
+        typedef struct
         {
             uint8_t     ofs;
             uint32_t    val;
-        } DataElementUnint32_t;      
+        } DataElementUnint32_t;
 
-        typedef struct 
+        typedef struct
         {
             uint8_t     ofs;
             uint64_t    val;
-        } DataElementUnint64_t;        
+        } DataElementUnint64_t;
     #pragma pack(pop)
 
-    typedef enum 
-    {  
+    typedef enum
+    {
         invalid = 0,
         uint8 = 1,
         uint16 = 2,
         uint32 = 3,
         uint64 = 4
     } DataSeriesValueType_t;
-    
-    /** 
+
+    /**
      * @brief Human Biometric Types.
-     * 
-     * TODO: More detailed TxCodec_t description. 
+     *
+     * TODO: More detailed TxCodec_t description.
      */
-    typedef enum 
-    {  
+    typedef enum
+    {
         unknown = 0,
         heartRate = 1,
         skinTemp = 2,
@@ -155,7 +161,7 @@ namespace ConfigurationObjects
         fatigueLevel = 6,
         taskEffectiveness = 7
     } HumanBiometricsTypes_t;
-    
+
     //-----------------------------------------------------------
 
     static FILE *_internalFileOpener(const char *fn, const char *mode)
@@ -288,7 +294,7 @@ namespace ConfigurationObjects
             v = def;
         }
     }
-    
+
     template<class T>
     static void getOptional(const char *name, T& v, const nlohmann::json& j)
     {
@@ -304,13 +310,13 @@ namespace ConfigurationObjects
     class ConfigurationObjectBase
     {
     public:
-        ConfigurationObjectBase()              
-        {   
-            _documenting = false;         
+        ConfigurationObjectBase()
+        {
+            _documenting = false;
         }
 
         virtual ~ConfigurationObjectBase()
-        {            
+        {
         }
 
         virtual void initForDocumenting()
@@ -320,7 +326,7 @@ namespace ConfigurationObjects
 
     protected:
         bool _documenting;
-    };    
+    };
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(NetworkInterfaceDevice)
@@ -328,7 +334,7 @@ namespace ConfigurationObjects
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(NetworkInterfaceDevice)
-        
+
     public:
         std::string                 name;
         std::string                 friendlyName;
@@ -372,7 +378,7 @@ namespace ConfigurationObjects
             hardwareAddress = "DE:AD:BE:EF:01:02:03";
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const NetworkInterfaceDevice& p)
     {
         j = nlohmann::json{
@@ -392,14 +398,14 @@ namespace ConfigurationObjects
         p.clear();
         getOptional("name", p.name, j);
         getOptional("friendlyName", p.friendlyName, j);
-        getOptional("description", p.description, j);        
+        getOptional("description", p.description, j);
         getOptional("family", p.family, j, -1);
         getOptional("address", p.address, j);
         getOptional("available", p.available, j, false);
         getOptional("isLoopback", p.isLoopback, j, false);
         getOptional("supportsMulticast", p.supportsMulticast, j, false);
         getOptional("hardwareAddress", p.hardwareAddress, j);
-    }    
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(ListOfNetworkInterfaceDevice)
@@ -407,7 +413,7 @@ namespace ConfigurationObjects
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(ListOfNetworkInterfaceDevice)
-        
+
     public:
         std::vector<NetworkInterfaceDevice> list;
 
@@ -421,7 +427,7 @@ namespace ConfigurationObjects
             list.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const ListOfNetworkInterfaceDevice& p)
     {
         j = nlohmann::json{
@@ -437,19 +443,19 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RtpHeader)
-    /** 
+    /**
      * @brief RTP header information as per <a href="https://tools.ietf.org/html/rfc3550" target="_blank">RFC 3550</a>.
-     * 
-     * @see BlobInfo 
-     * 
+     *
+     * @see BlobInfo
+     *
      * Example JSON: @include[lineno] examples/RtpHeader.json
-     *  
-     */    
+     *
+     */
     class RtpHeader : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(RtpHeader)
-        
+
     public:
 
         /** @brief A valid RTP payload between 0 and 127 <a href="https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml" target="_blank">See IANA Real-Time Transport Protocol (RTP) Parameters</a>  */
@@ -491,7 +497,7 @@ namespace ConfigurationObjects
             ts = 87654321;
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const RtpHeader& p)
     {
         if(p.pt != -1)
@@ -518,23 +524,23 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(BlobInfo)
     /** @brief Describes the Blob data being sent used in the @ref engageSendGroupBlob API
-     *  
-     *  TODO: Shaun, anything you want to add here 
-     * 
-     *  Helper C++ class to serialize and de-serialize BlobInfo JSON 
-     * 
-     *  Example JSON: @include[lineno] examples/BlobInfo.json 
-     * 
+     *
+     *  TODO: Shaun, anything you want to add here
+     *
+     *  Helper C++ class to serialize and de-serialize BlobInfo JSON
+     *
+     *  Example JSON: @include[lineno] examples/BlobInfo.json
+     *
      *  @see engageSendGroupBlob
-     */        
+     */
     class BlobInfo : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(BlobInfo)
-        
+
     public:
         /** @brief Payload type.
-         * BlobInfo RTP supported Payload types. 
+         * BlobInfo RTP supported Payload types.
          */
         typedef enum
         {
@@ -544,13 +550,13 @@ namespace ConfigurationObjects
             /** @brief Plain UTF 8 text. This is typically used to send plain text messages */
             bptAppTextUtf8                  = 1,
 
-            /** @brief JSON UFT 8 text. This is used to send JSON formatted messages */            
-            bptJsonTextUtf8                 = 2, 
+            /** @brief JSON UFT 8 text. This is used to send JSON formatted messages */
+            bptJsonTextUtf8                 = 2,
 
-            /** @brief Binary payload. Used to send binary data */            
+            /** @brief Binary payload. Used to send binary data */
             bptAppBinary                    = 3,
 
-            /** @brief Biometrics payload. Used to send biometric series data. <a href="https://github.com/rallytac/pub/wiki/Engage-Human-Biometrics" target="_blank">See WIKI post for more info</a> */            
+            /** @brief Biometrics payload. Used to send biometric series data. <a href="https://github.com/rallytac/pub/wiki/Engage-Human-Biometrics" target="_blank">See WIKI post for more info</a> */
             bptEngageBinaryHumanBiometrics  = 4
         } PayloadType_t;
 
@@ -589,7 +595,7 @@ namespace ConfigurationObjects
             rtpHeader.initForDocumenting();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const BlobInfo& p)
     {
         j = nlohmann::json{
@@ -612,22 +618,22 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(AdvancedTxParams)
-    /** 
-     * @brief Configuration when using the @ref engageBeginGroupTxAdvanced API   
-     * 
-     * Helper C++ class to serialize and de-serialize AdvancedTxParams JSON 
-     * 
-     * Example JSON: @include[lineno] examples/AdvancedTxParams.json 
-     * 
-     * TODO: Completed class properties 
-     * 
+    /**
+     * @brief Configuration when using the @ref engageBeginGroupTxAdvanced API
+     *
+     * Helper C++ class to serialize and de-serialize AdvancedTxParams JSON
+     *
+     * Example JSON: @include[lineno] examples/AdvancedTxParams.json
+     *
+     * TODO: Completed class properties
+     *
      * @see engageBeginGroupTxAdvanced
-     */            
+     */
     class AdvancedTxParams : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(AdvancedTxParams)
-        
+
     public:
 
         /** @brief TODO: Shaun where are these flags defined? */
@@ -664,10 +670,10 @@ namespace ConfigurationObjects
         }
 
         virtual void initForDocumenting()
-        {            
+        {
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const AdvancedTxParams& p)
     {
         j = nlohmann::json{
@@ -692,41 +698,41 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Identity)
-    /** 
+    /**
      * @brief Users Identity
-     * 
-     * Helper C++ class to serialize and de-serialize Identity JSON 
-     * 
-     * This configuration will be used by the Engine when transmitting presence data on behalf of the application. 
-     * 
-     * Example JSON: @include[lineno] examples/Identity.json 
-     * 
+     *
+     * Helper C++ class to serialize and de-serialize Identity JSON
+     *
+     * This configuration will be used by the Engine when transmitting presence data on behalf of the application.
+     *
+     * Example JSON: @include[lineno] examples/Identity.json
+     *
      * @see engageInitialize, PresenceDescriptor
-     */        
+     */
     class Identity : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Identity)
-        
+
     public:
-        
-        /** 
+
+        /**
          * @brief [Optional, Default: Auto Generated] This is the Node ID to use to represent instance on the network.
          *
-         * The application can generate and persist this Id or if an Id is not provided, the Engage Engine will generate 
-            a random Id and will be advertised in the PresenceDescriptor JSON with the <b>self</b> attribute 
+         * The application can generate and persist this Id or if an Id is not provided, the Engage Engine will generate
+            a random Id and will be advertised in the PresenceDescriptor JSON with the <b>self</b> attribute
             set to <b>true</B> in the PFN_ENGAGE_GROUP_NODE_DISCOVERED event @see PresenceDescriptor.
-         */     
+         */
         std::string     nodeId;
 
-        /** @brief [Optional, Default: empty string] The user ID to be used to represent the user. */ 
-        std::string     userId;         
+        /** @brief [Optional, Default: empty string] The user ID to be used to represent the user. */
+        std::string     userId;
 
         /** @brief [Optional, Default: empty string] The display name to be used for the user. */
         std::string     displayName;
 
-        /** @brief [Optional, Default: empty string] This is a application defined field used to indicate a users avatar. The Engine doesn't not process this data and is a pass through. */ 
-        std::string     avatar; 
+        /** @brief [Optional, Default: empty string] This is a application defined field used to indicate a users avatar. The Engine doesn't not process this data and is a pass through. */
+        std::string     avatar;
 
         Identity()
         {
@@ -742,10 +748,10 @@ namespace ConfigurationObjects
         }
 
         virtual void initForDocumenting()
-        {            
+        {
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const Identity& p)
     {
         j = nlohmann::json{
@@ -767,17 +773,17 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Location)
-    /** 
+    /**
      * @brief Location information used as part of the @ref PresenceDescriptor
-     * 
-     * Helper C++ class to serialize and de-serialize Location JSON 
-     * 
+     *
+     * Helper C++ class to serialize and de-serialize Location JSON
+     *
      * Location is presented by using the <a href="https://gisgeography.com/wgs84-world-geodetic-system/" target="_blank">World Geodetic System (WGS84)</a>
-     *  
-     * Example JSON: @include[lineno] examples/Location.json 
-     * 
-     *  @see PresenceDescriptor  
-     */            
+     *
+     * Example JSON: @include[lineno] examples/Location.json
+     *
+     *  @see PresenceDescriptor
+     */
     class Location : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
@@ -787,21 +793,21 @@ namespace ConfigurationObjects
         constexpr static double INVALID_LOCATION_VALUE = -999.999;
 
         /** @brief [Read Only: Unix timestamp - Zulu/UTC] Indicates the timestamp that the location was recorded. */
-        uint32_t                    ts;             
-        
-        /** @brief Its the latitude position using the using the <b>Signed degrees format</b> (DDD.dddd). Valid range is -90 to 90. */ 
-        double                      latitude;       
-        
-        /** @brief Its the longitudinal position using the <b>Signed degrees format</b> (DDD.dddd) format. Valid range is -180 to 180. */ 
-        double                      longitude; 
-        
-        /** @brief [Optional, Default: INVALID_LOCATION_VALUE] The altitude above sea level in meters. */ 
-        double                      altitude; 
-        
-        /** @brief [Optional, Default: INVALID_LOCATION_VALUE] Direction the endpoint is traveling in degrees. Valid range is 0 to 360 (NOTE: 0 and 360 are both the same heading). */ 
+        uint32_t                    ts;
+
+        /** @brief Its the latitude position using the using the <b>Signed degrees format</b> (DDD.dddd). Valid range is -90 to 90. */
+        double                      latitude;
+
+        /** @brief Its the longitudinal position using the <b>Signed degrees format</b> (DDD.dddd) format. Valid range is -180 to 180. */
+        double                      longitude;
+
+        /** @brief [Optional, Default: INVALID_LOCATION_VALUE] The altitude above sea level in meters. */
+        double                      altitude;
+
+        /** @brief [Optional, Default: INVALID_LOCATION_VALUE] Direction the endpoint is traveling in degrees. Valid range is 0 to 360 (NOTE: 0 and 360 are both the same heading). */
         double                      direction;
-        
-        /** @brief [Optional, Default: INVALID_LOCATION_VALUE] The speed the endpoint is traveling at in meters per second. */ 
+
+        /** @brief [Optional, Default: INVALID_LOCATION_VALUE] The speed the endpoint is traveling at in meters per second. */
         double                      speed;
 
         Location()
@@ -831,10 +837,10 @@ namespace ConfigurationObjects
             speed = 1234;
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const Location& p)
     {
-        j = nlohmann::json{            
+        j = nlohmann::json{
             TOJSON_IMPL(latitude),
             TOJSON_IMPL(longitude),
         };
@@ -853,19 +859,19 @@ namespace ConfigurationObjects
         getOptional<double>("altitude", p.altitude, j, Location::INVALID_LOCATION_VALUE);
         getOptional<double>("direction", p.direction, j, Location::INVALID_LOCATION_VALUE);
         getOptional<double>("speed", p.speed, j, Location::INVALID_LOCATION_VALUE);
-    }        
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Power)
-    /** 
+    /**
      * @brief Device Power Information used as part of the @ref PresenceDescriptor
-     * 
-     *  Helper C++ class to serialize and de-serialize Power JSON 
-     * 
-     * Example JSON: @include[lineno] examples/Power.json 
-     * 
-     *  @see PresenceDescriptor  
-     */                
+     *
+     *  Helper C++ class to serialize and de-serialize Power JSON
+     *
+     * Example JSON: @include[lineno] examples/Power.json
+     *
+     *  @see PresenceDescriptor
+     */
     class Power : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
@@ -875,33 +881,33 @@ namespace ConfigurationObjects
 
         /** @brief [Optional, Default: 0] Is the source the power is being delivered from
          *
-         * Valid values are 
-         *  
-         * Value | Description 
-         * --- | ---  
-         *  0 | Undefined 
-         *  1 | Battery 
+         * Valid values are
+         *
+         * Value | Description
+         * --- | ---
+         *  0 | Undefined
+         *  1 | Battery
          *  2 | Wired
-         *  
-         */    
+         *
+         */
         int     source;
 
         /** @brief [Optional, Default: 0] Is the current state that the power system is in.
          *
-         * Valid values are 
-         * 
-         * Value | Description 
-         * --- | ---  
-         *  0 | Undefined 
-         *  1 | Charging 
+         * Valid values are
+         *
+         * Value | Description
+         * --- | ---
+         *  0 | Undefined
+         *  1 | Charging
          *  2 | Discharging
          *  3 | Not Charging
          *  4 | Full
-         */    
+         */
         int     state;
 
-        /** @brief [Optional, Default: 0] Is the current level of the battery or power system as a percentage. Valid range is 0 to 100 TODO: Shaun, is this a percentage? */    
-        int     level; 
+        /** @brief [Optional, Default: 0] Is the current level of the battery or power system as a percentage. Valid range is 0 to 100 TODO: Shaun, is this a percentage? */
+        int     level;
 
         Power()
         {
@@ -916,13 +922,13 @@ namespace ConfigurationObjects
         }
 
         virtual void initForDocumenting()
-        {            
+        {
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const Power& p)
     {
-        j = nlohmann::json{            
+        j = nlohmann::json{
             TOJSON_IMPL(source),
             TOJSON_IMPL(state),
             TOJSON_IMPL(level)
@@ -939,41 +945,41 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Connectivity)
-    /** 
+    /**
      * @brief Connectivity Information used as part of the @ref PresenceDescriptor
-     * 
-     *  Helper C++ class to serialize and de-serialize Connectivity JSON 
-     * 
+     *
+     *  Helper C++ class to serialize and de-serialize Connectivity JSON
+     *
      * Example JSON: @include[lineno] examples/Connectivity.json  TODO: Shaun, Connectivity.json is null
-     * 
-     *  @see PresenceDescriptor  
-     */                
+     *
+     *  @see PresenceDescriptor
+     */
     class Connectivity : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Connectivity)
 
     public:
-        /** 
-         * @brief Is the type of connectivity the device has to the network 
+        /**
+         * @brief Is the type of connectivity the device has to the network
          *
-         * Valid values are 
-         * 
-         * Value | Description 
-         * --- | ---  
-         *  0 | Undefined 
+         * Valid values are
+         *
+         * Value | Description
+         * --- | ---
+         *  0 | Undefined
          *  1 | Wired
          *  2 | Wireless WiFi
          *  3 | Wireless Cellular
-         *  
-         */    
-        int     type;  
+         *
+         */
+        int     type;
 
         /** @brief Is the strength of the connection connection. TODO: Shaun, what is this measured in? */
-        int     strength; 
+        int     strength;
 
         /** @brief Is the round trip rating the Engine performs on the connection to a Rallypoint. TODO: Shaun, what are the valid ratings and what do they mean? */
-        int     rating; 
+        int     rating;
 
         Connectivity()
         {
@@ -996,12 +1002,12 @@ namespace ConfigurationObjects
             rating = 3;
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const Connectivity& p)
     {
         if(p.type != 0)
         {
-            j = nlohmann::json{            
+            j = nlohmann::json{
                 TOJSON_IMPL(type),
                 TOJSON_IMPL(strength),
                 TOJSON_IMPL(rating)
@@ -1019,15 +1025,15 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(GroupAlias)
-    /** 
-     * @brief Group Alias used as part of the @ref PresenceDescriptor 
-     * 
-     *  Helper C++ class to serialize and de-serialize GroupAlias JSON 
-     * 
-     * Example JSON: @include[lineno] examples/GroupAlias.json 
-     * 
-     *  @see PresenceDescriptor  
-     */                
+    /**
+     * @brief Group Alias used as part of the @ref PresenceDescriptor
+     *
+     *  Helper C++ class to serialize and de-serialize GroupAlias JSON
+     *
+     * Example JSON: @include[lineno] examples/GroupAlias.json
+     *
+     *  @see PresenceDescriptor
+     */
     class GroupAlias : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
@@ -1052,10 +1058,10 @@ namespace ConfigurationObjects
         }
 
         virtual void initForDocumenting()
-        {            
+        {
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const GroupAlias& p)
     {
         j = nlohmann::json{
@@ -1068,68 +1074,68 @@ namespace ConfigurationObjects
         p.clear();
         j.at("groupId").get_to(p.groupId);
         j.at("alias").get_to(p.alias);
-    }    
+    }
 
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(PresenceDescriptor)
-    /** 
-     * @brief Represents an endpoints presence properties. Used in @ref engageUpdatePresenceDescriptor API and PFN_ENGAGE_GROUP_NODE events.  
-     *  
+    /**
+     * @brief Represents an endpoints presence properties. Used in @ref engageUpdatePresenceDescriptor API and PFN_ENGAGE_GROUP_NODE events.
+     *
      *  Helper C++ class to serialize and de-serialize PresenceDescriptor JSON
-     * 
-     *  Example: @include[doc] examples/PresenceDescriptor.json 
-     * 
+     *
+     *  Example: @include[doc] examples/PresenceDescriptor.json
+     *
      *  @see engageUpdatePresenceDescriptor, PFN_ENGAGE_GROUP_NODE_DISCOVERED, PFN_ENGAGE_GROUP_NODE_REDISCOVERED
-     */    
+     */
     class PresenceDescriptor : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(PresenceDescriptor)
-        
+
     public:
 
-        /** 
-         * @brief [Read Only] Indicates that this presence declaration was generated by the Engage Engine the application currently connected to. 
+        /**
+         * @brief [Read Only] Indicates that this presence declaration was generated by the Engage Engine the application currently connected to.
          *
-         * NOTE: This is useful in identifying the nodeId that is automatically generated by the Engage Engine when the application does not provide the nodeId.  
-         */      
+         * NOTE: This is useful in identifying the nodeId that is automatically generated by the Engage Engine when the application does not provide the nodeId.
+         */
         bool                        self;
 
-        /** 
-         * @brief [Read Only, Unix timestamp - Zulu/UTC] Indicates the timestamp that the message was originally sent. 
-         *   
-         * Use this property and the <b>@ref nextUpdate</b> attribute to determine if the endpoint is still on the network. 
-         */      
-        uint32_t                    ts; 
+        /**
+         * @brief [Read Only, Unix timestamp - Zulu/UTC] Indicates the timestamp that the message was originally sent.
+         *
+         * Use this property and the <b>@ref nextUpdate</b> attribute to determine if the endpoint is still on the network.
+         */
+        uint32_t                    ts;
 
-        /** 
-         * @brief [Read Only, Unix timestamp - Zulu/UTC] Indicates the next time the presence descriptor will be sent. 
-         *   
-         *   This attributed together with the <b>@ref ts</b> attribute is used by the Engage Engage Engine to "timeout" the endpoint. (Unix timestamp - Zulu/UTC) 
-         */      
+        /**
+         * @brief [Read Only, Unix timestamp - Zulu/UTC] Indicates the next time the presence descriptor will be sent.
+         *
+         *   This attributed together with the <b>@ref ts</b> attribute is used by the Engage Engage Engine to "timeout" the endpoint. (Unix timestamp - Zulu/UTC)
+         */
         uint32_t                    nextUpdate;
 
-        /** @brief [Optional, Default see @ref Identity] Endpoint's identity information. */      
+        /** @brief [Optional, Default see @ref Identity] Endpoint's identity information. */
         Identity                    identity;
 
-        /** @brief [Optional] TODO: Shaun, whats the max length. */      
+        /** @brief [Optional] TODO: Shaun, whats the max length. */
         std::string                 comment;
 
-        /** 
+        /**
          * @brief [Optional] Indicates the users disposition
-         * 
+         *
          * This may be any value set bu the application and here is an example of values to use
-         * 
-         * Value | Description 
-         * --- | ---  
-         *  0x00000000 | Undefined 
-         *  0x00000001 | Emergency 
-         *  0x00000002 | Available 
-         *  0x00000004 | Busy 
-         *  etc | etc 
+         *
+         * Value | Description
+         * --- | ---
+         *  0x00000000 | Undefined
+         *  0x00000001 | Emergency
+         *  0x00000002 | Available
+         *  0x00000004 | Busy
+         *  etc | etc
          */
-        uint32_t                    disposition;         
+        uint32_t                    disposition;
 
         /** @brief [Read Only] List of group aliases associated with this presence descriptor. */
         std::vector<GroupAlias>     groupAliases;
@@ -1220,7 +1226,7 @@ namespace ConfigurationObjects
         getOptional<bool>("self", p.self, j);
         getOptional<uint32_t>("ts", p.ts, j);
         getOptional<uint32_t>("nextUpdate", p.nextUpdate, j);
-        getOptional<ConfigurationObjects::Identity>("identity", p.identity, j);
+        getOptional<Identity>("identity", p.identity, j);
         getOptional<std::string>("comment", p.comment, j);
         getOptional<uint32_t>("disposition", p.disposition, j);
         getOptional<std::vector<GroupAlias>>("groupAliases", p.groupAliases, j);
@@ -1230,36 +1236,36 @@ namespace ConfigurationObjects
         getOptional<Connectivity>("connectivity", p.connectivity, j);
         getOptional<Power>("power", p.power, j);
     }
-    
+
     //-----------------------------------------------------------
-    JSON_SERIALIZED_CLASS(NetworkTxOptions) 
-    /** 
+    JSON_SERIALIZED_CLASS(NetworkTxOptions)
+    /**
      * @brief Network Transmit Options used in @ref Group
-     * 
+     *
      *  Helper C++ class to serialize and de-serialize NetworkTxOptions JSON
-     * 
+     *
      *  TODO: Complete this Class
-     * 
-     *  Example: @include[doc] examples/NetworkTxOptions.json 
-     *    
+     *
+     *  Example: @include[doc] examples/NetworkTxOptions.json
+     *
      *  @see Group
-     */    
+     */
     class NetworkTxOptions : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(NetworkTxOptions)
-        
+
     public:
 
-        /** 
+        /**
          * @brief Network Transmission Priority.
-         *   
-         *   Priority to set on the packets in order for the network to optimize routing of the packets 
+         *
+         *   Priority to set on the packets in order for the network to optimize routing of the packets
          */
         typedef enum
         {
             /** @brief best effort */
-            priBestEffort   = 0, 
+            priBestEffort   = 0,
 
             /** @brief signaling */
             priSignaling    = 2,
@@ -1274,12 +1280,12 @@ namespace ConfigurationObjects
         /** @brief [Optional, Default: @ref priVoice] Transmission priority. This has meaning on some operating systems based on how their IP stack operates.  It may or may not affect final packet marking. */
         TxPriority_t    priority;
 
-        /** 
-         * @brief [Optional, Default: 1] Time to live or hop limit is a mechanism that limits the lifespan or lifetime of data in a network. TTL prevents a data packet from circulating indefinitely. 
-         *   
-         *   E.g If you don't want multicast data to leave your local network, set the TTL to 1. 
+        /**
+         * @brief [Optional, Default: 1] Time to live or hop limit is a mechanism that limits the lifespan or lifetime of data in a network. TTL prevents a data packet from circulating indefinitely.
+         *
+         *   E.g If you don't want multicast data to leave your local network, set the TTL to 1.
          */
-        int             ttl;   
+        int             ttl;
 
         NetworkTxOptions()
         {
@@ -1293,10 +1299,10 @@ namespace ConfigurationObjects
         }
 
         virtual void initForDocumenting()
-        {            
+        {
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const NetworkTxOptions& p)
     {
         j = nlohmann::json{
@@ -1312,22 +1318,22 @@ namespace ConfigurationObjects
     }
 
     //-----------------------------------------------------------
-    JSON_SERIALIZED_CLASS(NetworkAddress) 
-    /** 
-     * @brief NetworkAddress 
-     * 
+    JSON_SERIALIZED_CLASS(NetworkAddress)
+    /**
+     * @brief NetworkAddress
+     *
      * Helper C++ class to serialize and de-serialize NetworkAddress JSON
-     * 
+     *
      * TODO: Complete this Class
-     * 
-     * Example: @include[doc] examples/NetworkAddress.json 
-     *    
-     */    
+     *
+     * Example: @include[doc] examples/NetworkAddress.json
+     *
+     */
     class NetworkAddress : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(NetworkAddress)
-        
+
     public:
         /** @brief IP address. */
         std::string     address;
@@ -1346,7 +1352,7 @@ namespace ConfigurationObjects
             port = 0;
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const NetworkAddress& p)
     {
         j = nlohmann::json{
@@ -1363,22 +1369,22 @@ namespace ConfigurationObjects
 
 
     //-----------------------------------------------------------
-    JSON_SERIALIZED_CLASS(NetworkAddressRxTx) 
-    /** 
-     * @brief NetworkAddressRxTx 
-     * 
+    JSON_SERIALIZED_CLASS(NetworkAddressRxTx)
+    /**
+     * @brief NetworkAddressRxTx
+     *
      * Helper C++ class to serialize and de-serialize NetworkAddressRxTx JSON
-     * 
+     *
      * TODO: Complete this Class
-     * 
-     * Example: @include[doc] examples/NetworkAddressRxTx.json 
-     *    
-     */    
+     *
+     * Example: @include[doc] examples/NetworkAddressRxTx.json
+     *
+     */
     class NetworkAddressRxTx : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(NetworkAddressRxTx)
-        
+
     public:
         /** @brief RX. */
         NetworkAddress          rx;
@@ -1397,7 +1403,7 @@ namespace ConfigurationObjects
             tx.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const NetworkAddressRxTx& p)
     {
         j = nlohmann::json{
@@ -1414,83 +1420,83 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Rallypoint)
-    /** 
+    /**
      * @brief Rallypoint
-     * 
+     *
      * Helper C++ class to serialize and de-serialize Rallypoint JSON
-     *       
-     * Example: @include[doc] examples/Rallypoint.json 
-     */    
+     *
+     * Example: @include[doc] examples/Rallypoint.json
+     */
     class Rallypoint : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Rallypoint)
-        
+
     public:
 
         /**
-         * @brief This is the host address for the Engine to connect to the RallyPoint service.  
-         * 
-         * TODO: Shaun, Is there anything else we have to explain here 
-         * 
-         */    
+         * @brief This is the host address for the Engine to connect to the RallyPoint service.
+         *
+         * TODO: Shaun, Is there anything else we have to explain here
+         *
+         */
         NetworkAddress              host;
 
         /**
-         * @brief This is the X509 certificate to use for mutual authentication.    
-         * 
+         * @brief This is the X509 certificate to use for mutual authentication.
+         *
          * The full contents of the cert can be specified or the file path to where the cert is located can be specified by using an @@ replacement string e.g
-         * 
+         *
          *  \code{.json}
              certificate="@c:\\privatestore\certs\rp_cert.pem"
          *  \endcode
-         *  
-         *  
-         * TODO: Shaun, Is there anything else we have to explain here 
-         * 
-         */    
+         *
+         *
+         * TODO: Shaun, Is there anything else we have to explain here
+         *
+         */
         std::string                 certificate;
 
         /**
-         * @brief This is the private key used to generate the X509 certificate.    
-         * 
+         * @brief This is the private key used to generate the X509 certificate.
+         *
          * The full contents of the key can be specified or the file path to where the key is located can be specified by using an @@ replacement string e.g
-         * 
+         *
          *  \code{.json}
              certificate="@c:\\privatestore\certs\rp_private_key.key"
          *  \endcode
-         *  
-         *  
-         * TODO: Shaun, Is there anything else we have to explain here 
-         * 
-         */          
-        std::string                 certificateKey; 
+         *
+         *
+         * TODO: Shaun, Is there anything else we have to explain here
+         *
+         */
+        std::string                 certificateKey;
 
-        /** 
+        /**
          * @brief [Optional] TODO: Shaun, whats this? This looks like its for RallyPoint config and not client?
-         * 
-         * Description 
+         *
+         * Description
          */
         bool                        verifyPeer;
 
-        /** 
+        /**
          * @brief [Optional] TODO: Shaun, whats this? This looks like its for RallyPoint config and not client?
-         * 
-         * Description 
+         *
+         * Description
          */
-        bool                        allowSelfSignedCertificate;    
+        bool                        allowSelfSignedCertificate;
 
-        /** 
+        /**
          * @brief [Optional] TODO: Shaun, whats this? This looks like its for RallyPoint config and not client?
-         * 
-         * Description 
+         *
+         * Description
          */
-        std::vector<std::string>    caCertificates; 
+        std::vector<std::string>    caCertificates;
 
-        /** 
+        /**
          * @brief [Optional] TODO: Shaun, whats this? This looks like its for RallyPoint config and not client?
-         * 
-         * Description 
+         *
+         * Description
          */
         int                         transactionTimeoutMs;
         bool                        disableMessageSigning;
@@ -1512,13 +1518,13 @@ namespace ConfigurationObjects
             disableMessageSigning = false;
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const Rallypoint& p)
     {
         j = nlohmann::json{
             TOJSON_IMPL(host),
             TOJSON_IMPL(certificate),
-            TOJSON_IMPL(certificateKey),                        
+            TOJSON_IMPL(certificateKey),
             TOJSON_IMPL(verifyPeer),
             TOJSON_IMPL(allowSelfSignedCertificate),
             TOJSON_IMPL(caCertificates),
@@ -1544,28 +1550,28 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(TxAudio)
     /**
-     * @brief Configuration for the audio transmit properties for a group 
-     *  
+     * @brief Configuration for the audio transmit properties for a group
+     *
      *  Helper C++ class to serialize and de-serialize TxAudio JSON  @see Group
-     *      
-     *  This JSON is used as an object in the Group definition JSON. 
-     * 
-     *  <P> 
-     *  Example: @include[doc] examples/TxAudio.json 
-     *  </P>    
-     *    
-     */    
+     *
+     *  This JSON is used as an object in the Group definition JSON.
+     *
+     *  <P>
+     *  Example: @include[doc] examples/TxAudio.json
+     *  </P>
+     *
+     */
     class TxAudio : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(TxAudio)
-        
+
     public:
 
-        /** 
+        /**
          * @brief Codec Types enum.
-         * 
-         * More detailed TxCodec_t description. 
+         *
+         * More detailed TxCodec_t description.
          */
         typedef enum
         {
@@ -1575,7 +1581,7 @@ namespace ConfigurationObjects
 
 
             /** @brief G711 U-Law 64 (kbit/s) <a href="https://en.wikipedia.org/wiki/G.711" target="_blank">See for more info</a> */
-            ctG711ulaw      = 1, 
+            ctG711ulaw      = 1,
 
             /** @brief G711 A-Law 64 (kbit/s) <a href="https://en.wikipedia.org/wiki/G.711" target="_blank">See for more info</a> */
             ctG711alaw      = 2,    /**<  */
@@ -1591,10 +1597,10 @@ namespace ConfigurationObjects
             ctAmrNb5150     = 11,
 
             /** @brief AMR Narrowband 5.9 (kbit/s) <a href="https://en.wikipedia.org/wiki/Adaptive_Multi-Rate_audio_codec" target="_blank">See for more info</a> */
-            ctAmrNb5900     = 12, 
+            ctAmrNb5900     = 12,
 
             /** @brief AMR Narrowband 6.7 (kbit/s) <a href="https://en.wikipedia.org/wiki/Adaptive_Multi-Rate_audio_codec" target="_blank">See for more info</a> */
-            ctAmrNb6700     = 13, 
+            ctAmrNb6700     = 13,
 
             /** @brief AMR Narrowband 7.4 (kbit/s) <a href="https://en.wikipedia.org/wiki/Adaptive_Multi-Rate_audio_codec" target="_blank">See for more info</a> */
             ctAmrNb7400     = 14,
@@ -1637,7 +1643,7 @@ namespace ConfigurationObjects
             ctOpus22000     = 28,
 
             /** @brief Opus 24 (kbit/s) <a href="http://opus-codec.org" target="_blank">See for more info</a> */
-            ctOpus24000     = 29 
+            ctOpus24000     = 29
         } TxCodec_t;
 
         /** @brief [Optional, Default: @ref ctOpus8000] Specifies the Codec Type to use for the transmission. See @ref TxCodec_t for all codec types */
@@ -1649,27 +1655,27 @@ namespace ConfigurationObjects
         /** @brief [Optional, Default: false] Indicates if full duplex audio is supported.  TODO: Shaun, can you please elaborate on this? */
         bool            fdx;
 
-        /** 
+        /**
          * @brief [Optional, Default: false] Set to <b>true</b> whether to disable header extensions.
          *
-         * Indicates whether the Engine should not add a header extension on the RTP packet. If the header extension is omitted then any of the information such as Alias, NodeID and Tx 
+         * Indicates whether the Engine should not add a header extension on the RTP packet. If the header extension is omitted then any of the information such as Alias, NodeID and Tx
          * Priority will <B>not</B> be transmitted along with the audio.
-         */   
-        bool            noHdrExt; 
-        
-        /** 
+         */
+        bool            noHdrExt;
+
+        /**
          * @brief [Optional, Default: 0] Maximum number of seconds the Engine will transmit for.
          *
          * When the time limit is exceeded, the Engine will fire a PFN_ENGAGE_GROUP_MAX_TX_TIME_EXCEEDED event.
-         */   
+         */
         int             maxTxSecs;
-        
-        /** 
+
+        /**
          * @brief [Optional, Default: 10] The number pf packets when to periodically send the header extension.
          *
          * Eg, if its 3, then every third packed will contain the header extension. TODO: SHAUN please verify
-         */   
-        int             extensionSendInterval;  
+         */
+        int             extensionSendInterval;
 
         /** @brief [Optional, Default: false] TODO: SHAUN help. */
         bool            debug;
@@ -1681,7 +1687,7 @@ namespace ConfigurationObjects
         int             userTxFlags;
 
         /** @brief [Optional, Default: 5] TODO: SHAUN help. */
-        int             initialHeaderBurst; 
+        int             initialHeaderBurst;
 
         /** @brief [Optional, Default: 5] TODO: SHAUN help. */
         int             trailingHeaderBurst;
@@ -1707,7 +1713,7 @@ namespace ConfigurationObjects
             trailingHeaderBurst = 5;
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const TxAudio& p)
     {
         j = nlohmann::json{
@@ -1744,25 +1750,25 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(AudioDeviceDescriptor)
     /**
-     * @brief Custom Audio Device Configuration  
-     * 
-     * Helper C++ class to serialize and de-serialize AudioDeviceDescriptor JSON used in @ref engageAudioDeviceRegister API.  
-     *      
-     * TODO: Shaun, I know very little about these settings, can you please verify and complete 
-     * 
-     * Example: @include[doc] examples/AudioDeviceDescriptor.json 
-     * 
+     * @brief Custom Audio Device Configuration
+     *
+     * Helper C++ class to serialize and de-serialize AudioDeviceDescriptor JSON used in @ref engageAudioDeviceRegister API.
+     *
+     * TODO: Shaun, I know very little about these settings, can you please verify and complete
+     *
+     * Example: @include[doc] examples/AudioDeviceDescriptor.json
+     *
      * @see engageAudioDeviceRegister
-     */           
+     */
     class AudioDeviceDescriptor : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(AudioDeviceDescriptor)
-        
+
     public:
 
-        /** @brief Audio Device Direction Enum. */    
-        typedef enum 
+        /** @brief Audio Device Direction Enum. */
+        typedef enum
         {
             /** @brief Direction unknown */
             dirUnknown = 0,
@@ -1777,36 +1783,36 @@ namespace ConfigurationObjects
             dirBoth
         } Direction_t;
 
-        /** 
-         * @brief [Read Only] Unique device identifier assigned by Engage Engine at time of device creation. 
-         * 
-         * TODO: SHAUN please verify 
+        /**
+         * @brief [Read Only] Unique device identifier assigned by Engage Engine at time of device creation.
+         *
+         * TODO: SHAUN please verify
          */
         int             deviceId;
 
-        /** 
-         * @brief This is the rate that the device will process the PCM audio data at. 
-         * 
-         * TODO: Shaun, do we need to add a note about the number of bytes etc based on Kamil experience 
-         */ 
+        /**
+         * @brief This is the rate that the device will process the PCM audio data at.
+         *
+         * TODO: Shaun, do we need to add a note about the number of bytes etc based on Kamil experience
+         */
         int             samplingRate;       ///< TODO: Shaun help
 
-        /** 
-         * @brief Indicates the number of audio channels to process. 
+        /**
+         * @brief Indicates the number of audio channels to process.
 
          * TODO: Shaun. How many channels can we support and whats the default
-         */  
+         */
         int             channels;           ///< TODO: Shaun help
 
         /** @brief Audio direction the device supports @see Direction_t */
         Direction_t     direction;
 
-        /** 
-         * @brief Is a percentage at which to gain the audio. 
+        /**
+         * @brief Is a percentage at which to gain the audio.
 
          * TODO: Shaun help
          */
-        int             boostPercentage;  
+        int             boostPercentage;
         int             msPerBuffer;
 
         bool            isAdad;
@@ -1818,7 +1824,7 @@ namespace ConfigurationObjects
         bool            isDefault;
         std::string     type;
         std::string     extra;
-        
+
         AudioDeviceDescriptor()
         {
             clear();
@@ -1844,7 +1850,7 @@ namespace ConfigurationObjects
             extra.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const AudioDeviceDescriptor& p)
     {
         j = nlohmann::json{
@@ -1872,7 +1878,7 @@ namespace ConfigurationObjects
         getOptional<int>("samplingRate", p.samplingRate, j, 0);
         getOptional<int>("msPerBuffer", p.msPerBuffer, j, 0);
         getOptional<int>("channels", p.channels, j, 0);
-        getOptional<AudioDeviceDescriptor::Direction_t>("direction", p.direction, j, 
+        getOptional<AudioDeviceDescriptor::Direction_t>("direction", p.direction, j,
                         AudioDeviceDescriptor::Direction_t::dirUnknown);
         getOptional<int>("boostPercentage", p.boostPercentage, j, 0);
 
@@ -1893,7 +1899,7 @@ namespace ConfigurationObjects
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(ListOfAudioDeviceDescriptor)
-        
+
     public:
         std::vector<AudioDeviceDescriptor> list;
 
@@ -1907,7 +1913,7 @@ namespace ConfigurationObjects
             list.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const ListOfAudioDeviceDescriptor& p)
     {
         j = nlohmann::json{
@@ -1923,17 +1929,17 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Audio)
     /**
-     * @brief Used to configure the Audio properties for a group @see Group  
-     * 
-     * Helper C++ class to serialize and de-serialize Audio JSON 
-     *      
-     * Example: @include[doc] examples/Audio.json 
-     */           
+     * @brief Used to configure the Audio properties for a group @see Group
+     *
+     * Helper C++ class to serialize and de-serialize Audio JSON
+     *
+     * Example: @include[doc] examples/Audio.json
+     */
     class Audio : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Audio)
-        
+
     public:
 
         /** @brief [Optional, Default: first audio device] Id for the input audio device to use for this group. TODO: Shaun, please verify */
@@ -1973,7 +1979,7 @@ namespace ConfigurationObjects
             outputMuted = false;
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const Audio& p)
     {
         j = nlohmann::json{
@@ -1996,29 +2002,29 @@ namespace ConfigurationObjects
         getOptional<int>("outputLevelRight", p.outputLevelRight, j, 100);
         getOptional<bool>("outputMuted", p.outputMuted, j, false);
     }
-    
+
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(TalkerInformation)
     /**
-     * @brief Contains talker information used in providing a list in GroupTalkers  
-     * 
-     * Helper C++ class to serialize and de-serialize TalkerInformation JSON 
-     * 
-     * Example: @include[doc] examples/TalkerInformation.json 
-     *    
-     * @see GroupTalkers 
-     */   
+     * @brief Contains talker information used in providing a list in GroupTalkers
+     *
+     * Helper C++ class to serialize and de-serialize TalkerInformation JSON
+     *
+     * Example: @include[doc] examples/TalkerInformation.json
+     *
+     * @see GroupTalkers
+     */
     class TalkerInformation : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(TalkerInformation)
-        
+
     public:
 
-        /** @brief The user alias to represent as a "talker". */ 
+        /** @brief The user alias to represent as a "talker". */
         std::string alias;
 
-        /** @brief The nodeId the talker is originating from. */ 
+        /** @brief The nodeId the talker is originating from. */
         std::string nodeId;
 
         TalkerInformation()
@@ -2032,7 +2038,7 @@ namespace ConfigurationObjects
             nodeId.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const TalkerInformation& p)
     {
         j = nlohmann::json{
@@ -2050,21 +2056,21 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(GroupTalkers)
     /**
-     * @brief List of @ref TalkerInformation objects.  
-     * 
-     * Helper C++ class to serialize and de-serialize GroupTalkers JSON 
-     *      
-     * This is used as the groupTalkerJson parameter in the PFN_ENGAGE_GROUP_RX_SPEAKERS_CHANGED event to represent a list of active talkers on the group. 
-     * 
-     * Example: @include[doc] examples/GroupTalkers.json 
-     *    
+     * @brief List of @ref TalkerInformation objects.
+     *
+     * Helper C++ class to serialize and de-serialize GroupTalkers JSON
+     *
+     * This is used as the groupTalkerJson parameter in the PFN_ENGAGE_GROUP_RX_SPEAKERS_CHANGED event to represent a list of active talkers on the group.
+     *
+     * Example: @include[doc] examples/GroupTalkers.json
+     *
      * @see PFN_ENGAGE_GROUP_RX_SPEAKERS_CHANGED
-     */   
+     */
     class GroupTalkers : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(GroupTalkers)
-        
+
     public:
         /** @brief List of @ref TalkerInformation objects.*/
         std::vector<TalkerInformation> list;
@@ -2079,7 +2085,7 @@ namespace ConfigurationObjects
             list.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const GroupTalkers& p)
     {
         j = nlohmann::json{
@@ -2091,23 +2097,23 @@ namespace ConfigurationObjects
         p.clear();
         getOptional<std::vector<TalkerInformation>>("list", p.list, j);
     }
-    
+
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Presence)
     /**
      * @brief Describes how the Presence is configured for a group of type @ref Group::gtPresence in @ref Group::Type_t
-     * 
-     * Helper C++ class to serialize and de-serialize Presence JSON 
-     *           
-     * Example: @include[doc] examples/Presence.json 
-     *    
+     *
+     * Helper C++ class to serialize and de-serialize Presence JSON
+     *
+     * Example: @include[doc] examples/Presence.json
+     *
      * @see Group
-     */   
+     */
     class Presence : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Presence)
-        
+
     public:
         /**
          * @brief Presence format types enum.
@@ -2120,11 +2126,11 @@ namespace ConfigurationObjects
             /** @brief Engage propriety format */
             pfEngage        = 1,
 
-            /** 
-             * @brief Cursor On Target format. 
-             * 
-             * This is a simple XML based exchange standard that is used to share information about targets. 
-             * Cursor on Target was originally developed by MITRE in 2002 in support of the U.S. Air Force Electronic Systems Center (ESC) 
+            /**
+             * @brief Cursor On Target format.
+             *
+             * This is a simple XML based exchange standard that is used to share information about targets.
+             * Cursor on Target was originally developed by MITRE in 2002 in support of the U.S. Air Force Electronic Systems Center (ESC)
              */
             pfCot           = 2
         } Format_t;
@@ -2135,10 +2141,10 @@ namespace ConfigurationObjects
         /** @brief [Optional, Default: 30] The interval in seconds at which to send the presence descriptor on the presence group */
         int             intervalSecs;
 
-        /** @brief [Optional, Default: false] Will force the presence to be transmitted every time audio is transmitted. */ 
+        /** @brief [Optional, Default: false] Will force the presence to be transmitted every time audio is transmitted. */
         bool            forceOnAudioTransmit;
 
-        /** @brief Instructs the Engage Engine to not transmit presence descriptor */ 
+        /** @brief Instructs the Engage Engine to not transmit presence descriptor */
         bool            listenOnly;
 
         Presence()
@@ -2154,7 +2160,7 @@ namespace ConfigurationObjects
             listenOnly = false;
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const Presence& p)
     {
         j = nlohmann::json{
@@ -2176,20 +2182,20 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Advertising)
-    /** 
+    /**
      * @brief TODO: Shaun, not sure what this does, please verify all info.  Presnce
-     * 
-     * Helper C++ class to serialize and de-serialize Advertising JSON 
-     * 
-     * Example: @include[doc] examples/Advertising.json 
-     *    
+     *
+     * Helper C++ class to serialize and de-serialize Advertising JSON
+     *
+     * Example: @include[doc] examples/Advertising.json
+     *
      * @see DiscoverySsdp, DiscoverySap
-     */       
+     */
     class Advertising : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Advertising)
-        
+
     public:
         /** @brief [Optional, Default: false] Enabled advertising */
         bool        enabled;
@@ -2232,21 +2238,21 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(GroupTimeline)
     /**
-     * @brief Configuration for Timeline functionality for Group. 
-     * 
+     * @brief Configuration for Timeline functionality for Group.
+     *
      * If a GroupTimeline is not specified, then the configursation in the @ref ConfigurationObjects::EnginePolicyTimelines will used as default.
-     * 
-     * Helper C++ class to serialize and de-serialize GroupTimeline JSON 
-     * 
-     * Example: @include[doc] examples/GroupTimeline.json 
-     *    
-     * @see ConfigurationObjects::Group, ConfigurationObjects::EnginePolicyTimeLines 
-     */       
+     *
+     * Helper C++ class to serialize and de-serialize GroupTimeline JSON
+     *
+     * Example: @include[doc] examples/GroupTimeline.json
+     *
+     * @see ConfigurationObjects::Group, ConfigurationObjects::EnginePolicyTimeLines
+     */
     class GroupTimeline : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(GroupTimeline)
-        
+
     public:
         /** @brief [Optional, Default: true] Enables timeline feature. */
         bool        enabled;
@@ -2286,36 +2292,37 @@ namespace ConfigurationObjects
 
     //-----------------------------------------------------------
     ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_INTERNAL = "com.rallytac.engage.internal";
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_CORE = "com.rallytac.engage.magellan";
     ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_CISTECH = "com.rallytac.engage.magellan.cistech" ;
     ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_TRELLISWARE = "com.rallytac.engage.magellan.trellisware";
 
     JSON_SERIALIZED_CLASS(Group)
-    /** 
+    /**
      * @brief Group Configuration
-     * 
+     *
      * This describes all the group properties for all supported group types
      *
-     * Example: @include[doc] examples/Group.json    
-     * 
-     * @see engageCreateGroup 
-     *     
-     */        
+     * Example: @include[doc] examples/Group.json
+     *
+     * @see engageCreateGroup
+     *
+     */
     class Group : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Group)
-        
+
     public:
 
         /** @brief Enum describing all the different group types. */
-        typedef enum 
-        {   
+        typedef enum
+        {
 
             /** @brief Unknown group type */
-            gtUnknown, 
+            gtUnknown,
 
             /** @brief Audio group type. This group is used to transmit Audio. */
-            gtAudio, 
+            gtAudio,
 
             /** @brief Presence group type. This group is use to relay presence data to all nodes that are configured for the same presence group. */
             gtPresence,
@@ -2329,9 +2336,9 @@ namespace ConfigurationObjects
 
         /**
          * @brief Unique identity for the group.
-         * 
-         * NOTE: Groups configured with the same multicast addresses but with different 
-         * id's will NOT be routed correctly via RallyPoints as they are considered different streams.  
+         *
+         * NOTE: Groups configured with the same multicast addresses but with different
+         * id's will NOT be routed correctly via RallyPoints as they are considered different streams.
          */
         std::string                             id;
 
@@ -2368,15 +2375,15 @@ namespace ConfigurationObjects
         /** @brief Sets audio properties like which audio device to use, audio gain etc (see @ref Audio). */
         Audio                                   audio;
 
-        /** 
-         * @brief Audio timeline is configuration. 
-         * 
-         * Specifies how the Engine should record times lines. Timelines are used for instant replay and audio archival.  
-         * 
+        /**
+         * @brief Audio timeline is configuration.
+         *
+         * Specifies how the Engine should record times lines. Timelines are used for instant replay and audio archival.
+         *
          * @see engageQueryGroupTimeline, PFN_ENGAGE_GROUP_TIMELINE_EVENT_??? events
          */
         GroupTimeline                           timeline;
-     
+
         /** @brief User alias to transmit as part part of the realtime audio stream when using the @ref engageBeginGroupTx API.  */
         std::string                             alias;
 
@@ -2386,11 +2393,11 @@ namespace ConfigurationObjects
         /** @brief [Optional, Default: null] Indicates the source of this configuration - e.g. from the application or discovered via Magellan */
         std::string                             source;
 
-        /** 
+        /**
          * @brief [Optional, Default: 0] Maximum number of seconds the Engine will receive for on this group.
          *
          * When the time limit is exceeded, the Engine will fire a PFN_ENGAGE_GROUP_MAX_RX_TIME_EXCEEDED event.
-         */   
+         */
         int                                     maxRxSecs;
 
         bool                                    enableMulticastFailover;
@@ -2416,7 +2423,7 @@ namespace ConfigurationObjects
             cryptoPassword.clear();
 
             alias.clear();
-            
+
             rallypoints.clear();
 
             debugAudio = false;
@@ -2482,19 +2489,19 @@ namespace ConfigurationObjects
         getOptional<bool>("enableMulticastFailover", p.enableMulticastFailover, j, true);
         getOptional<int>("multicastFailoverSecs", p.multicastFailoverSecs, j, 10);
     }
-    
-    
+
+
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Mission)
     class Mission : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(Mission)
-        
+
     public:
         std::string                             id;
         std::string                             name;
-        std::vector<Group>                      groups;        
+        std::vector<Group>                      groups;
         std::chrono::system_clock::time_point   begins;
         std::chrono::system_clock::time_point   ends;
 
@@ -2512,7 +2519,7 @@ namespace ConfigurationObjects
             TOJSON_IMPL(id),
             TOJSON_IMPL(name),
             TOJSON_IMPL(groups)
-        };        
+        };
     }
 
     static void from_json(const nlohmann::json& j, Mission& p)
@@ -2533,28 +2540,28 @@ namespace ConfigurationObjects
 
         std::string s;
     }
-    
+
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(LicenseDescriptor)
     /**
-    * @brief Helper class for serializing and deserializing the LicenseDescriptor JSON 
-    * 
-    * Helper C++ class to serialize and de-serialize LicenseDescriptor JSON 
-    * 
-    * Example: @include[doc] examples/LicenseDescriptor.json 
-    *    
-    * @see TODO: engageGetActiveLicenseDescriptor, engageGetLicenseDescriptor 
-    */       
+    * @brief Helper class for serializing and deserializing the LicenseDescriptor JSON
+    *
+    * Helper C++ class to serialize and de-serialize LicenseDescriptor JSON
+    *
+    * Example: @include[doc] examples/LicenseDescriptor.json
+    *
+    * @see TODO: engageGetActiveLicenseDescriptor, engageGetLicenseDescriptor
+    */
     class LicenseDescriptor : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(LicenseDescriptor)
 
     /** @addtogroup licensingStatusCodes Licensing Codes
-     *  
+     *
      * Status codes used to determine licensing status
      *  @{
-     */        
+     */
     public:
         static const int STATUS_OK = 0;
         static const int ERR_NULL_ENTITLEMENT_KEY = -1;
@@ -2566,23 +2573,23 @@ namespace ConfigurationObjects
         static const int ERR_GENERAL_FAILURE = -7;
         static const int ERR_NOT_INITIALIZED = -8;
         static const int ERR_REQUIRES_ACTIVATION = -9;
-        /** @} */ 
+        /** @} */
 
-        /** 
+        /**
          * @brief Entitlement key to use for the product.
          *
-         * The entitlement key is a unique key generated by an application developer so that any license keys generated by 
-         * Rally Tactical's licensing system can only be used on a product with the same matching entitlement key. E.g If you develop two 
-         * products and you would like to issue license keys independently and would like the Engage Engine and licensing system to handle the 
-         * entitlement, then you should generate and separate entitlement key for each application.  
+         * The entitlement key is a unique key generated by an application developer so that any license keys generated by
+         * Rally Tactical's licensing system can only be used on a product with the same matching entitlement key. E.g If you develop two
+         * products and you would like to issue license keys independently and would like the Engage Engine and licensing system to handle the
+         * entitlement, then you should generate and separate entitlement key for each application.
          */
         std::string                             entitlement;
 
-        /** 
-         * @brief License Key to be used for the application. 
-         * 
-         * This key is generated by the Rally Tactical Licensing systems and requires the entitlement key for creation. This key is then 
-         * locked to the entitlement key and can never be changed.  
+        /**
+         * @brief License Key to be used for the application.
+         *
+         * This key is generated by the Rally Tactical Licensing systems and requires the entitlement key for creation. This key is then
+         * locked to the entitlement key and can never be changed.
         */
         std::string                             key;
 
@@ -2596,11 +2603,11 @@ namespace ConfigurationObjects
         int                                     type;
 
         /** @brief [Read only] The time that the license key or activation code expires in Unix timestamp - Zulu/UTC. */
-        time_t                                  expires;                
+        time_t                                  expires;
 
         /** @brief [Read only] The time that the license key or activation code expires formatted in ISO 8601 format, Zulu/UTC. */
-        std::string                             expiresFormatted; 
-        
+        std::string                             expiresFormatted;
+
         /** @brief TODO: Shaun, I assume that these are the bit flags or whatever the app wants to do with them */
         int                                     flags;
 
@@ -2614,7 +2621,7 @@ namespace ConfigurationObjects
         int                                     refreshIntervalDays;
 
         /** @brief The current licensing status.
-         *  
+         *
          * @see licensingStatusCodes
          */
         int                                     status;
@@ -2661,7 +2668,7 @@ namespace ConfigurationObjects
             TOJSON_IMPL(refreshIntervalDays),
             TOJSON_IMPL(status),
             TOJSON_IMPL(manufacturerId)
-        };        
+        };
     }
 
     static void from_json(const nlohmann::json& j, LicenseDescriptor& p)
@@ -2686,67 +2693,67 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyNetworking)
     /**
-    * @brief TODO: Shaun, can you document this class please 
-    * 
-    * Helper C++ class to serialize and de-serialize EnginePolicyNetworking JSON 
-    * 
-    * Example: @include[doc] examples/EnginePolicyNetworking.json 
-    *    
-    * @see TODO: Add references 
-    */       
+    * @brief TODO: Shaun, can you document this class please
+    *
+    * Helper C++ class to serialize and de-serialize EnginePolicyNetworking JSON
+    *
+    * Example: @include[doc] examples/EnginePolicyNetworking.json
+    *
+    * @see TODO: Add references
+    */
     class EnginePolicyNetworking : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyNetworking)
-        
+
     public:
 
-        /** @brief This is the default netork interface card the Engage Engine should bind to. TODO: Shaun */ 
+        /** @brief This is the default netork interface card the Engage Engine should bind to. TODO: Shaun */
         std::string         defaultNic;
 
-        /** @brief [Optional, Default: 100] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 100] TODO: Shaun. */
         int                 maxOutputQueuePackets;
 
-        /** @brief [Optional, Default: 100] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 100] TODO: Shaun. */
         int                 rtpJitterMinMs;
 
         int                 rtpJitterMaxFactor;
 
-        /** @brief [Optional, Default: 1000] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 1000] TODO: Shaun. */
         int                 rtpJitterMaxMs;
 
-        /** @brief [Optional, Default: 5] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 5] TODO: Shaun. */
         int                 rtpLatePacketSequenceRange;
 
         int                 rtpJitterOverflowTrimPercentage;
         int                 rtpJitterUnderrunReductionThresholdMs;
 
-        /** @brief [Optional, Default: 2000] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 2000] TODO: Shaun. */
         int                 rtpLatePacketTimestampRangeMs;
 
-        /** @brief [Optional, Default: 500] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 500] TODO: Shaun. */
         int                 rtpInboundProcessorInactivityMs;
 
-        /** @brief [Optional, Default: 8] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 8] TODO: Shaun. */
         int                 multicastRejoinSecs;
 
-        /** @brief [Optional, Default: 10] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 10] TODO: Shaun. */
         int                 rpLeafConnectTimeoutSecs;
 
-        /** @brief [Optional, Default: 5000] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 5000] TODO: Shaun. */
         int                 maxReconnectPauseMs;
 
-        /** @brief [Optional, Default: 500] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 500] TODO: Shaun. */
         int                 reconnectFailurePauseIncrementMs;
 
-        /** @brief [Optional, Default: 1000] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 1000] TODO: Shaun. */
         int                 sendFailurePauseMs;
 
-        /** @brief [Optional, Default: 6000] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 6000] TODO: Shaun. */
         int                 rallypointRtTestIntervalMs;
         bool                logRtpJitterBufferStats;
 
-        /** @brief [Optional, Default: true] Overrides/cancels group-level multicast failover if set to true */ 
+        /** @brief [Optional, Default: true] Overrides/cancels group-level multicast failover if set to true */
         bool                preventMulticastFailover;
 
         EnginePolicyNetworking()
@@ -2784,7 +2791,7 @@ namespace ConfigurationObjects
             TOJSON_IMPL(rtpJitterMinMs),
             TOJSON_IMPL(rtpJitterMaxFactor),
             TOJSON_IMPL(rtpJitterOverflowTrimPercentage),
-            TOJSON_IMPL(rtpJitterUnderrunReductionThresholdMs),            
+            TOJSON_IMPL(rtpJitterUnderrunReductionThresholdMs),
             TOJSON_IMPL(rtpLatePacketSequenceRange),
             TOJSON_IMPL(rtpLatePacketTimestampRangeMs),
             TOJSON_IMPL(rtpInboundProcessorInactivityMs),
@@ -2818,25 +2825,25 @@ namespace ConfigurationObjects
         FROMJSON_IMPL(rallypointRtTestIntervalMs, int, 60000);
         FROMJSON_IMPL(logRtpJitterBufferStats, bool, false);
         FROMJSON_IMPL(preventMulticastFailover, bool, false);
-    }           
+    }
 
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyAudio)
     /**
-    * @brief Default audio settings for Engage Engine policy. TODO: Shaun, can you document this class please 
-    * 
-    * Helper C++ class to serialize and de-serialize EnginePolicyAudio JSON 
-    * 
-    * Example: @include[doc] examples/EnginePolicyAudio.json 
-    *    
+    * @brief Default audio settings for Engage Engine policy. TODO: Shaun, can you document this class please
+    *
+    * Helper C++ class to serialize and de-serialize EnginePolicyAudio JSON
+    *
+    * Example: @include[doc] examples/EnginePolicyAudio.json
+    *
     * @see TODO: ConfigurationObjects::EnginePolicy
     */
     class EnginePolicyAudio : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyAudio)
-        
+
     public:
         int                 internalRate;
         int                 internalChannels;
@@ -2847,19 +2854,19 @@ namespace ConfigurationObjects
 
         int                 outputBufferMs;
 
-        /** @brief [Optional, Default: 2] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 2] TODO: Shaun. */
         int                 outputChannels;
 
-        /** @brief [Optional, Default: ?] TODO: Shaun. */ 
+        /** @brief [Optional, Default: ?] TODO: Shaun. */
         int                 outputRate;
 
-        /** @brief [Optional, Default: 0] TODO: Shaun. */ 
+        /** @brief [Optional, Default: 0] TODO: Shaun. */
         int                 outputGainPercentage;
 
-        /** @brief [Optional, Default: false] TODO: Shaun. */ 
+        /** @brief [Optional, Default: false] TODO: Shaun. */
         bool                allowOutputOnTransmit;
 
-        /** @brief [Optional, Default: false] Automatically mute TX when TX begins */ 
+        /** @brief [Optional, Default: false] Automatically mute TX when TX begins */
         bool                muteTxOnTx;
 
         EnginePolicyAudio()
@@ -2890,7 +2897,7 @@ namespace ConfigurationObjects
     {
         j = nlohmann::json{
             TOJSON_IMPL(internalRate),
-            TOJSON_IMPL(internalChannels),            
+            TOJSON_IMPL(internalChannels),
             TOJSON_IMPL(inputBufferMs),
             TOJSON_IMPL(inputChannels),
             TOJSON_IMPL(inputRate),
@@ -2926,27 +2933,27 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(SecurityCertificate)
     /**
     * @brief Configuration for a Security Certificate used in various configurations. TODO: Shaun please review
-    * 
-    * Helper C++ class to serialize and de-serialize SecurityCertificate JSON 
-    * 
+    *
+    * Helper C++ class to serialize and de-serialize SecurityCertificate JSON
+    *
     * Example: @include[doc] examples/SecurityCertificate.json
-    *    
+    *
     * @see ConfigurationObjects::EnginePolicySecurity, ConfigurationObjects::RallypointServer
-    */       
+    */
     class SecurityCertificate : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(SecurityCertificate)
-        
+
     public:
 
-        /** 
+        /**
          * @brief x509 certificate text.
-         * 
-         */ 
+         *
+         */
         std::string         certificate;
 
-        /** @brief Private key for the certificate. */ 
+        /** @brief Private key for the certificate. */
         std::string         key;
 
         SecurityCertificate()
@@ -2973,32 +2980,50 @@ namespace ConfigurationObjects
         p.clear();
         FROMJSON_IMPL(certificate, std::string, EMPTY_STRING);
         FROMJSON_IMPL(key, std::string, EMPTY_STRING);
-    }           
-    
+    }
+
     // This is where spell checking stops
-    //----------------------------------------------------------- 
+    //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicySecurity)
 
     /**
-    * @brief Default certificate to use for security operation in the Engage Engine.  
-    * 
+    * @brief Default certificate to use for security operation in the Engage Engine.
+    *
     * For example .... TODO: Shaun, can you please provide examples
-    * 
-    * Helper C++ class to serialize and de-serialize EnginePolicySecurity JSON 
-    * 
-    * Example: @include[doc] examples/EnginePolicySecurity.json 
-    *    
+    *
+    * Helper C++ class to serialize and de-serialize EnginePolicySecurity JSON
+    *
+    * Example: @include[doc] examples/EnginePolicySecurity.json
+    *
     * @see ConfigurationObjects::EnginePolicy
-    */       
+    */
     class EnginePolicySecurity : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicySecurity)
-        
+
     public:
 
-        /** @brief TODO: Shaun, is this optional as I recall there is a built in CERT the engine uses ... should we document that?? */ 
+        /** 
+         * @brief The default certificate and private key for the Engine instance 
+         * 
+         * Description
+         * 
+         * The certificate and private key are used for a variety of purposes including:
+         * - Mission generation
+         * - As the default for timeline signing
+         * - As the default for Rallypoint connectivity
+         * */
         SecurityCertificate     certificate;
+
+        /** 
+         * @brief [Optional] An array of CA certificates to be used for validation of far-end X.509 certificates 
+         * 
+         * Description
+         * 
+         * These certificates will be used on Rallypoint connections where no specific CA certificates have been provided.
+        */
+        std::vector<std::string>    caCertificates;
 
         EnginePolicySecurity()
         {
@@ -3008,6 +3033,7 @@ namespace ConfigurationObjects
         void clear()
         {
             certificate.clear();
+            caCertificates.clear();
         }
     };
 
@@ -3015,37 +3041,39 @@ namespace ConfigurationObjects
     {
         j = nlohmann::json{
             TOJSON_IMPL(certificate),
+            TOJSON_IMPL(caCertificates)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicySecurity& p)
     {
         p.clear();
         getOptional("certificate", p.certificate, j);
-    }           
+        getOptional<std::vector<std::string>>("caCertificates", p.caCertificates, j);
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyLogging)
     /**
-    * @brief Engine logging settings. TODO: Shaun, please verify this.  
-    * 
-    * Helper C++ class to serialize and de-serialize EnginePolicyLogging JSON 
-    * 
-    * Example: @include[doc] examples/EnginePolicyLogging.json 
-    *    
+    * @brief Engine logging settings. TODO: Shaun, please verify this.
+    *
+    * Helper C++ class to serialize and de-serialize EnginePolicyLogging JSON
+    *
+    * Example: @include[doc] examples/EnginePolicyLogging.json
+    *
     * @see ConfigurationObjects::EnginePolicy
-    */       
+    */
     class EnginePolicyLogging : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyLogging)
-        
+
     public:
 
-        /** 
+        /**
          * @brief [Optional, Default: 4, Range: 0-7] This is the maximum logging level to display in other words, any logging with levels equal or lower than this level will be logged. TODO: Shaun, can you please verify this?
          *
-         * Logging levels 
-         * Value    | Severity      | Description 
+         * Logging levels
+         * Value    | Severity      | Description
          * ---      | ---           | ---
          * 0        | Emergency     | System is unusable
          * 1        | Alert         | Action must be taken immediately
@@ -3055,7 +3083,7 @@ namespace ConfigurationObjects
          * 5        | Notice        | Normal but significant conditions
          * 6        | Informational | Informational messages
          * 7        | debug         | Debug-level messages
-         *          
+         *
          */
         int     maxLevel;
 
@@ -3086,7 +3114,7 @@ namespace ConfigurationObjects
         p.clear();
         getOptional("maxLevel", p.maxLevel, j, 4);          // ILogger::Level::debug
         getOptional("enableSyslog", p.enableSyslog, j);
-    }           
+    }
 
 
     //-----------------------------------------------------------
@@ -3095,7 +3123,7 @@ namespace ConfigurationObjects
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyDatabase)
-        
+
     public:
         typedef enum
         {
@@ -3143,26 +3171,26 @@ namespace ConfigurationObjects
         FROMJSON_IMPL(fixedFileName, std::string, EMPTY_STRING);
         FROMJSON_IMPL(forceMaintenance, bool, false);
         FROMJSON_IMPL(reclaimSpace, bool, false);
-    }  
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyLicensing)
     /**
     * @brief Licensing settings
-    * 
-    * Used to enable the Engage Engine for production features 
-    * 
-    * Helper C++ class to serialize and de-serialize EnginePolicyLicensing JSON 
-    * 
-    * Example: @include[doc] examples/EnginePolicyLicensing.json 
-    *    
-    * @see engageInitialize, engageGetActiveLicenseDescriptor, engageGetLicenseDescriptor, engageUpdateLicense, ConfigurationObjects::EnginePolicy,  
-    */       
+    *
+    * Used to enable the Engage Engine for production features
+    *
+    * Helper C++ class to serialize and de-serialize EnginePolicyLicensing JSON
+    *
+    * Example: @include[doc] examples/EnginePolicyLicensing.json
+    *
+    * @see engageInitialize, engageGetActiveLicenseDescriptor, engageGetLicenseDescriptor, engageUpdateLicense, ConfigurationObjects::EnginePolicy,
+    */
     class EnginePolicyLicensing : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyLicensing)
-        
+
     public:
 
         /** @brief Entitlement key to use for the product. See @ref LicenseDescriptor::entitlement for details */
@@ -3213,43 +3241,43 @@ namespace ConfigurationObjects
         FROMJSON_IMPL(activationCode, std::string, EMPTY_STRING);
         FROMJSON_IMPL(deviceId, std::string, EMPTY_STRING);
         FROMJSON_IMPL(manufacturerId, std::string, EMPTY_STRING);
-    }           
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(DiscoverySsdp)
     /**
     * @brief <a href="https://en.wikipedia.org/wiki/Simple_Service_Discovery_Protocol" target="_blank">Simple Service Discovery Protocol</a>  settings.
     * TODO: Shaun please verify
-    * 
-    * Helper C++ class to serialize and de-serialize DiscoverySsdp JSON 
-    * 
-    * Example: @include[doc] examples/DiscoverySsdp.json 
-    *    
-    * @see engageInitialize, ConfigurationObjects::DiscoveryConfiguration 
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize DiscoverySsdp JSON
+    *
+    * Example: @include[doc] examples/DiscoverySsdp.json
+    *
+    * @see engageInitialize, ConfigurationObjects::DiscoveryConfiguration
+    */
     class DiscoverySsdp : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(DiscoverySsdp)
-        
+
     public:
 
-        /** @brief [Optional, Default: false] Enables the Engage Engine to use SSDP for asset discovery. TODO: Shaun, is this correct? */ 
+        /** @brief [Optional, Default: false] Enables the Engage Engine to use SSDP for asset discovery. TODO: Shaun, is this correct? */
         bool                                    enabled;
 
-        /** @brief [Optional, Default: default system interface] The network interface to bind to receiving discovery packets.  */ 
+        /** @brief [Optional, Default: default system interface] The network interface to bind to receiving discovery packets.  */
         std::string                             interfaceName;
 
-        /** @brief TODO: Shaun, can you please complete? */ 
+        /** @brief TODO: Shaun, can you please complete? */
         NetworkAddress                          address;
 
-        /** @brief TODO: Shaun, can you please complete? */ 
+        /** @brief TODO: Shaun, can you please complete? */
         std::vector<std::string>                searchTerms;
 
-        /** @brief TODO: Shaun, can you please complete? */ 
+        /** @brief TODO: Shaun, can you please complete? */
         int                                     ageTimeoutMs;
 
-        /** @brief TODO: Shaun, can you please complete? */ 
+        /** @brief TODO: Shaun, can you please complete? */
         Advertising                             advertising;
 
         DiscoverySsdp()
@@ -3293,34 +3321,34 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(DiscoverySap)
     /**
-    * @brief <a href="https://en.wikipedia.org/wiki/Session_Announcement_Protocol" target="_blank">Session Announcement Discovery settings</a>  settings. 
+    * @brief <a href="https://en.wikipedia.org/wiki/Session_Announcement_Protocol" target="_blank">Session Announcement Discovery settings</a>  settings.
     * TODO: Shaun please verify
-    * 
-    * Helper C++ class to serialize and de-serialize DiscoverySap JSON 
-    * 
-    * Example: @include[doc] examples/DiscoverySap.json 
-    *    
-    * @see engageInitialize, ConfigurationObjects::DiscoveryConfiguration 
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize DiscoverySap JSON
+    *
+    * Example: @include[doc] examples/DiscoverySap.json
+    *
+    * @see engageInitialize, ConfigurationObjects::DiscoveryConfiguration
+    */
     class DiscoverySap : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(DiscoverySap)
-        
+
     public:
-        /** @brief [Optional, Default: false] Enables the Engage Engine to use SAP for asset discovery. TODO: Shaun, is this correct? */ 
+        /** @brief [Optional, Default: false] Enables the Engage Engine to use SAP for asset discovery. TODO: Shaun, is this correct? */
         bool                                    enabled;
 
-        /** @brief [Optional, Default: default system interface] The network interface to bind to receiving discovery packets.  */ 
+        /** @brief [Optional, Default: default system interface] The network interface to bind to receiving discovery packets.  */
         std::string                             interfaceName;
 
-        /** @brief TODO: Shaun, can you please complete? */ 
+        /** @brief TODO: Shaun, can you please complete? */
         NetworkAddress                          address;
 
-        /** @brief TODO: Shaun, can you please complete? */ 
+        /** @brief TODO: Shaun, can you please complete? */
         int                                     ageTimeoutMs;
 
-        /** @brief TODO: Shaun, can you please complete? */ 
+        /** @brief TODO: Shaun, can you please complete? */
         Advertising                             advertising;
 
         DiscoverySap()
@@ -3361,21 +3389,21 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(DiscoveryCistech)
     /**
-    * @brief Cistech Discovery settings 
-    * 
+    * @brief Cistech Discovery settings
+    *
     * Used to configure the Engage Engine to discovery Cistech Gateways on the network using a propriety Citech protocol
-    * 
-    * Helper C++ class to serialize and de-serialize DiscoveryCistech JSON 
-    * 
-    * Example: @include[doc] examples/DiscoveryCistech.json 
-    *    
-    * @see engageInitialize, ConfigurationObjects::DiscoveryConfiguration     
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize DiscoveryCistech JSON
+    *
+    * Example: @include[doc] examples/DiscoveryCistech.json
+    *
+    * @see engageInitialize, ConfigurationObjects::DiscoveryConfiguration
+    */
     class DiscoveryCistech : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(DiscoveryCistech)
-        
+
     public:
         bool                                    enabled;
         std::string                             interfaceName;
@@ -3419,18 +3447,18 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(DiscoveryTrellisware)
     /**
     * @brief Trellisware Discovery settings
-    *     
-    * Helper C++ class to serialize and de-serialize DiscoveryTrellisware JSON 
-    * 
-    * Example: @include[doc] examples/DiscoveryTrellisware.json 
-    *    
-    * @see engageInitialize, ConfigurationObjects::DiscoveryConfiguration 
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize DiscoveryTrellisware JSON
+    *
+    * Example: @include[doc] examples/DiscoveryTrellisware.json
+    *
+    * @see engageInitialize, ConfigurationObjects::DiscoveryConfiguration
+    */
     class DiscoveryTrellisware : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(DiscoveryTrellisware)
-        
+
     public:
 
         /** Enable Discovery */
@@ -3462,19 +3490,19 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(DiscoveryConfiguration)
     /**
-    * @brief Configuration for the Discovery features 
-    * 
-    * Helper C++ class to serialize and de-serialize DiscoveryConfiguration JSON 
-    * 
-    * Example: @include[doc] examples/DiscoveryConfiguration.json 
-    *    
-    * @see engageInitialize, ConfigurationObjects::EnginePolicy 
-    */       
+    * @brief Configuration for the Discovery features
+    *
+    * Helper C++ class to serialize and de-serialize DiscoveryConfiguration JSON
+    *
+    * Example: @include[doc] examples/DiscoveryConfiguration.json
+    *
+    * @see engageInitialize, ConfigurationObjects::EnginePolicy
+    */
     class DiscoveryConfiguration : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(DiscoveryConfiguration)
-        
+
     public:
         /** [Optional] SSDP (Simple Session Discovery Protocol)  configuration. */
         DiscoverySsdp                           ssdp;
@@ -3524,20 +3552,20 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(EnginePolicyInternals)
     /**
     * @brief Internal Engage Engine settings
-    * 
-    * These settings are used to configure internal parameters.   
-    * 
-    * Helper C++ class to serialize and de-serialize EnginePolicyInternals JSON 
-    * 
-    * Example: @include[doc] examples/EnginePolicyInternals.json 
-    *    
-    * @see engageInitialize, ConfigurationObjects::EnginePolicy 
-    */       
+    *
+    * These settings are used to configure internal parameters.
+    *
+    * Helper C++ class to serialize and de-serialize EnginePolicyInternals JSON
+    *
+    * Example: @include[doc] examples/EnginePolicyInternals.json
+    *
+    * @see engageInitialize, ConfigurationObjects::EnginePolicy
+    */
     class EnginePolicyInternals : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyInternals)
-        
+
     public:
 
         /** @brief [Optional, Default: false] The watchdog will monitor internal message queues and if it detects an issue, it will abort the process. TODO: Shaun, is this correct*/
@@ -3596,41 +3624,41 @@ namespace ConfigurationObjects
         getOptional<int>("watchdogIntervalMs", p.watchdogIntervalMs, j, 5000);
         getOptional<int>("watchdogHangDetectionMs", p.watchdogHangDetectionMs, j, 2000);
         getOptional<int>("housekeeperIntervalMs", p.housekeeperIntervalMs, j, 1000);
-        getOptional<int>("logTaskQueueStatsIntervalMs", p.logTaskQueueStatsIntervalMs, j, 0);        
+        getOptional<int>("logTaskQueueStatsIntervalMs", p.logTaskQueueStatsIntervalMs, j, 0);
         getOptional<int>("maxTxSecs", p.maxTxSecs, j, 30);
         getOptional<int>("maxRxSecs", p.maxRxSecs, j, 0);
         getOptional<bool>("enableLazySpeakerClosure", p.enableLazySpeakerClosure, j, false);
-        
+
     }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyTimelines)
     /**
     * @brief Engine Policy Timeline configuration.
-    * 
-    * Timelines are used to record audio for instant replay and archival purposes. The audio files contain "anti tampering" features.  
-    * 
-    * Helper C++ class to serialize and de-serialize EnginePolicyTimelines JSON 
-    * 
-    * Example: @include[doc] examples/EnginePolicyTimelines.json 
-    *    
-    * @see engageInitialize, engageQueryGroupTimeline, EnginePolicy 
-    */       
+    *
+    * Timelines are used to record audio for instant replay and archival purposes. The audio files contain "anti tampering" features.
+    *
+    * Helper C++ class to serialize and de-serialize EnginePolicyTimelines JSON
+    *
+    * Example: @include[doc] examples/EnginePolicyTimelines.json
+    *
+    * @see engageInitialize, engageQueryGroupTimeline, EnginePolicy
+    */
     class EnginePolicyTimelines : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicyTimelines)
-        
+
     public:
 
-        /** 
-         * @brief [Optional, Default: true] Specifies if Time Lines are enabled by default. 
-         * 
-         * Certain time line settings can be overridden at a per group level using the @ref ConfigurationObjects::GroupTimeline configuration. 
+        /**
+         * @brief [Optional, Default: true] Specifies if Time Lines are enabled by default.
+         *
+         * Certain time line settings can be overridden at a per group level using the @ref ConfigurationObjects::GroupTimeline configuration.
          */
         bool                                    enabled;
 
-        /** @brief Specifies where the timeline recordings will be stored physically. */ 
+        /** @brief Specifies where the timeline recordings will be stored physically. */
         std::string                             storageRoot;
 
         /** Specifies the maximum storage to use for recordings. TODO: Shaun, is this memory or disk space? */
@@ -3645,12 +3673,12 @@ namespace ConfigurationObjects
         /** @brief TODO: Shaun, can you document this please */
         long                                    groomingIntervalSecs;
 
-        /** 
-         * @brief The certificate to use for signing the recording with. 
-         * 
-         * This is part of the anti tampering feature. TODO: Shaun, can you expand on this please 
-         * 
-         */ 
+        /**
+         * @brief The certificate to use for signing the recording with.
+         *
+         * This is part of the anti tampering feature. TODO: Shaun, can you expand on this please
+         *
+         */
         SecurityCertificate                     security;
         long                                    autosaveIntervalSecs;
         bool                                    disableSigningAndVerification;
@@ -3668,7 +3696,7 @@ namespace ConfigurationObjects
             maxEventAgeSecs = (86400 * 30);         // 30 days
             groomingIntervalSecs = (60 * 30);       // 30 minutes
             maxEvents = 1000;
-            autosaveIntervalSecs = 5;               
+            autosaveIntervalSecs = 5;
             security.clear();
             disableSigningAndVerification = false;
         }
@@ -3683,7 +3711,7 @@ namespace ConfigurationObjects
             TOJSON_IMPL(maxEventAgeSecs),
             TOJSON_IMPL(maxEvents),
             TOJSON_IMPL(groomingIntervalSecs),
-            TOJSON_IMPL(autosaveIntervalSecs),                        
+            TOJSON_IMPL(autosaveIntervalSecs),
             TOJSON_IMPL(security),
             TOJSON_IMPL(disableSigningAndVerification)
         };
@@ -3694,9 +3722,9 @@ namespace ConfigurationObjects
         getOptional<bool>("enabled", p.enabled, j, true);
         getOptional<std::string>("storageRoot", p.storageRoot, j, EMPTY_STRING);
         getOptional<int>("maxStorageMb", p.maxStorageMb, j, 128);
-        getOptional<long>("maxEventAgeSecs", p.maxEventAgeSecs, j, (86400 * 30));       
-        getOptional<long>("groomingIntervalSecs", p.groomingIntervalSecs, j, (60 * 30));     
-        getOptional<long>("autosaveIntervalSecs", p.autosaveIntervalSecs, j, 5);     
+        getOptional<long>("maxEventAgeSecs", p.maxEventAgeSecs, j, (86400 * 30));
+        getOptional<long>("groomingIntervalSecs", p.groomingIntervalSecs, j, (60 * 30));
+        getOptional<long>("autosaveIntervalSecs", p.autosaveIntervalSecs, j, 5);
         getOptional<int>("maxEvents", p.maxEvents, j, 1000);
         getOptional<SecurityCertificate>("security", p.security, j);
         getOptional<bool>("disableSigningAndVerification", p.disableSigningAndVerification, j, false);
@@ -3706,47 +3734,47 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(EnginePolicy)
     /**
     * @brief Provides Engage Engine policy configuration.
-    * 
-    * Helper C++ class to serialize and de-serialize EnginePolicy JSON 
-    * 
+    *
+    * Helper C++ class to serialize and de-serialize EnginePolicy JSON
+    *
     * Provided at Engage Engine initialization time to specify all the policy settings for the Engage Engine.
-    *  
-    * Example JSON: @include[doc] examples/EnginePolicy.json 
-    * 
-    * @see engageInitialize 
-    */    
+    *
+    * Example JSON: @include[doc] examples/EnginePolicy.json
+    *
+    * @see engageInitialize
+    */
     class EnginePolicy : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EnginePolicy)
-        
+
     public:
 
         /** @brief Specifies the physical path to store data. TODO: Shaun, what is this used for? */
-        std::string                 dataDirectory;  
+        std::string                 dataDirectory;
 
-        /** @brief Licensing settings */ 
-        EnginePolicyLicensing       licensing;      
+        /** @brief Licensing settings */
+        EnginePolicyLicensing       licensing;
 
-        /** @brief Security settings */ 
+        /** @brief Security settings */
         EnginePolicySecurity        security;
-                      
-        /** @brief Security settings */ 
+
+        /** @brief Security settings */
         EnginePolicyNetworking      networking;
-                      
-        /** @brief Audio settings */ 
+
+        /** @brief Audio settings */
         EnginePolicyAudio           audio;
-                      
-        /** @brief Discovery settings */ 
+
+        /** @brief Discovery settings */
         DiscoveryConfiguration      discovery;
-                      
-        /** @brief Logging settings */ 
+
+        /** @brief Logging settings */
         EnginePolicyLogging         logging;
-                      
-        /** @brief Internal settings */ 
+
+        /** @brief Internal settings */
         EnginePolicyInternals       internals;
-                      
-        /** @brief Timelines settings */ 
+
+        /** @brief Timelines settings */
         EnginePolicyTimelines       timelines;
         EnginePolicyDatabase        database;
 
@@ -3811,26 +3839,26 @@ namespace ConfigurationObjects
         FROMJSON_IMPL_SIMPLE(database);
         FROMJSON_IMPL_SIMPLE(certStoreFileName);
         FROMJSON_IMPL_SIMPLE(certStorePasswordHex);
-    } 
+    }
 
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(TalkgroupAsset)
     /**
-    * @brief TODO: Complete class 
+    * @brief TODO: Complete class
     * TODO: Shaun, can you please complete
-    * 
-    * Helper C++ class to serialize and de-serialize TalkgroupAsset JSON 
-    * 
-    * Example: @include[doc] examples/TalkgroupAsset.json 
-    *    
-    * @see TODO: Add references 
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize TalkgroupAsset JSON
+    *
+    * Example: @include[doc] examples/TalkgroupAsset.json
+    *
+    * @see TODO: Add references
+    */
     class TalkgroupAsset : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(TalkgroupAsset)
-        
+
     public:
 
         /** @brief TODO: Shaun, can you please complete */
@@ -3850,7 +3878,7 @@ namespace ConfigurationObjects
             group.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const TalkgroupAsset& p)
     {
         j = nlohmann::json{
@@ -3868,20 +3896,20 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EngageDiscoveredGroup)
     /**
-    * @brief TODO: Complete class 
+    * @brief TODO: Complete class
     * TODO: Shaun, can you please complete
-    * 
-    * Helper C++ class to serialize and de-serialize EngageDiscoveredGroup JSON 
-    * 
-    * Example: @include[doc] examples/EngageDiscoveredGroup.json 
-    *    
-    * @see TODO: Add references 
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize EngageDiscoveredGroup JSON
+    *
+    * Example: @include[doc] examples/EngageDiscoveredGroup.json
+    *
+    * @see TODO: Add references
+    */
     class EngageDiscoveredGroup : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(EngageDiscoveredGroup)
-        
+
     public:
         std::string     id;
         int             type;
@@ -3901,7 +3929,7 @@ namespace ConfigurationObjects
             tx.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const EngageDiscoveredGroup& p)
     {
         j = nlohmann::json{
@@ -3923,19 +3951,19 @@ namespace ConfigurationObjects
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointPeer)
     /**
-    * @brief TODO: Shaun, is this even needed to be documented? 
-    * 
-    * Helper C++ class to serialize and de-serialize RallypointPeer JSON 
-    * 
-    * Example: @include[doc] examples/RallypointPeer.json 
-    *    
-    * @see RallypointServer  
-    */       
+    * @brief TODO: Shaun, is this even needed to be documented?
+    *
+    * Helper C++ class to serialize and de-serialize RallypointPeer JSON
+    *
+    * Example: @include[doc] examples/RallypointPeer.json
+    *
+    * @see RallypointServer
+    */
     class RallypointPeer : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(RallypointPeer)
-        
+
     public:
         std::string             id;
         bool                    enabled;
@@ -3978,20 +4006,20 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(RallypointServerLimits)
     /**
     * @brief TODO: Configuration for Rallypoint limits
-    * 
-    * Helper C++ class to serialize and de-serialize RallypointServerLimits JSON 
-    * 
-    * Example: @include[doc] examples/RallypointServerLimits.json 
-    *    
-    * @see RallypointServer  
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize RallypointServerLimits JSON
+    *
+    * Example: @include[doc] examples/RallypointServerLimits.json
+    *
+    * @see RallypointServer
+    */
     class RallypointServerLimits : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(RallypointServerLimits)
 
     public:
-        /** @brief Maximum number of clients (0 = unlimited) */ 
+        /** @brief Maximum number of clients (0 = unlimited) */
         uint32_t            maxClients;
 
         /** @brief Maximum number of peers (0 = unlimited) */
@@ -4000,10 +4028,10 @@ namespace ConfigurationObjects
         /** @brief Maximum number of multicastReflectors (0 = unlimited) */
         uint32_t            maxMulticastReflectors;
 
-        /** @brief Maximum number of registered streams (0 = unlimited) */ 
+        /** @brief Maximum number of registered streams (0 = unlimited) */
         uint32_t            maxRegisteredStreams;
 
-        /** @brief Maximum number of bidirectional stream paths (0 = unlimited) */ 
+        /** @brief Maximum number of bidirectional stream paths (0 = unlimited) */
         uint32_t            maxStreamPaths;
 
         /** @brief Maximum number of packets received per second (0 = unlimited) */
@@ -4056,7 +4084,7 @@ namespace ConfigurationObjects
             denyNewConnectionCpuThreshold = 75;
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const RallypointServerLimits& p)
     {
         j = nlohmann::json{
@@ -4093,19 +4121,19 @@ namespace ConfigurationObjects
         getOptional<uint32_t>("lowPriorityQueueThreshold", p.lowPriorityQueueThreshold, j, 64);
         getOptional<uint32_t>("normalPriorityQueueThreshold", p.normalPriorityQueueThreshold, j, 256);
         getOptional<uint32_t>("denyNewConnectionCpuThreshold", p.denyNewConnectionCpuThreshold, j, 75);
-    }   
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointServerStatusReport)
     /**
     * @brief TODO: Configuration for the Rallypoint status report file
-    * 
-    * Helper C++ class to serialize and de-serialize RallypointServerStatusReport JSON 
-    * 
-    * Example: @include[doc] examples/RallypointServerStatusReport.json 
-    *    
-    * @see RallypointServer  
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize RallypointServerStatusReport JSON
+    *
+    * Example: @include[doc] examples/RallypointServerStatusReport.json
+    *
+    * @see RallypointServer
+    */
     class RallypointServerStatusReport : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
@@ -4149,7 +4177,7 @@ namespace ConfigurationObjects
             runCmd.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const RallypointServerStatusReport& p)
     {
         j = nlohmann::json{
@@ -4172,7 +4200,7 @@ namespace ConfigurationObjects
         getOptional<bool>("includePeerLinkDetails", p.includePeerLinkDetails, j, false);
         getOptional<bool>("includeClientLinkDetails", p.includeClientLinkDetails, j, false);
         getOptional<std::string>("runCmd", p.runCmd, j);
-    }    
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointServerLinkGraph)
@@ -4191,15 +4219,15 @@ namespace ConfigurationObjects
         /** [Optional, Default: false] Indicates if link reprting is enabled. */
         bool                            enabled;
 
-        /** [Optional, Default: true] Indicates if the output should be enclosed in a digraph. */        
+        /** [Optional, Default: true] Indicates if the output should be enclosed in a digraph. */
         bool                            includeDigraphEnclosure;
 
-        /** [Optional, Default: false] Indicates if client links should be incldued. */        
+        /** [Optional, Default: false] Indicates if client links should be incldued. */
 
-        /** [Optional] GraphViz styling for nodes representing client. */        
+        /** [Optional] GraphViz styling for nodes representing client. */
         bool                            includeClients;
 
-        /** [Optional] GraphViz styling for nodes representing core Rallypoint peers. */                
+        /** [Optional] GraphViz styling for nodes representing core Rallypoint peers. */
         std::string                     coreRpStyling;
 
         /** [Optional] GraphViz styling for nodes representing leaf Rallypoint peers. */
@@ -4229,7 +4257,7 @@ namespace ConfigurationObjects
             runCmd.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const RallypointServerLinkGraph& p)
     {
         j = nlohmann::json{
@@ -4254,21 +4282,21 @@ namespace ConfigurationObjects
         getOptional<bool>("includeClients", p.includeClients, j, false);
         getOptional<std::string>("coreRpStyling", p.coreRpStyling, j, "[shape=hexagon color=firebrick style=filled]");
         getOptional<std::string>("leafRpStyling", p.leafRpStyling, j, "[shape=box color=gray style=filled]");
-        getOptional<std::string>("clientStyling", p.clientStyling, j);        
+        getOptional<std::string>("clientStyling", p.clientStyling, j);
         getOptional<std::string>("runCmd", p.runCmd, j);
-    }    
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointExternalHealthCheckResponder)
     /**
-    * @brief TODO: Configuration to enable external systems to use to check if the service is still running. TODO: Shaun, can you please expand. 
-    * 
-    * Helper C++ class to serialize and de-serialize RallypointExternalHealthCheckResponder JSON 
-    * 
-    * Example: @include[doc] examples/RallypointExternalHealthCheckResponder.json 
-    *    
-    * @see RallypointServer 
-    */       
+    * @brief TODO: Configuration to enable external systems to use to check if the service is still running. TODO: Shaun, can you please expand.
+    *
+    * Helper C++ class to serialize and de-serialize RallypointExternalHealthCheckResponder JSON
+    *
+    * Example: @include[doc] examples/RallypointExternalHealthCheckResponder.json
+    *
+    * @see RallypointServer
+    */
     class RallypointExternalHealthCheckResponder : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
@@ -4293,7 +4321,7 @@ namespace ConfigurationObjects
             immediateClose = true;
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const RallypointExternalHealthCheckResponder& p)
     {
         j = nlohmann::json{
@@ -4306,7 +4334,7 @@ namespace ConfigurationObjects
         p.clear();
         getOptional<int>("listenPort", p.listenPort, j, 0);
         getOptional<bool>("immediateClose", p.immediateClose, j, true);
-    }    
+    }
 
 
     //-----------------------------------------------------------
@@ -4314,13 +4342,13 @@ namespace ConfigurationObjects
     /**
     * @brief TODO: Transport Security Layer (TLS) settings
     * TODO: Shaun, can you please complete ..
-    * 
-    * Helper C++ class to serialize and de-serialize Tls JSON 
-    * 
-    * Example: @include[doc] examples/Tls.json 
-    *    
-    * @see RallypointServer 
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize Tls JSON
+    *
+    * Example: @include[doc] examples/Tls.json
+    *
+    * @see RallypointServer
+    */
     class Tls : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
@@ -4328,25 +4356,25 @@ namespace ConfigurationObjects
 
     public:
 
-        /** @brief TODO: */ 
+        /** @brief TODO: */
         bool                        verifyPeers;
 
-        /** @brief TODO: */ 
+        /** @brief TODO: */
         bool                        allowSelfSignedCertificates;
 
-        /** @brief TODO: */ 
+        /** @brief TODO: */
         std::vector<std::string>    caCertificates;
 
-        /** @brief TODO: */ 
+        /** @brief TODO: */
         std::vector<std::string>    whitelistedSubjects;
 
-        /** @brief TODO: */ 
+        /** @brief TODO: */
         std::vector<std::string>    whitelistedIssuers;
 
-        /** @brief TODO: */ 
+        /** @brief TODO: */
         std::vector<std::string>    blacklistedSubjects;
 
-        /** @brief TODO: */ 
+        /** @brief TODO: */
         std::vector<std::string>    blacklistedIssuers;
 
         Tls()
@@ -4365,13 +4393,13 @@ namespace ConfigurationObjects
             blacklistedIssuers.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const Tls& p)
     {
         j = nlohmann::json{
             TOJSON_IMPL(verifyPeers),
             TOJSON_IMPL(allowSelfSignedCertificates),
-            TOJSON_IMPL(caCertificates),            
+            TOJSON_IMPL(caCertificates),
             TOJSON_IMPL(whitelistedSubjects),
             TOJSON_IMPL(whitelistedIssuers),
             TOJSON_IMPL(blacklistedSubjects),
@@ -4388,22 +4416,22 @@ namespace ConfigurationObjects
         getOptional<std::vector<std::string>>("whitelistedIssuers", p.whitelistedIssuers, j);
         getOptional<std::vector<std::string>>("blacklistedSubjects", p.blacklistedSubjects, j);
         getOptional<std::vector<std::string>>("blacklistedIssuers", p.blacklistedIssuers, j);
-    }    
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(PeeringConfiguration)
     /**
-    * @brief Configuration for Rallypoint peers 
-    * 
-    * Helper C++ class to serialize and de-serialize PeeringConfiguration JSON 
-    *         
-    * @see RallypointServer 
-    */       
+    * @brief Configuration for Rallypoint peers
+    *
+    * Helper C++ class to serialize and de-serialize PeeringConfiguration JSON
+    *
+    * @see RallypointServer
+    */
     class PeeringConfiguration : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(PeeringConfiguration)
-        
+
     public:
 
         /** @brief An identifier useful for organizations that track different mesh configurations by ID */
@@ -4412,7 +4440,7 @@ namespace ConfigurationObjects
         /** @brief TODO: A version number for the mesh configuration.  Change this whenever you update your configuration */
         int                             version;
 
-        /** @brief Comments */ 
+        /** @brief Comments */
         std::string                     comments;
 
         /** @brief List of Rallypoint peers to connect to */
@@ -4453,28 +4481,28 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(IgmpSnooping)
     /**
     * @brief Configuration for IGMP snooping
-    * 
-    * Helper C++ class to serialize and de-serialize IgmpSnooping JSON 
-    *         
-    * @see RallypointServer 
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize IgmpSnooping JSON
+    *
+    * @see RallypointServer
+    */
     class IgmpSnooping : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(IgmpSnooping)
-        
+
     public:
 
         /** @brief Enables IGMP.  Default is false. */
         bool                            enabled;
 
-        /** @brief TODO */ 
+        /** @brief TODO */
         int                             queryIntervalMs;
 
-        /** @brief TODO */ 
+        /** @brief TODO */
         int                             lastMemberQueryIntervalMs;
 
-        /** @brief TODO */ 
+        /** @brief TODO */
         int                             lastMemberQueryCount;
 
         IgmpSnooping()
@@ -4509,23 +4537,78 @@ namespace ConfigurationObjects
         getOptional<int>("lastMemberQueryCount", p.lastMemberQueryCount, j, 1);
     }
 
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(RallypointReflector)
+    /**
+     * @brief Definition of a static group for Rallypoints
+     *
+     * Example: @include[doc] examples/RallypointReflector.json
+     *
+     */
+    class RallypointReflector : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(RallypointReflector)
+
+    public:
+        /**
+         * @brief Unique identity for the group.
+         */
+        std::string                             id;
+
+        /** @brief The network address for receiving network traffic on. */
+        NetworkAddress                          rx;
+
+        /** @brief The network address for transmitting network traffic to. */
+        NetworkAddress                          tx;
+
+        RallypointReflector()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            id.clear();
+            rx.clear();
+            tx.clear();
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const RallypointReflector& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(id),
+            TOJSON_IMPL(rx),
+            TOJSON_IMPL(tx)
+        };
+    }
+    static void from_json(const nlohmann::json& j, RallypointReflector& p)
+    {
+        p.clear();
+        j.at("id").get_to(p.id);
+        j.at("rx").get_to(p.rx);
+        j.at("tx").get_to(p.tx);
+    }    
+
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(RallypointServer)
     /**
     * @brief Configuration for the Rallypoint server
-    * 
+    *
     * TODO: Shaun, can you please document this?
-    * 
-    * Helper C++ class to serialize and de-serialize RallypointServer JSON 
-    * 
-    * Example: @include[doc] examples/RallypointServer.json 
-    *     
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize RallypointServer JSON
+    *
+    * Example: @include[doc] examples/RallypointServer.json
+    *
+    */
     class RallypointServer : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(RallypointServer)
-        
+
     public:
 
         /** @brief A unqiue identifier for the Rallypoint */
@@ -4603,9 +4686,6 @@ namespace ConfigurationObjects
         /** @brief Set to true to forgo DSA signing of messages.  Doing so is is a security risk but can be useful on CPU-constrained systems on already-secure environments. */
         bool                                        disableMessageSigning;
 
-        /** @brief Indicates whether inbound peer registrations should be reciprocated.  Only applicable for a mesh leaf that has multicat forwarding enabled. */
-        bool                                        reciprocateRegistrations;
-
         /** @brief Vector of multicasts that may be reflected. */
         std::vector<NetworkAddressRxTx>             multicastWhitelist;
 
@@ -4615,8 +4695,8 @@ namespace ConfigurationObjects
         /** @brief IGMP snooping configuration. */
         IgmpSnooping                                igmpSnooping;
 
-        /** @brief Vector of pre-configured multicasts that must always be reflected. */
-        std::vector<NetworkAddressRxTx>             requiredMulticasts;
+        /** @brief Vector of static groups. */
+        std::vector<RallypointReflector>          staticReflectors;
 
         /** @brief Tx options. */
         NetworkTxOptions                            txOptions;
@@ -4662,18 +4742,17 @@ namespace ConfigurationObjects
             watchdogIntervalMs = 5000;
             watchdogHangDetectionMs = 2000;
             disableMessageSigning = false;
-            reciprocateRegistrations = false;
             multicastWhitelist.clear();
             multicastBlacklist.clear();
             igmpSnooping.clear();
-            requiredMulticasts.clear();
+            staticReflectors.clear();
             txOptions.clear();
             multicastTxOptions.clear();
             certStoreFileName.clear();
             certStorePasswordHex.clear();
         }
     };
-    
+
     static void to_json(nlohmann::json& j, const RallypointServer& p)
     {
         j = nlohmann::json{
@@ -4685,7 +4764,7 @@ namespace ConfigurationObjects
             TOJSON_IMPL(allowMulticastForwarding),
             // TOJSON_IMPL(peeringConfiguration),               // NOTE: Not serialized!
             TOJSON_IMPL(peeringConfigurationFileName),
-            TOJSON_IMPL(peeringConfigurationFileCommand),            
+            TOJSON_IMPL(peeringConfigurationFileCommand),
             TOJSON_IMPL(peeringConfigurationFileCheckSecs),
             TOJSON_IMPL(ioPools),
             TOJSON_IMPL(statusReport),
@@ -4702,12 +4781,11 @@ namespace ConfigurationObjects
             TOJSON_IMPL(watchdogIntervalMs),
             TOJSON_IMPL(watchdogHangDetectionMs),
             TOJSON_IMPL(disableMessageSigning),
-            TOJSON_IMPL(reciprocateRegistrations),
             TOJSON_IMPL(multicastWhitelist),
             TOJSON_IMPL(multicastBlacklist),
             TOJSON_IMPL(multicastBlacklist),
             TOJSON_IMPL(igmpSnooping),
-            TOJSON_IMPL(requiredMulticasts),
+            TOJSON_IMPL(staticReflectors),
             TOJSON_IMPL(txOptions),
             TOJSON_IMPL(multicastTxOptions),
             TOJSON_IMPL(certStoreFileName),
@@ -4723,53 +4801,52 @@ namespace ConfigurationObjects
         getOptional<std::string>("interfaceName", p.interfaceName, j);
         getOptional<int>("listenPort", p.listenPort, j, 7443);
         getOptional<bool>("allowMulticastForwarding", p.allowMulticastForwarding, j, false);
-        //getOptional<PeeringConfiguration>("peeringConfiguration", p.peeringConfiguration, j);         // NOTE: Not serialized!    
+        //getOptional<PeeringConfiguration>("peeringConfiguration", p.peeringConfiguration, j);         // NOTE: Not serialized!
         getOptional<std::string>("peeringConfigurationFileName", p.peeringConfigurationFileName, j);
-        getOptional<std::string>("peeringConfigurationFileCommand", p.peeringConfigurationFileCommand, j);        
+        getOptional<std::string>("peeringConfigurationFileCommand", p.peeringConfigurationFileCommand, j);
         getOptional<int>("peeringConfigurationFileCheckSecs", p.peeringConfigurationFileCheckSecs, j, 60);
         getOptional<int>("ioPools", p.ioPools, j, -1);
         getOptional<RallypointServerStatusReport>("statusReport", p.statusReport, j);
         getOptional<RallypointServerLimits>("limits", p.limits, j);
         getOptional<RallypointServerLinkGraph>("linkGraph", p.linkGraph, j);
         getOptional<RallypointExternalHealthCheckResponder>("externalHealthCheckResponder", p.externalHealthCheckResponder, j);
-        getOptional<bool>("allowPeerForwarding", p.allowPeerForwarding, j, false);        
+        getOptional<bool>("allowPeerForwarding", p.allowPeerForwarding, j, false);
         getOptional<std::string>("multicastInterfaceName", p.multicastInterfaceName, j);
         getOptional<Tls>("tls", p.tls, j);
-        getOptional<DiscoveryConfiguration>("discovery", p.discovery, j);   
+        getOptional<DiscoveryConfiguration>("discovery", p.discovery, j);
         getOptional<bool>("forwardDiscoveredGroups", p.forwardDiscoveredGroups, j, false);
         getOptional<bool>("isMeshLeaf", p.isMeshLeaf, j, false);
-        getOptional<bool>("disableWatchdog", p.disableWatchdog, j, false);        
+        getOptional<bool>("disableWatchdog", p.disableWatchdog, j, false);
         getOptional<int>("watchdogIntervalMs", p.watchdogIntervalMs, j, 5000);
         getOptional<int>("watchdogHangDetectionMs", p.watchdogHangDetectionMs, j, 2000);
         getOptional<bool>("disableMessageSigning", p.disableMessageSigning, j, false);
-        getOptional<bool>("reciprocateRegistrations", p.reciprocateRegistrations, j, false);
         getOptional<std::vector<NetworkAddressRxTx>>("multicastWhitelist", p.multicastWhitelist, j);
         getOptional<std::vector<NetworkAddressRxTx>>("multicastBlacklist", p.multicastBlacklist, j);
         getOptional<IgmpSnooping>("igmpSnooping", p.igmpSnooping, j);
-        getOptional<std::vector<NetworkAddressRxTx>>("requiredMulticasts", p.requiredMulticasts, j);
+        getOptional<std::vector<RallypointReflector>>("staticReflectors", p.staticReflectors, j);
         getOptional<NetworkTxOptions>("txOptions", p.txOptions, j);
         getOptional<NetworkTxOptions>("multicastTxOptions", p.multicastTxOptions, j);
         getOptional<std::string>("certStoreFileName", p.certStoreFileName, j);
         getOptional<std::string>("certStorePasswordHex", p.certStorePasswordHex, j);
-    }    
+    }
 
-    
+
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(PlatformDiscoveredService)
     /**
-    * @brief TODO: Shaun, not sure what this is 
-    * 
-    * Helper C++ class to serialize and de-serialize PlatformDiscoveredService JSON 
-    * 
-    * Example: @include[doc] examples/PlatformDiscoveredService.json 
-    *    
-    * @see TODO: Add references 
-    */       
+    * @brief TODO: Shaun, not sure what this is
+    *
+    * Helper C++ class to serialize and de-serialize PlatformDiscoveredService JSON
+    *
+    * Example: @include[doc] examples/PlatformDiscoveredService.json
+    *
+    * @see TODO: Add references
+    */
     class PlatformDiscoveredService : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(PlatformDiscoveredService)
-        
+
     public:
 
         /** @brief TODO: */
@@ -4784,6 +4861,9 @@ namespace ConfigurationObjects
         /** @brief TODO: */
         NetworkAddress                          address;
 
+        /** @brief TODO: */
+        std::string                             uri;
+
         PlatformDiscoveredService()
         {
             clear();
@@ -4795,6 +4875,7 @@ namespace ConfigurationObjects
             type.clear();
             name.clear();
             address.clear();
+            uri.clear();
         }
     };
 
@@ -4804,7 +4885,8 @@ namespace ConfigurationObjects
             TOJSON_IMPL(id),
             TOJSON_IMPL(type),
             TOJSON_IMPL(name),
-            TOJSON_IMPL(address)
+            TOJSON_IMPL(address),
+            TOJSON_IMPL(uri)
         };
     }
     static void from_json(const nlohmann::json& j, PlatformDiscoveredService& p)
@@ -4814,6 +4896,7 @@ namespace ConfigurationObjects
         getOptional<std::string>("type", p.type, j);
         getOptional<std::string>("name", p.name, j);
         getOptional<NetworkAddress>("address", p.address, j);
+        getOptional<std::string>("uri", p.uri, j);
     }
 
     //-----------------------------------------------------------
@@ -4827,7 +4910,7 @@ namespace ConfigurationObjects
             etLocation            = 2
         } EventType_t;
 
-        typedef enum 
+        typedef enum
         {
             dNone        = 0,
             dInbound     = 1,
@@ -4835,25 +4918,25 @@ namespace ConfigurationObjects
             dBoth        = 3,
             dUndefined   = 4,
         } Direction_t;
-    };    
+    };
 
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(TimelineQueryParameters)
     /**
-    * @brief TODO: Shaun, can you please document this class  
-    * 
-    * Helper C++ class to serialize and de-serialize TimelineQueryParameters JSON 
-    * 
-    * Example: @include[doc] examples/TimelineQueryParameters.json 
-    *    
-    * @see TODO: Add references 
-    */       
+    * @brief TODO: Shaun, can you please document this class
+    *
+    * Helper C++ class to serialize and de-serialize TimelineQueryParameters JSON
+    *
+    * Example: @include[doc] examples/TimelineQueryParameters.json
+    *
+    * @see TODO: Add references
+    */
     class TimelineQueryParameters : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(TimelineQueryParameters)
-        
+
     public:
 
         /** @brief TODO: */
@@ -4929,7 +5012,7 @@ namespace ConfigurationObjects
         getOptional<int>("onlyDirection", p.onlyDirection, j, 0);
         getOptional<int>("onlyType", p.onlyType, j, 0);
         getOptional<bool>("onlyCommitted", p.onlyCommitted, j, true);
-        getOptional<std::string>("onlyAlias", p.onlyAlias, j, EMPTY_STRING);        
+        getOptional<std::string>("onlyAlias", p.onlyAlias, j, EMPTY_STRING);
         getOptional<std::string>("onlyNodeId", p.onlyNodeId, j, EMPTY_STRING);
         getOptional<std::string>("sql", p.sql, j, EMPTY_STRING);
     }
@@ -4938,15 +5021,15 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(CertStoreCertificate)
     /**
     * @brief Holds a certificate and (optionally) a private key in a certstore
-    * 
-    * Helper C++ class to serialize and de-serialize CertStoreCertificate JSON 
-    *         
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize CertStoreCertificate JSON
+    *
+    */
     class CertStoreCertificate : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(CertStoreCertificate)
-        
+
     public:
         /** @brief Id of the certificate */
         std::string                     id;
@@ -4994,15 +5077,15 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(CertStore)
     /**
     * @brief Holds a certstore
-    * 
-    * Helper C++ class to serialize and de-serialize CertStore JSON 
-    *         
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize CertStore JSON
+    *
+    */
     class CertStore : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(CertStore)
-        
+
     public:
         /** @brief Array of certificates in this store */
         std::vector<CertStoreCertificate>    certificates;
@@ -5034,15 +5117,15 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(CertStoreCertificateElement)
     /**
     * @brief Description of a certstore certificate element
-    * 
-    * Helper C++ class to serialize and de-serialize CertStoreCertificateElement JSON 
-    *         
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize CertStoreCertificateElement JSON
+    *
+    */
     class CertStoreCertificateElement : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(CertStoreCertificateElement)
-        
+
     public:
         /** @brief ID */
         std::string                     id;
@@ -5074,21 +5157,21 @@ namespace ConfigurationObjects
         p.clear();
         getOptional<std::string>("id", p.id, j, EMPTY_STRING);
         getOptional<bool>("hasPrivateKey", p.hasPrivateKey, j, false);
-    }    
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(CertStoreDescriptor)
     /**
     * @brief Description of a certstore
-    * 
-    * Helper C++ class to serialize and de-serialize CertStoreDescriptor JSON 
-    *         
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize CertStoreDescriptor JSON
+    *
+    */
     class CertStoreDescriptor : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(CertStoreDescriptor)
-        
+
     public:
         /** @brief Name of the file the certstore resides in. */
         std::string                                     fileName;
@@ -5138,15 +5221,15 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(CertificateDescriptor)
     /**
     * @brief Description of a certificate
-    * 
-    * Helper C++ class to serialize and de-serialize CertificateDescriptor JSON 
-    *         
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize CertificateDescriptor JSON
+    *
+    */
     class CertificateDescriptor : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_JSON_DOCUMENTATION(CertificateDescriptor)
-        
+
     public:
         /** @brief Subject */
         std::string                                     subject;
@@ -5208,16 +5291,16 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(GroupConnectionDetail)
     /**
     * @brief Detailed information for a group connection
-    * 
-    * Helper C++ class to serialize and de-serialize GroupConnectionDetail JSON 
-    *         
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize GroupConnectionDetail JSON
+    *
+    */
     class GroupConnectionDetail : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_WRAPPED_JSON_SERIALIZATION(GroupConnectionDetail)
         IMPLEMENT_JSON_DOCUMENTATION(GroupConnectionDetail)
-        
+
     public:
         /** @brief Connection type. */
         typedef enum
@@ -5228,7 +5311,7 @@ namespace ConfigurationObjects
             /** @brief IP multicast */
             ctIPMulticast                   = 1,
 
-            /** @brief Rallypoint */            
+            /** @brief Rallypoint */
             ctRallypoint                    = 2
         } ConnectionType_t;
 
@@ -5285,16 +5368,16 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(GroupTxDetail)
     /**
     * @brief Detailed information for a group transmit
-    * 
-    * Helper C++ class to serialize and de-serialize GroupTxDetail JSON 
-    *         
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize GroupTxDetail JSON
+    *
+    */
     class GroupTxDetail : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_WRAPPED_JSON_SERIALIZATION(GroupTxDetail)
         IMPLEMENT_JSON_DOCUMENTATION(GroupTxDetail)
-        
+
     public:
         /** @brief TxStatus */
         typedef enum
@@ -5378,7 +5461,7 @@ namespace ConfigurationObjects
         {
             j["localPriority"] = p.localPriority;
             j["remotePriority"] = p.remotePriority;
-        }        
+        }
         else if(p.status == GroupTxDetail::TxStatus_t::txsRxActiveOnNonFdx)
         {
             j["nonFdxMsHangRemaining"] = p.nonFdxMsHangRemaining;
@@ -5398,16 +5481,16 @@ namespace ConfigurationObjects
     JSON_SERIALIZED_CLASS(RallypointConnectionDetail)
     /**
     * @brief Detailed information for a rallypoint connection
-    * 
-    * Helper C++ class to serialize and de-serialize RallypointConnectionDetail JSON 
-    *         
-    */       
+    *
+    * Helper C++ class to serialize and de-serialize RallypointConnectionDetail JSON
+    *
+    */
     class RallypointConnectionDetail : public ConfigurationObjectBase
     {
         IMPLEMENT_JSON_SERIALIZATION()
         IMPLEMENT_WRAPPED_JSON_SERIALIZATION(RallypointConnectionDetail)
         IMPLEMENT_JSON_DOCUMENTATION(RallypointConnectionDetail)
-        
+
     public:
         /** @brief Id */
         std::string                                     internalId;
@@ -5456,7 +5539,7 @@ namespace ConfigurationObjects
         getOptional<int>("port", p.port, j, 0);
         getOptional<uint64_t>("msToNextConnectionAttempt", p.msToNextConnectionAttempt, j, 0);
     }
-    //-----------------------------------------------------------    
+    //-----------------------------------------------------------
     static inline void dumpExampleConfigurations(const char *path)
     {
         RtpHeader::document(path);
@@ -5518,7 +5601,7 @@ namespace ConfigurationObjects
     }
 }
 
-#ifndef WIN32    
+#ifndef WIN32
     #pragma GCC diagnostic pop
 #endif
 

@@ -28,6 +28,7 @@
 
 #ifdef WIN32
     #define strncasecmp                             _strnicmp
+    #define strcasecmp                              _stricmp
     #define PATH_MAX                                MAX_PATH
     #define pid_t                                   int
 #else
