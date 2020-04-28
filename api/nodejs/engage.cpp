@@ -83,7 +83,7 @@ using namespace v8;
 // This little class wraps callbacks into JS from non-JS threads.  It does so by
 // posting the callback/event onto the libuv event loop from which the instance
 // of this worker class was created.  So ... be very careful only to create instances
-// of this class from a thread that originated in libuv!! 
+// of this class from a thread that originated in libuv!!
 class CrossThreadCallbackWorker
 {
 public:
@@ -104,7 +104,7 @@ public:
             if(s != nullptr && s[0] != 0)
             {
                 _val = s;
-            }            
+            }
         }
 
         std::string _val;
@@ -128,7 +128,7 @@ public:
         StringVectorParameter(const char *array[])
         {
             _type = ptStringVector;
-            
+
             // Our array is either null to begin with or terminated with a nullptr at the end
             if(array != nullptr)
             {
@@ -167,7 +167,7 @@ public:
         ADD_OBJECT_REFERENCE();
     }
 
-    virtual ~CrossThreadCallbackWorker() 
+    virtual ~CrossThreadCallbackWorker()
     {
         Nan::HandleScope scope;
 
@@ -175,7 +175,7 @@ public:
         {
             _persistentHandle.Reset();
         }
-        
+
         delete _resource;
     }
 
@@ -196,14 +196,14 @@ public:
 
     void enqueue(const char *extra)
     {
-        std::vector<Parameter*> *params = new std::vector<Parameter*>();        
+        std::vector<Parameter*> *params = new std::vector<Parameter*>();
         params->push_back(new StringParameter(extra));
         enqueue(params);
     }
 
     void enqueue(const char *s, const char *extra)
     {
-        std::vector<Parameter*> *params = new std::vector<Parameter*>();        
+        std::vector<Parameter*> *params = new std::vector<Parameter*>();
         params->push_back(new StringParameter(s));
         params->push_back(new StringParameter(extra));
         enqueue(params);
@@ -211,7 +211,7 @@ public:
 
     void enqueue(const char *s1, const char *s2, const char *extra)
     {
-        std::vector<Parameter*> *params = new std::vector<Parameter*>();        
+        std::vector<Parameter*> *params = new std::vector<Parameter*>();
         params->push_back(new StringParameter(s1));
         params->push_back(new StringParameter(s2));
         params->push_back(new StringParameter(extra));
@@ -222,7 +222,7 @@ public:
     {
         // We need to wait here for the worker to become available (it may already be
         // queued in JS).  The chances of this happening are very slim as callbacks
-        // don't happen that often and, when they do, they'll return in just a few 
+        // don't happen that often and, when they do, they'll return in just a few
         // microseconds.  But, let's be paranoid shall we!
         _lock.lock();
 
@@ -322,7 +322,7 @@ private:
                 {
                     argv[index] = Nan::New<v8::Integer>(((IntParameter*)(*itr))->_val);
                 }
-                
+
                 index++;
             }
 
@@ -336,7 +336,7 @@ private:
                     itr != _pendingParameters->end();
                     itr++)
                 {
-                    delete *itr;                    
+                    delete *itr;
                 }
 
                 _pendingParameters->clear();
@@ -346,15 +346,15 @@ private:
         }
 
         // ... and only now can we say that this worker is no longer in use - i.e. its out
-        // out the libuv queue and won't cause a bus error in case it gets reused very 
-        // quickly (that can happen if this code runs in onExecuteWork).        
+        // out the libuv queue and won't cause a bus error in case it gets reused very
+        // quickly (that can happen if this code runs in onExecuteWork).
         _isBusy = false;
 
         _lock.unlock();
 
         // Finally, let go of the reference we added when this was enqueue
-        RELEASE_OBJECT_REFERENCE();        
-    }    
+        RELEASE_OBJECT_REFERENCE();
+    }
 
     std::mutex _lock;
     uv_loop_t *_evLoop;
@@ -400,7 +400,7 @@ static CrossThreadCallbackWorker *getCallback(const char *cbName)
 }
 
 
-// The following convey events from Engage up to JS.  They all follow the same 
+// The following convey events from Engage up to JS.  They all follow the same
 // basic flow of finding a callback for the event name and, if one is found, calling
 // it.  Generally callbacks have no parameters, or a single string parameter.  But,
 // some of them are a little unique.  So, for those that look the same, we'll use the
@@ -495,7 +495,7 @@ NAN_METHOD(on)
 
     // We don't yet have an entry in the map
     if(itr == g_cbMap.end())
-    {   
+    {
         // If we don't have a function, then we're done
         if(!haveAFunction)
         {
@@ -635,13 +635,13 @@ NAN_METHOD(shutdown)
 NAN_METHOD(start)
 {
     engageStart();
-} 
+}
 
 //--------------------------------------------------------
 NAN_METHOD(stop)
 {
     engageStop();
-} 
+}
 
 //--------------------------------------------------------
 NAN_METHOD(createGroup)
@@ -737,7 +737,7 @@ NAN_METHOD(encrypt)
 
     // Our output is going to contain encrypted data padded to 16 bytes + another 16 bytes of IV
     uint8_t *outputBytes = new uint8_t[inputLen + 16 * 2];
-    
+
     int bytesInOutput =  engageEncrypt(inputBytes + inputOfs, inputLen, outputBytes, STRVAL(3));
 
     if(bytesInOutput > 0)
@@ -758,7 +758,7 @@ NAN_METHOD(decrypt)
 
     // Our output is not going to be larger than the input (if anything, it'll be smaller)
     uint8_t *outputBytes = new uint8_t[inputLen];
-    
+
     int bytesInOutput =  engageDecrypt(inputBytes + inputOfs, inputLen, outputBytes, STRVAL(3));
 
     if(bytesInOutput > 0)
@@ -894,10 +894,11 @@ NAN_METHOD(closeCertStore)
 // TODO: engageDeleteCertStoreCertificate
 // TODO: engageGetCertStoreCertificatePem
 // TODO: engageGetCertificateDescriptorFromPem
+// TODO: engageImportCertStoreElementFromCertStore
 
 //--------------------------------------------------------
-NAN_MODULE_INIT(Init) 
-{    
+NAN_MODULE_INIT(Init)
+{
     ENGAGE_BINDING(on);
 
     ENGAGE_BINDING(setLogLevel);
