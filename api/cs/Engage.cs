@@ -90,6 +90,7 @@ public class Engage
         void onGroupTimelineEventEnded(string id, string eventJson, string eventExtraJson);
         void onGroupTimelineReport(string id, string reportJson, string eventExtraJson);
         void onGroupTimelineReportFailed(string id, string eventExtraJson);
+        void onGroupTimelineGroomed(string id, string eventListJson, string eventExtraJson);        
     }
 
     public interface IHumanBiometricsNotifications
@@ -714,6 +715,7 @@ public class Engage
         public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_EVENT_ENDED;
         public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_REPORT;
         public EngageStringCallback PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
+        public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_GROOMED;        
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]     // 9 bytes
@@ -1024,6 +1026,7 @@ public class Engage
 
         cb.PFN_ENGAGE_GROUP_TIMELINE_REPORT = on_ENGAGE_GROUP_TIMELINE_REPORT;
         cb.PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED = on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
+        cb.PFN_ENGAGE_GROUP_TIMELINE_GROOMED = on_ENGAGE_GROUP_TIMELINE_GROOMED;
 
         return engageRegisterEventCallbacks(ref cb);
     }
@@ -1684,6 +1687,17 @@ public class Engage
             foreach (IGroupNotifications n in _groupNotificationSubscribers)
             {
                 n.onGroupTimelineReportFailed(id, eventExtraJson);
+            }
+        }
+    };
+
+    private EngageString2Callback on_ENGAGE_GROUP_TIMELINE_GROOMED = (string id, string eventListJson, string eventExtraJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupTimelineGroomed(id, eventListJson, eventExtraJson);
             }
         }
     };
