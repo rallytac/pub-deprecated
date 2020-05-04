@@ -928,6 +928,7 @@ public final class Engine
         void onGroupTimelineEventEnded(String id, String eventJson, String eventExtraJson);
         void onGroupTimelineReport(String id, String reportJson, String eventExtraJson);
         void onGroupTimelineReportFailed(String id, String eventExtraJson);
+        void onGroupTimelineGroomed(String id, String eventJson, String eventExtraJson);        
     }
 
     @Keep
@@ -2755,6 +2756,22 @@ public final class Engine
                 for (IGroupListener listener : _groupListeners)
                 {
                     listener.onGroupTimelineReportFailed(id, eventExtraJson);
+                }
+            }
+        });
+    }
+
+    @Keep
+    private void onGroupTimelineGroomed(final String id, final String eventListJson, final String eventExtraJson)
+    {
+        _handler.post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                for (IGroupListener listener : _groupListeners)
+                {
+                    listener.onGroupTimelineGroomed(id, eventListJson, eventExtraJson);
                 }
             }
         });
