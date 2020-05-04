@@ -475,6 +475,7 @@ ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(groupTimelineEventUpdated);
 ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(groupTimelineEventEnded);
 ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(groupTimelineReport);
 ENGAGE_CB_ID_PARAM(groupTimelineReportFailed);
+ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(groupTimelineGroomed);
 
 //--------------------------------------------------------
 // Registers an event name and the JS callback function
@@ -595,6 +596,8 @@ NAN_METHOD(initialize)
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_EVENT_ENDED, groupTimelineEventEnded);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_REPORT, groupTimelineReport);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED, groupTimelineReportFailed);
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_GROOMED, groupTimelineGroomed);
+    
 
     engageRegisterEventCallbacks(&g_eventCallbacks);
 
