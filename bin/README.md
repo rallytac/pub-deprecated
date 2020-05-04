@@ -1,7 +1,11 @@
 # Change List
 
+## 
+- Adds notification of timeline grooming.
+- Removes the option to disable the system database.
+
 ## May 3, 2020 - 1.150.8921
-- Adds ability for the Engage Engine library to run side-by-side with the OS-provided distribution of OpenSSL..
+- Adds ability for the Engage Engine library to run side-by-side with the OS-provided distribution of OpenSSL.
 
 ## May 1, 2020 - 1.148.8914
 - Adds timeline grooming based on occupied disk storage.

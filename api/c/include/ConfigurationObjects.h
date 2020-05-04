@@ -3132,7 +3132,6 @@ namespace AppConfigurationObjects
             dbtFixedFile            = 2
         } DatabaseType_t;
 
-        bool                enabled;
         DatabaseType_t      type;
         std::string         fixedFileName;
         bool                forceMaintenance;
@@ -3145,7 +3144,6 @@ namespace AppConfigurationObjects
 
         void clear()
         {
-            enabled = true;
             type = DatabaseType_t::dbtFixedMemory;
             fixedFileName.clear();
             forceMaintenance = false;
@@ -3156,7 +3154,6 @@ namespace AppConfigurationObjects
     static void to_json(nlohmann::json& j, const EnginePolicyDatabase& p)
     {
         j = nlohmann::json{
-            TOJSON_IMPL(enabled),
             TOJSON_IMPL(type),
             TOJSON_IMPL(fixedFileName),
             TOJSON_IMPL(forceMaintenance),
@@ -3166,7 +3163,6 @@ namespace AppConfigurationObjects
     static void from_json(const nlohmann::json& j, EnginePolicyDatabase& p)
     {
         p.clear();
-        FROMJSON_IMPL(enabled, bool, true);
         FROMJSON_IMPL(type, EnginePolicyDatabase::DatabaseType_t, EnginePolicyDatabase::DatabaseType_t::dbtFixedMemory);
         FROMJSON_IMPL(fixedFileName, std::string, EMPTY_STRING);
         FROMJSON_IMPL(forceMaintenance, bool, false);
