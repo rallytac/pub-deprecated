@@ -17,15 +17,17 @@ extern "C"
 {
 #endif
 
-#if defined(WIN32)
-    #ifdef ENGAGE_EXPORTS
-        // Windows needs dllexport to produce an import lib without a .DEF file
-        #define ENGAGE_API  __declspec(dllexport) extern
+#if !defined(ENGAGE_API)
+    #if defined(WIN32)
+        #ifdef ENGAGE_EXPORTS
+            // Windows needs dllexport to produce an import lib without a .DEF file
+            #define ENGAGE_API  __declspec(dllexport) extern
+        #else
+            #define ENGAGE_API  extern
+        #endif
     #else
-        #define ENGAGE_API  extern
+        #define ENGAGE_API  __attribute__ ((visibility ("default")))
     #endif
-#else
-    #define ENGAGE_API
 #endif
 
 /** @brief Audio Device Control Operation enum

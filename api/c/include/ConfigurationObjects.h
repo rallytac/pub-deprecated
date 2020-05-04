@@ -3661,8 +3661,11 @@ namespace AppConfigurationObjects
         /** @brief Specifies where the timeline recordings will be stored physically. */
         std::string                             storageRoot;
 
-        /** Specifies the maximum storage to use for recordings. TODO: Shaun, is this memory or disk space? */
-        int                                     maxStorageMb;
+        /** Specifies the maximum storage to use for recordings in memory. */
+        int                                     maxMemStorageMb;
+
+        /** Specifies the maximum storage to use for recordings on disk. */
+        int                                     maxDiskStorageMb;
 
         /** @brief TODO: Shaun, no idea what this is */
         long                                    maxEventAgeSecs;
@@ -3692,7 +3695,8 @@ namespace AppConfigurationObjects
         {
             enabled = true;
             storageRoot.clear();
-            maxStorageMb = 128;
+            maxMemStorageMb = 128;
+            maxDiskStorageMb = 1024;
             maxEventAgeSecs = (86400 * 30);         // 30 days
             groomingIntervalSecs = (60 * 30);       // 30 minutes
             maxEvents = 1000;
@@ -3707,7 +3711,8 @@ namespace AppConfigurationObjects
         j = nlohmann::json{
             TOJSON_IMPL(enabled),
             TOJSON_IMPL(storageRoot),
-            TOJSON_IMPL(maxStorageMb),
+            TOJSON_IMPL(maxMemStorageMb),
+            TOJSON_IMPL(maxDiskStorageMb),
             TOJSON_IMPL(maxEventAgeSecs),
             TOJSON_IMPL(maxEvents),
             TOJSON_IMPL(groomingIntervalSecs),
@@ -3721,7 +3726,8 @@ namespace AppConfigurationObjects
         p.clear();
         getOptional<bool>("enabled", p.enabled, j, true);
         getOptional<std::string>("storageRoot", p.storageRoot, j, EMPTY_STRING);
-        getOptional<int>("maxStorageMb", p.maxStorageMb, j, 128);
+        getOptional<int>("maxMemStorageMb", p.maxMemStorageMb, j, 128);
+        getOptional<int>("maxDiskStorageMb", p.maxDiskStorageMb, j, 1024);
         getOptional<long>("maxEventAgeSecs", p.maxEventAgeSecs, j, (86400 * 30));
         getOptional<long>("groomingIntervalSecs", p.groomingIntervalSecs, j, (60 * 30));
         getOptional<long>("autosaveIntervalSecs", p.autosaveIntervalSecs, j, 5);

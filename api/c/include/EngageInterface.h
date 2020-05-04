@@ -18,15 +18,17 @@ extern "C"
 {
 #endif
 
-#if defined(WIN32)
-    #ifdef ENGAGE_EXPORTS
-        // Windows needs dllexport to produce an import lib without a .DEF file
-        #define ENGAGE_API  __declspec(dllexport) extern
+#if !defined(ENGAGE_API)
+    #if defined(WIN32)
+        #ifdef ENGAGE_EXPORTS
+            // Windows needs dllexport to produce an import lib without a .DEF file
+            #define ENGAGE_API  __declspec(dllexport) extern
+        #else
+            #define ENGAGE_API  extern
+        #endif
     #else
-        #define ENGAGE_API  extern
+        #define ENGAGE_API  __attribute__ ((visibility ("default")))
     #endif
-#else
-    #define ENGAGE_API
 #endif
 
 #if !defined(__clang__)
@@ -295,6 +297,9 @@ typedef struct
 
     /** @brief TODO: */
     void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_TIMELINE_GROOMED)(const char * _Nonnull pId, const char * _Nonnull eventListJson, const char * _Nullable eventExtraJson);    
 } EngageEvents_t;
 /** @} */
 
