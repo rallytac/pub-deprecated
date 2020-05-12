@@ -172,8 +172,21 @@ public class Engage
 
     // Group sources
     public const String GROUP_SOURCE_ENGAGE_INTERNAL = "com.rallytac.engage.internal";
+    public const String GROUP_SOURCE_ENGAGE_MAGELLAN_CORE = "com.rallytac.magellan.core";
     public const String GROUP_SOURCE_ENGAGE_MAGELLAN_CISTECH = "com.rallytac.engage.magellan.cistech";
     public const String GROUP_SOURCE_ENGAGE_MAGELLAN_TRELLISWARE = "com.rallytac.engage.magellan.trellisware";
+    public const String GROUP_SOURCE_ENGAGE_MAGELLAN_SILVUS = "com.rallytac.engage.magellan.silvus";
+    public const String GROUP_SOURCE_ENGAGE_MAGELLAN_PERSISTENT = "com.rallytac.engage.magellan.persistent";
+    public const String GROUP_SOURCE_ENGAGE_MAGELLAN_DOMO = "com.rallytac.engage.magellan.domo";
+    public const String GROUP_SOURCE_ENGAGE_MAGELLAN_KENWOOD = "com.rallytac.engage.magellan.kenwood";
+    public const String GROUP_SOURCE_ENGAGE_MAGELLAN_TAIT = "com.rallytac.engage.magellan.tait";
+
+    // Group disconnected reasons
+    public const String GROUP_DISCONNECTED_REASON_NO_REAON = "NoReason";
+    public const String GROUP_DISCONNECTED_REASON_NO_LINK = "NoLink";
+    public const String GROUP_DISCONNECTED_REASON_UNREGISTERED = "Unregistered";
+    public const String GROUP_DISCONNECTED_REASON_NOT_ALLOWED = "NotAllowed";
+    public const String GROUP_DISCONNECTED_REASON_GENERAL_DENIAL = "GeneralDenial";
 
     // NetworkTxPriority
     public enum NetworkTxPriority : int
@@ -211,6 +224,7 @@ public class Engage
             public static String connectionType = "connectionType";
             public static String peer = "peer";
             public static String asFailover = "asFailover";
+            public static String reason = "reason";
         }
 
         public class CertStoreCertificateElement
@@ -1915,9 +1929,9 @@ public class Engage
         }
     }
 
-    public String getLicenseDescriptor(string entitlement, string key, string activationCode)
+    public String getLicenseDescriptor(string entitlement, string key, string activationCode, string manufacturerId)
     {
-        IntPtr ptr = engageGetLicenseDescriptor(entitlement, key, activationCode);
+        IntPtr ptr = engageGetLicenseDescriptor(entitlement, key, activationCode, manufacturerId);
 
         if (ptr == IntPtr.Zero)
         {
@@ -1929,9 +1943,9 @@ public class Engage
         }
     }
 
-    public int updateLicense(string entitlement, string key, string activationCode)
+    public int updateLicense(string entitlement, string key, string activationCode, string manufacturerId)
     {
-        return engageUpdateLicense(entitlement, key, activationCode);
+        return engageUpdateLicense(entitlement, key, activationCode, manufacturerId);
     }
 
     public String getNetworkInterfaceDevices()
@@ -2037,7 +2051,7 @@ public class Engage
     
     public int importCertStoreElementFromCertStore(string id, string srcId, string srcFileName, string srcPasswordHexByteString)
     {
-        return engageImportCertStoreElementFromCertStore(id, srcId, srcFileName, srcPasswordHexByteString;)
+        return engageImportCertStoreElementFromCertStore(id, srcId, srcFileName, srcPasswordHexByteString);
     }
 
     #endregion
