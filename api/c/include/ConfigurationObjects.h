@@ -1418,6 +1418,127 @@ namespace AppConfigurationObjects
         getOptional<NetworkAddress>("tx", p.tx, j);
     }
 
+    /** @brief Enum describing restriction types. */
+    typedef enum
+    {
+        /** @brief Undefined */
+        rtUndefined = 0,
+
+        /** @brief Elements are whitelisted */
+        rtWhitelist = 1,
+
+        /** @brief Elements are blacklisted */
+        rtBlacklist = 2
+    } RestrictionType_t;
+
+    static bool isValidRestrictionType(RestrictionType_t t)
+    {
+        return (t == RestrictionType_t::rtUndefined ||
+                t == RestrictionType_t::rtWhitelist ||
+                t == RestrictionType_t::rtBlacklist );
+    }
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(NetworkAddressRestrictionList)
+    /**
+     * @brief NetworkAddressRestrictionList
+     *
+     * Helper C++ class to serialize and de-serialize NetworkAddressRestrictionList JSON
+     *
+     * TODO: Complete this Class
+     *
+     * Example: @include[doc] examples/NetworkAddressRestrictionList.json
+     *
+     */
+    class NetworkAddressRestrictionList : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(NetworkAddressRestrictionList)
+
+    public:
+        /** @brief Type indicating how the elements are to be treated **/
+        RestrictionType_t                   type;
+
+        /** @brief List of elements */
+        std::vector<NetworkAddressRxTx>     elements;
+
+        NetworkAddressRestrictionList()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            type = RestrictionType_t::rtUndefined;
+            elements.clear();
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const NetworkAddressRestrictionList& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(type),
+            TOJSON_IMPL(elements)
+        };
+    }
+    static void from_json(const nlohmann::json& j, NetworkAddressRestrictionList& p)
+    {
+        p.clear();
+        getOptional<RestrictionType_t>("type", p.type, j, RestrictionType_t::rtUndefined);
+        getOptional<std::vector<NetworkAddressRxTx>>("elements", p.elements, j);
+    }
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(StringRestrictionList)
+    /**
+     * @brief StringRestrictionList
+     *
+     * Helper C++ class to serialize and de-serialize StringRestrictionList JSON
+     *
+     * TODO: Complete this Class
+     *
+     * Example: @include[doc] examples/StringRestrictionList.json
+     *
+     */
+    class StringRestrictionList : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(StringRestrictionList)
+
+    public:
+        /** @brief Type indicating how the elements are to be treated **/
+        RestrictionType_t                   type;
+
+        /** @brief List of elements */
+        std::vector<std::string>     elements;
+
+        StringRestrictionList()
+        {
+            type = RestrictionType_t::rtUndefined;
+            clear();
+        }
+
+        void clear()
+        {
+            elements.clear();
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const StringRestrictionList& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(type),
+            TOJSON_IMPL(elements)
+        };
+    }
+    static void from_json(const nlohmann::json& j, StringRestrictionList& p)
+    {
+        p.clear();
+        getOptional<RestrictionType_t>("type", p.type, j, RestrictionType_t::rtUndefined);
+        getOptional<std::vector<std::string>>("elements", p.elements, j);
+    }
+
+
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(Rallypoint)
     /**
@@ -2290,11 +2411,50 @@ namespace AppConfigurationObjects
         getOptional("recordAudio", p.recordAudio, j, true);
     }
 
-    //-----------------------------------------------------------
+    /** @addtogroup groupSources Group source names
+     *
+     * Names assigned to entities that advertise groups/channels.
+     *
+     *  @{
+     */
+    /** @brief Internal to Engage */
     ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_INTERNAL = "com.rallytac.engage.internal";
-    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_CORE = "com.rallytac.engage.magellan";
-    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_CISTECH = "com.rallytac.engage.magellan.cistech" ;
+    /** @brief The source is a Magellan-capable entity */
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_CORE = "com.rallytac.magellan.core";
+    /** @brief The source is CISTECH via Magellan discovery */
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_CISTECH = "com.rallytac.engage.magellan.cistech";
+    /** @brief The source is Trellisware via Magellan discovery */
     ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_TRELLISWARE = "com.rallytac.engage.magellan.trellisware";
+    /** @brief The source is Silvus via Magellan discovery */
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_SILVUS = "com.rallytac.engage.magellan.silvus";
+    /** @brief The source is Persistent Systems via Magellan discovery */
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_PERSISTENT = "com.rallytac.engage.magellan.persistent";
+    /** @brief The source is Domo Tactical via Magellan discovery */
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_DOMO = "com.rallytac.engage.magellan.domo";
+    /** @brief The source is Kenwood via Magellan discovery */
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_KENWOOD = "com.rallytac.engage.magellan.kenwood";
+    /** @brief The source is Tait via Magellan discovery */
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_SOURCE_ENGAGE_MAGELLAN_TAIT = "com.rallytac.engage.magellan.tait";
+    /** @} */
+
+    /** @addtogroup groupDisconnectReasons Reasons for why a group has disconnected
+     *
+     * These are additional reason descriptors that may accompany a onGroupDisconnected event
+     *
+     *  @{
+     */
+    /** @brief No particular reason was provided */
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_DISCONNECTED_REASON_NO_REAON = "NoReason";
+    /** @brief The link to the Rallypoint is down */
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_DISCONNECTED_REASON_NO_LINK = "NoLink";
+    /** @brief The group has been gracefully unregistered from the Rallypoint **/
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_DISCONNECTED_REASON_UNREGISTERED = "Unregistered";
+    /** @brief The Rallypoint is not accepting registration for the group at this time **/
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_DISCONNECTED_REASON_NOT_ALLOWED = "NotAllowed";
+    /** @brief The Rallypoint has denied the registration for no specific reason **/
+    ENGAGE_IGNORE_COMPILER_UNUSED_WARNING static const char *GROUP_DISCONNECTED_REASON_GENERAL_DENIAL = "GeneralDenial";
+    /** @} */
+
 
     JSON_SERIALIZED_CLASS(Group)
     /**
@@ -4368,16 +4528,10 @@ namespace AppConfigurationObjects
         std::vector<std::string>    caCertificates;
 
         /** @brief TODO: */
-        std::vector<std::string>    whitelistedSubjects;
+        StringRestrictionList       subjectRestrictions;
 
         /** @brief TODO: */
-        std::vector<std::string>    whitelistedIssuers;
-
-        /** @brief TODO: */
-        std::vector<std::string>    blacklistedSubjects;
-
-        /** @brief TODO: */
-        std::vector<std::string>    blacklistedIssuers;
+        StringRestrictionList       issuerRestrictions;
 
         Tls()
         {
@@ -4389,10 +4543,8 @@ namespace AppConfigurationObjects
             verifyPeers = false;
             allowSelfSignedCertificates = true;
             caCertificates.clear();
-            whitelistedSubjects.clear();
-            whitelistedIssuers.clear();
-            blacklistedSubjects.clear();
-            blacklistedIssuers.clear();
+            subjectRestrictions.clear();
+            issuerRestrictions.clear();
         }
     };
 
@@ -4402,10 +4554,8 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(verifyPeers),
             TOJSON_IMPL(allowSelfSignedCertificates),
             TOJSON_IMPL(caCertificates),
-            TOJSON_IMPL(whitelistedSubjects),
-            TOJSON_IMPL(whitelistedIssuers),
-            TOJSON_IMPL(blacklistedSubjects),
-            TOJSON_IMPL(blacklistedIssuers)
+            TOJSON_IMPL(subjectRestrictions),
+            TOJSON_IMPL(issuerRestrictions)
         };
     }
     static void from_json(const nlohmann::json& j, Tls& p)
@@ -4414,10 +4564,8 @@ namespace AppConfigurationObjects
         getOptional<bool>("verifyPeers", p.verifyPeers, j, false);
         getOptional<bool>("allowSelfSignedCertificates", p.allowSelfSignedCertificates, j, true);
         getOptional<std::vector<std::string>>("caCertificates", p.caCertificates, j);
-        getOptional<std::vector<std::string>>("whitelistedSubjects", p.whitelistedSubjects, j);
-        getOptional<std::vector<std::string>>("whitelistedIssuers", p.whitelistedIssuers, j);
-        getOptional<std::vector<std::string>>("blacklistedSubjects", p.blacklistedSubjects, j);
-        getOptional<std::vector<std::string>>("blacklistedIssuers", p.blacklistedIssuers, j);
+        getOptional<StringRestrictionList>("subjectRestrictions", p.subjectRestrictions, j);
+        getOptional<StringRestrictionList>("issuerRestrictions", p.issuerRestrictions, j);
     }
 
     //-----------------------------------------------------------
@@ -4670,6 +4818,9 @@ namespace AppConfigurationObjects
         /** @brief Enables automatic forwarding of discovered multicast traffic to peer Rallypoints. */
         bool                                        forwardDiscoveredGroups;
 
+        /** @brief Enables forwarding of multicast addressing to peer Rallypoints. */
+        bool                                        forwardMulticastAddressing;
+
         /** @brief Internal - not serialized. */
         PeeringConfiguration                        peeringConfiguration;       // NOTE: This is NOT serialized
 
@@ -4688,17 +4839,14 @@ namespace AppConfigurationObjects
         /** @brief Set to true to forgo DSA signing of messages.  Doing so is is a security risk but can be useful on CPU-constrained systems on already-secure environments. */
         bool                                        disableMessageSigning;
 
-        /** @brief Vector of multicasts that may be reflected. */
-        std::vector<NetworkAddressRxTx>             multicastWhitelist;
-
-        /** @brief Vector of multicasts that may not be reflected. */
-        std::vector<NetworkAddressRxTx>             multicastBlacklist;
+        /** @brief Multicasts to be restricted (inclusive or exclusive) */
+        NetworkAddressRestrictionList               multicastRestrictions;
 
         /** @brief IGMP snooping configuration. */
         IgmpSnooping                                igmpSnooping;
 
         /** @brief Vector of static groups. */
-        std::vector<RallypointReflector>          staticReflectors;
+        std::vector<RallypointReflector>            staticReflectors;
 
         /** @brief Tx options. */
         NetworkTxOptions                            txOptions;
@@ -4711,6 +4859,9 @@ namespace AppConfigurationObjects
 
         /** @brief Hex password for the certificate store (if any) */
         std::string                                 certStorePasswordHex;
+
+        /** @brief Group IDs to be restricted (inclusive or exclusive) */
+        StringRestrictionList                       groupRestrictions;
 
         RallypointServer()
         {
@@ -4739,19 +4890,20 @@ namespace AppConfigurationObjects
             tls.clear();
             discovery.clear();
             forwardDiscoveredGroups = false;
+            forwardMulticastAddressing = false;
             isMeshLeaf = false;
             disableWatchdog = false;
             watchdogIntervalMs = 5000;
             watchdogHangDetectionMs = 2000;
             disableMessageSigning = false;
-            multicastWhitelist.clear();
-            multicastBlacklist.clear();
+            multicastRestrictions.clear();
             igmpSnooping.clear();
             staticReflectors.clear();
             txOptions.clear();
             multicastTxOptions.clear();
             certStoreFileName.clear();
             certStorePasswordHex.clear();
+            groupRestrictions.clear();
         }
     };
 
@@ -4778,20 +4930,20 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(tls),
             TOJSON_IMPL(discovery),
             TOJSON_IMPL(forwardDiscoveredGroups),
+            TOJSON_IMPL(forwardMulticastAddressing),
             TOJSON_IMPL(isMeshLeaf),
             TOJSON_IMPL(disableWatchdog),
             TOJSON_IMPL(watchdogIntervalMs),
             TOJSON_IMPL(watchdogHangDetectionMs),
             TOJSON_IMPL(disableMessageSigning),
-            TOJSON_IMPL(multicastWhitelist),
-            TOJSON_IMPL(multicastBlacklist),
-            TOJSON_IMPL(multicastBlacklist),
+            TOJSON_IMPL(multicastRestrictions),
             TOJSON_IMPL(igmpSnooping),
             TOJSON_IMPL(staticReflectors),
             TOJSON_IMPL(txOptions),
             TOJSON_IMPL(multicastTxOptions),
             TOJSON_IMPL(certStoreFileName),
-            TOJSON_IMPL(certStorePasswordHex)
+            TOJSON_IMPL(certStorePasswordHex),
+            TOJSON_IMPL(groupRestrictions)
         };
     }
     static void from_json(const nlohmann::json& j, RallypointServer& p)
@@ -4815,21 +4967,22 @@ namespace AppConfigurationObjects
         getOptional<bool>("allowPeerForwarding", p.allowPeerForwarding, j, false);
         getOptional<std::string>("multicastInterfaceName", p.multicastInterfaceName, j);
         getOptional<Tls>("tls", p.tls, j);
-        getOptional<DiscoveryConfiguration>("discovery", p.discovery, j);
+        getOptional<DiscoveryConfiguration>("discovery", p.discovery, j);        
         getOptional<bool>("forwardDiscoveredGroups", p.forwardDiscoveredGroups, j, false);
+        getOptional<bool>("forwardMulticastAddressing", p.forwardMulticastAddressing, j, false);
         getOptional<bool>("isMeshLeaf", p.isMeshLeaf, j, false);
         getOptional<bool>("disableWatchdog", p.disableWatchdog, j, false);
         getOptional<int>("watchdogIntervalMs", p.watchdogIntervalMs, j, 5000);
         getOptional<int>("watchdogHangDetectionMs", p.watchdogHangDetectionMs, j, 2000);
         getOptional<bool>("disableMessageSigning", p.disableMessageSigning, j, false);
-        getOptional<std::vector<NetworkAddressRxTx>>("multicastWhitelist", p.multicastWhitelist, j);
-        getOptional<std::vector<NetworkAddressRxTx>>("multicastBlacklist", p.multicastBlacklist, j);
+        getOptional<NetworkAddressRestrictionList>("multicastRestrictions", p.multicastRestrictions, j);
         getOptional<IgmpSnooping>("igmpSnooping", p.igmpSnooping, j);
         getOptional<std::vector<RallypointReflector>>("staticReflectors", p.staticReflectors, j);
         getOptional<NetworkTxOptions>("txOptions", p.txOptions, j);
         getOptional<NetworkTxOptions>("multicastTxOptions", p.multicastTxOptions, j);
         getOptional<std::string>("certStoreFileName", p.certStoreFileName, j);
         getOptional<std::string>("certStorePasswordHex", p.certStorePasswordHex, j);
+        getOptional<StringRestrictionList>("groupRestrictions", p.groupRestrictions, j);
     }
 
 
@@ -5329,6 +5482,9 @@ namespace AppConfigurationObjects
         /** @brief Indicates whether the connection is for purposes of failover */
         bool                                            asFailover;
 
+        /** @brief [Optional] Additional reason information */
+        std::string                                     reason;
+
         GroupConnectionDetail()
         {
             clear();
@@ -5340,6 +5496,7 @@ namespace AppConfigurationObjects
             connectionType = ctUndefined;
             peer.clear();
             asFailover = false;
+            reason.clear();
         }
     };
 
@@ -5349,7 +5506,8 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(id),
             TOJSON_IMPL(connectionType),
             TOJSON_IMPL(peer),
-            TOJSON_IMPL(asFailover)
+            TOJSON_IMPL(asFailover),
+            TOJSON_IMPL(reason)
         };
 
         if(p.asFailover)
@@ -5364,6 +5522,7 @@ namespace AppConfigurationObjects
         getOptional<GroupConnectionDetail::ConnectionType_t>("connectionType", p.connectionType, j, GroupConnectionDetail::ConnectionType_t::ctUndefined);
         getOptional<std::string>("peer", p.peer, j, EMPTY_STRING);
         getOptional<bool>("asFailover", p.asFailover, j, false);
+        getOptional<std::string>("reason", p.reason, j, EMPTY_STRING);
     }
 
     //-----------------------------------------------------------
