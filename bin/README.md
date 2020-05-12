@@ -1,5 +1,9 @@
 # Change List
 
+## May 12, 2020 - 1.153.8924
+- Adds group restrictions to Rallypoints.
+- Replaces multicast white and blacklists with multicast resrictions in Rallypoints.
+
 ## May 4, 2020 - 1.151.8922
 - Adds notification of timeline grooming.
 - Removes the option to disable the system database.
