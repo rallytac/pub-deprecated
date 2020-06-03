@@ -1688,7 +1688,6 @@ namespace AppConfigurationObjects
         IMPLEMENT_JSON_DOCUMENTATION(TxAudio)
 
     public:
-
         /**
          * @brief Codec Types enum.
          *
@@ -1700,13 +1699,11 @@ namespace AppConfigurationObjects
             /** @brief Unknown Codec type */
             ctUnknown       = 0,
 
-
             /** @brief G711 U-Law 64 (kbit/s) <a href="https://en.wikipedia.org/wiki/G.711" target="_blank">See for more info</a> */
             ctG711ulaw      = 1,
 
             /** @brief G711 A-Law 64 (kbit/s) <a href="https://en.wikipedia.org/wiki/G.711" target="_blank">See for more info</a> */
             ctG711alaw      = 2,    /**<  */
-
 
             /** @brief GSM Full Rate 13.2 (kbit/s) <a href="https://en.wikipedia.org/wiki/Full_Rate" target="_blank">See for more info</a> */
             ctGsm610        = 3,
@@ -2563,6 +2560,8 @@ namespace AppConfigurationObjects
         bool                                    enableMulticastFailover;
         int                                     multicastFailoverSecs;
 
+        /** @brief The network address for receiving RTCP presencing packets */
+        NetworkAddress                          rtcpPresenceRx;
 
         Group()
         {
@@ -2598,6 +2597,8 @@ namespace AppConfigurationObjects
 
             enableMulticastFailover = true;
             multicastFailoverSecs = 10;
+
+            rtcpPresenceRx.clear();
         }
     };
 
@@ -2623,7 +2624,8 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(source),
             TOJSON_IMPL(maxRxSecs),
             TOJSON_IMPL(enableMulticastFailover),
-            TOJSON_IMPL(multicastFailoverSecs)
+            TOJSON_IMPL(multicastFailoverSecs),
+            TOJSON_IMPL(rtcpPresenceRx)
         };
     }
     static void from_json(const nlohmann::json& j, Group& p)
@@ -2648,6 +2650,7 @@ namespace AppConfigurationObjects
         getOptional<int>("maxRxSecs", p.maxRxSecs, j, 0);
         getOptional<bool>("enableMulticastFailover", p.enableMulticastFailover, j, true);
         getOptional<int>("multicastFailoverSecs", p.multicastFailoverSecs, j, 10);
+        getOptional<NetworkAddress>("rtcpPresenceRx", p.rtcpPresenceRx, j);
     }
 
 
@@ -2916,6 +2919,9 @@ namespace AppConfigurationObjects
         /** @brief [Optional, Default: true] Overrides/cancels group-level multicast failover if set to true */
         bool                preventMulticastFailover;
 
+        /** @brief [Optional, Default: 45000] Timeout for RTCP presence. */
+        int                 rtcpPresenceTimeoutMs;
+
         EnginePolicyNetworking()
         {
             clear();
@@ -2940,6 +2946,7 @@ namespace AppConfigurationObjects
             rallypointRtTestIntervalMs = 60000;
             logRtpJitterBufferStats = false;
             preventMulticastFailover = false;
+            rtcpPresenceTimeoutMs = 45000;
         }
     };
 
@@ -2962,7 +2969,8 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(sendFailurePauseMs),
             TOJSON_IMPL(rallypointRtTestIntervalMs),
             TOJSON_IMPL(logRtpJitterBufferStats),
-            TOJSON_IMPL(preventMulticastFailover)
+            TOJSON_IMPL(preventMulticastFailover),
+            TOJSON_IMPL(rtcpPresenceTimeoutMs)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyNetworking& p)
@@ -2985,8 +2993,95 @@ namespace AppConfigurationObjects
         FROMJSON_IMPL(rallypointRtTestIntervalMs, int, 60000);
         FROMJSON_IMPL(logRtpJitterBufferStats, bool, false);
         FROMJSON_IMPL(preventMulticastFailover, bool, false);
+        FROMJSON_IMPL(rtcpPresenceTimeoutMs, int, 45000);
     }
 
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(Aec)
+    /**
+    * @brief Acoustic Echo Cancellation settings
+    *
+    * Helper C++ class to serialize and de-serialize Aec JSON
+    *
+    * Example: @include[doc] examples/Aec.json
+    *
+    * @see TODO: ConfigurationObjects::Aec
+    */
+    class Aec : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(Aec)
+
+    public:
+        /**
+         * @brief Acoustic echo cancellation mode enum.
+         *
+         * More detailed Mode_t description.
+         */
+        typedef enum
+        {
+            /** @brief Default */
+            aecmDefault         = 0,
+
+            /** @brief Low */
+            aecmLow             = 1,
+
+            /** @brief Medium */
+            aecmMedium          = 2,
+
+            /** @brief High */
+            aecmHigh            = 3,
+
+            /** @brief Very High */
+            aecmVeryHigh        = 4,
+
+            /** @brief Highest */
+            aecmHighest         = 5
+        } Mode_t;
+
+        /** @brief [Optional, Default: false] Enable acoustic echo cancellation */
+        bool                enabled;
+
+        /** @brief [Optional, Default: @ref aecmDefault] Specifies AEC mode. See @ref Mode_t for all modes */
+        Mode_t              mode;
+
+        /** @brief [Optional, Default: 60] Milliseconds of speaker tail */
+        int                 speakerTailMs;
+
+        /** @brief [Optional, Default: true] Enable comfort noise generation */
+        bool                cng;
+
+        Aec()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            enabled = false;
+            mode = aecmDefault;
+            speakerTailMs = 60;
+            cng = true;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const Aec& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(enabled),
+            TOJSON_IMPL(mode),
+            TOJSON_IMPL(speakerTailMs),
+            TOJSON_IMPL(cng)
+        };
+    }
+    static void from_json(const nlohmann::json& j, Aec& p)
+    {
+        p.clear();
+        FROMJSON_IMPL(enabled, bool, false);
+        FROMJSON_IMPL(mode, Aec::Mode_t, Aec::Mode_t::aecmDefault);
+        FROMJSON_IMPL(speakerTailMs, int, 60);
+        FROMJSON_IMPL(cng, bool, true);
+    }
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyAudio)
@@ -3029,6 +3124,9 @@ namespace AppConfigurationObjects
         /** @brief [Optional, Default: false] Automatically mute TX when TX begins */
         bool                muteTxOnTx;
 
+        /** @brief [Optional] Acoustic echo cancellation settings */
+        Aec                 aec;
+
         EnginePolicyAudio()
         {
             clear();
@@ -3050,6 +3148,7 @@ namespace AppConfigurationObjects
             outputGainPercentage = 0;
             allowOutputOnTransmit = false;
             muteTxOnTx = false;
+            aec.clear();
         }
     };
 
@@ -3067,7 +3166,8 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(outputChannels),
             TOJSON_IMPL(outputGainPercentage),
             TOJSON_IMPL(allowOutputOnTransmit),
-            TOJSON_IMPL(muteTxOnTx)
+            TOJSON_IMPL(muteTxOnTx),
+            TOJSON_IMPL(aec)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyAudio& p)
@@ -3087,6 +3187,7 @@ namespace AppConfigurationObjects
         FROMJSON_IMPL(outputGainPercentage, int, 0);
         FROMJSON_IMPL(allowOutputOnTransmit, bool, false);
         FROMJSON_IMPL(muteTxOnTx, bool, false);
+        getOptional<Aec>("aec", p.aec, j);
     }
 
     //-----------------------------------------------------------
@@ -5285,8 +5386,11 @@ namespace AppConfigurationObjects
         /** @brief ID */
         std::string                     id;
 
-        /** @brief True if the certificate has private key associated with it */
+        /** @brief True if the certificate has a private key associated with it */
         bool                            hasPrivateKey;
+
+        /** @brief PEM of the certificate */
+        std::string                     certificatePem;
 
         CertStoreCertificateElement()
         {
@@ -5306,12 +5410,18 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(id),
             TOJSON_IMPL(hasPrivateKey)
         };
+
+        if(!p.certificatePem.empty())
+        {
+            j["certificatePem"] = p.certificatePem;            
+        }
     }
     static void from_json(const nlohmann::json& j, CertStoreCertificateElement& p)
     {
         p.clear();
         getOptional<std::string>("id", p.id, j, EMPTY_STRING);
         getOptional<bool>("hasPrivateKey", p.hasPrivateKey, j, false);
+        getOptional<std::string>("certificatePem", p.certificatePem, j, EMPTY_STRING);        
     }
 
     //-----------------------------------------------------------
@@ -5636,6 +5746,94 @@ namespace AppConfigurationObjects
         getOptional<int>("localPriority", p.localPriority, j, 0);
         getOptional<int>("remotePriority", p.remotePriority, j, 0);
         getOptional<long>("nonFdxMsHangRemaining", p.nonFdxMsHangRemaining, j, 0);
+    }
+
+//-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(GroupHealthReport)
+    /**
+    * @brief Detailed information regarding a group's health
+    *
+    * Helper C++ class to serialize and de-serialize GroupHealthReport JSON
+    *
+    */
+    class GroupHealthReport : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_WRAPPED_JSON_SERIALIZATION(GroupHealthReport)
+        IMPLEMENT_JSON_DOCUMENTATION(GroupHealthReport)
+
+    public:
+        std::string id;
+        uint64_t    lastErrorTs;
+        uint64_t    decryptionErrors;
+        uint64_t    encryptionErrors;
+        uint64_t    unsupportDecoderErrors;
+        uint64_t    decoderFailures;
+        uint64_t    decoderStartFailures;
+        uint64_t    inboundRtpPacketAllocationFailures;
+        uint64_t    inboundRtpPacketLoadFailures;
+        uint64_t    latePacketsDiscarded;
+        uint64_t    jitterBufferInsertionFailures;
+        uint64_t    presenceDeserializationFailures;
+        uint64_t    notRtpErrors;
+        
+        GroupHealthReport()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            id.clear();
+            lastErrorTs = 0;
+            decryptionErrors = 0;
+            encryptionErrors = 0;
+            unsupportDecoderErrors = 0;
+            decoderFailures = 0;
+            decoderStartFailures = 0;
+            inboundRtpPacketAllocationFailures = 0;
+            inboundRtpPacketLoadFailures = 0;
+            latePacketsDiscarded = 0;
+            jitterBufferInsertionFailures = 0;
+            presenceDeserializationFailures = 0;
+            notRtpErrors = 0;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const GroupHealthReport& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(id),
+            TOJSON_IMPL(lastErrorTs),
+            TOJSON_IMPL(decryptionErrors),
+            TOJSON_IMPL(encryptionErrors),
+            TOJSON_IMPL(unsupportDecoderErrors),
+            TOJSON_IMPL(decoderFailures),
+            TOJSON_IMPL(decoderStartFailures),
+            TOJSON_IMPL(inboundRtpPacketAllocationFailures),
+            TOJSON_IMPL(inboundRtpPacketLoadFailures),
+            TOJSON_IMPL(latePacketsDiscarded),
+            TOJSON_IMPL(jitterBufferInsertionFailures),
+            TOJSON_IMPL(presenceDeserializationFailures),
+            TOJSON_IMPL(notRtpErrors)
+        };
+    }
+    static void from_json(const nlohmann::json& j, GroupHealthReport& p)
+    {
+        p.clear();
+        getOptional<std::string>("id", p.id, j, EMPTY_STRING);
+        getOptional<uint64_t>("lastErrorTs", p.lastErrorTs, j, 0);
+        getOptional<uint64_t>("decryptionErrors", p.decryptionErrors, j, 0);
+        getOptional<uint64_t>("encryptionErrors", p.encryptionErrors, j, 0);
+        getOptional<uint64_t>("unsupportDecoderErrors", p.unsupportDecoderErrors, j, 0);
+        getOptional<uint64_t>("decoderFailures", p.decoderFailures, j, 0);
+        getOptional<uint64_t>("decoderStartFailures", p.decoderStartFailures, j, 0);
+        getOptional<uint64_t>("inboundRtpPacketAllocationFailures", p.inboundRtpPacketAllocationFailures, j, 0);
+        getOptional<uint64_t>("inboundRtpPacketLoadFailures", p.inboundRtpPacketLoadFailures, j, 0);
+        getOptional<uint64_t>("latePacketsDiscarded", p.latePacketsDiscarded, j, 0);
+        getOptional<uint64_t>("jitterBufferInsertionFailures", p.jitterBufferInsertionFailures, j, 0);
+        getOptional<uint64_t>("presenceDeserializationFailures", p.presenceDeserializationFailures, j, 0);
+        getOptional<uint64_t>("notRtpErrors", p.notRtpErrors, j, 0);
     }
 
     //-----------------------------------------------------------

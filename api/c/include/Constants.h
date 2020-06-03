@@ -38,8 +38,6 @@ static const size_t MAX_IP_ADDR_SIZE = sizeof(struct sockaddr_in6);
 static const size_t MAX_ALIAS_SIZE = 16;
 static const size_t MAX_NODE_ID_SIZE = 16;
 
-static const size_t MAX_BUFF_SIZE = 8192;
-
 static const size_t RTP_PACKET_BUFFER_ALLOCATION_EXTRA_BYTES = 512;
 static const size_t BLOB_PACKET_BUFFER_ALLOCATION_EXTRA_BYTES = 512;
 
@@ -48,20 +46,16 @@ static const int16_t PCM_MAX_VALUE = 32767;
 
 static const uint16_t SELECT_FUNCTION_TIMEOUT_SECS = 1;
 static const uint16_t MULTICAST_REJOIN_SECS = 8;
-static const uint16_t LEAF_TCP_CONNECTION_TIMEOUT_SECS = 10;
 
 static const size_t MAX_DATAGRAM_SIZE = 4096;
 static const long MAX_RECONNECT_PAUSE_MS = 30000;
 static const long RECONNECT_FAILURE_PAUSE_INCREMENT_MS = 1500;
-static const long SEND_FAILURE_PAUSE_MS = 1000;
 
 static const size_t BASE_RTP_HEADER_SIZE = 12;
 static const uint16_t ACCEPTED_RTP_VERSION = 2;
 static const size_t MAX_RTP_SAMPLES_THAT_CAN_BE_DECODED = (8000);
 
-static const size_t PCM_SAMPLE_RATE = 8000;
 static const size_t PCM_CHANNELS = 1;
-static const size_t PCM_BYTES_PER_SAMPLE = 2;
 static const size_t PCM_SAMPLE_COUNT_PER_MS = 8;
 static const size_t PCM_10_MS_SAMPLE_COUNT = (PCM_SAMPLE_COUNT_PER_MS * 10);
 
@@ -85,5 +79,11 @@ static const size_t PCM_10_MS_SAMPLE_COUNT = (PCM_SAMPLE_COUNT_PER_MS * 10);
 
 static const long TLS_CONNECTION_KEY_MATERIAL_SIZE = 32;
 static const uint64_t RTP_RESET_AFTER_IDLE_MS = (1000 * 30);
+
+#if defined(RTS_DEBUG_BUILD)
+static const uint64_t GROUP_HEALTH_ERROR_ERROR_NOTIFICATION_INTERVAL_MS = (1000 * 10);
+#else
+static const uint64_t GROUP_HEALTH_ERROR_ERROR_NOTIFICATION_INTERVAL_MS = (1000 * 30);
+#endif
 
 #endif // Constants_h
