@@ -91,6 +91,9 @@ public class Engage
         void onGroupTimelineReport(string id, string reportJson, string eventExtraJson);
         void onGroupTimelineReportFailed(string id, string eventExtraJson);
         void onGroupTimelineGroomed(string id, string eventListJson, string eventExtraJson);        
+
+        void onGroupHealthReport(string id, string healthReportJson, string eventExtraJson);
+        void onGroupHealthReportFailed(string id, string eventExtraJson);        
     }
 
     public interface IHumanBiometricsNotifications
@@ -406,6 +409,15 @@ public class Engage
                 public static String outputGainPercentage = "outputGainPercentage";
                 public static String allowOutputOnTransmit = "allowOutputOnTransmit";
                 public static String muteTxOnTx = "muteTxOnTx";
+
+                public class Aec
+                {
+                    public static String objectName = "aec";
+                    public static String enabled = "enabled";
+                    public static String mode = "mode";
+                    public static String speakerTailMs = "speakerTailMs";
+                    public static String cng = "cng";
+                }
             }
 
             public class Discovery
@@ -729,7 +741,10 @@ public class Engage
         public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_EVENT_ENDED;
         public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_REPORT;
         public EngageStringCallback PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
-        public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_GROOMED;        
+        public EngageString2Callback PFN_ENGAGE_GROUP_TIMELINE_GROOMED;
+
+        public EngageString2Callback PFN_ENGAGE_GROUP_HEALTH_REPORT;
+        public EngageStringCallback PFN_ENGAGE_GROUP_HEALTH_REPORT_FAILED;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]     // 9 bytes
@@ -915,6 +930,12 @@ public class Engage
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageImportCertStoreElementFromCertStore(string id, string srcId, string srcFileName, string srcPasswordHexByteString);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr engageQueryCertStoreContents(string fileName, string passwordHexByteString);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageQueryGroupHealth(string id);
     #endregion
 
     #region Internal functions
@@ -1041,6 +1062,9 @@ public class Engage
         cb.PFN_ENGAGE_GROUP_TIMELINE_REPORT = on_ENGAGE_GROUP_TIMELINE_REPORT;
         cb.PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED = on_ENGAGE_GROUP_TIMELINE_REPORT_FAILED;
         cb.PFN_ENGAGE_GROUP_TIMELINE_GROOMED = on_ENGAGE_GROUP_TIMELINE_GROOMED;
+
+        cb.PFN_ENGAGE_GROUP_HEALTH_REPORT = on_ENGAGE_GROUP_HEALTH_REPORT;
+        cb.PFN_ENGAGE_GROUP_HEALTH_REPORT_FAILED = on_ENGAGE_GROUP_HEALTH_REPORT_FAILED;
 
         return engageRegisterEventCallbacks(ref cb);
     }
@@ -1715,6 +1739,28 @@ public class Engage
             }
         }
     };
+
+    private EngageStringCallback on_ENGAGE_GROUP_HEALTH_REPORT = (string id, string healthReportJson, string eventExtraJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupHealthReport(id, healthReportJson, eventExtraJson);
+            }
+        }
+    };   
+
+    private EngageStringCallback on_ENGAGE_GROUP_HEALTH_REPORT_FAILED = (string id, string eventExtraJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupHealthReportFailed(id, eventExtraJson);
+            }
+        }
+    };
     #endregion
 
     #region Public functions
@@ -1896,6 +1942,11 @@ public class Engage
         return engageQueryGroupTimeline(id, jsonParams);
     }
 
+    public int queryGroupHealth(string id)
+    {
+        return engageQueryGroupHealth(id);
+    }
+
     public int logMsg(int level, string tag, string msg)
     {
         return engageLogMsg(level, tag, msg);
@@ -2054,6 +2105,19 @@ public class Engage
         return engageImportCertStoreElementFromCertStore(id, srcId, srcFileName, srcPasswordHexByteString);
     }
 
+    public String queryCertStoreContents(string fileName, string passwordHexByteString)
+    {
+        IntPtr ptr = engageQueryCertStoreContents(fileName, passwordHexByteString);
+
+        if (ptr == IntPtr.Zero)
+        {
+            return null;
+        }
+        else
+        {
+            return Marshal.PtrToStringAnsi(ptr);
+        }
+    }
     #endregion
 
     #region Helpers
