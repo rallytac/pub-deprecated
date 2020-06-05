@@ -1667,6 +1667,76 @@ namespace AppConfigurationObjects
         getOptional<bool>("disableMessageSigning", p.disableMessageSigning, j, false);
     }
 
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(RallypointCluster)
+    /**
+     * @brief RallypointCluster
+     *
+     * Helper C++ class to serialize and de-serialize RallypointCluster JSON
+     *
+     * TODO: Complete this Class
+     *
+     * Example: @include[doc] examples/RallypointCluster.json
+     *
+     */
+    class RallypointCluster : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(RallypointCluster)
+
+    public:
+        /**
+         * @brief Connection strategy enum.
+         *
+         * More detailed ConnectionStrategy_t description.
+         */
+        typedef enum
+        {
+            /** @brief Connect in round-robin fashion */
+            csRoundRobin    = 0,
+
+            /** @brief Fail back to high-order RP when available */
+            csFailback      = 1
+        } ConnectionStrategy_t;
+
+        /** @brief [Optional, Default: @ref csRoundRobin] Specifies the connection strategy to be followed. See @ref ConnectionStrategy_t for all strategy types */
+        ConnectionStrategy_t                connectionStrategy;
+
+        /** @brief List of Rallypoints */
+        std::vector<Rallypoint>             rallypoints;
+
+        /** @brief Seconds between switching to a new target */
+        int                                 rolloverSecs;
+
+        RallypointCluster()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            connectionStrategy = csRoundRobin;
+            rallypoints.clear();
+            rolloverSecs = 10;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const RallypointCluster& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(connectionStrategy),
+            TOJSON_IMPL(rallypoints),
+            TOJSON_IMPL(rolloverSecs)
+        };
+    }
+    static void from_json(const nlohmann::json& j, RallypointCluster& p)
+    {
+        p.clear();
+        getOptional<RallypointCluster::ConnectionStrategy_t>("connectionStrategy", p.connectionStrategy, RallypointCluster::ConnectionStrategy_t::csRoundRobin);
+        getOptional<std::vector<Rallypoint>>("rallypoints", p.rallypoints, j);
+        getOptional<int>("rolloverSecs", p.rolloverSecs, j, 10);
+    }
+
 
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(TxAudio)
@@ -2526,8 +2596,11 @@ namespace AppConfigurationObjects
         /** @brief TODO: Shaun, no clue what this does */
         bool                                    debugAudio;
 
-        /** @brief List of @ref Rallypoint (s) the Group should use to connect to a RallyPoint router. */
+        /** @brief [DEPRECATED] List of @ref Rallypoint (s) the Group should use to connect to a Rallypoint router. Use @ref RallypointCluster instead. */
         std::vector<Rallypoint>                 rallypoints;
+
+        /** @brief Cluster of one or more @ref Rallypoints the group may use. */
+        RallypointCluster                       rallypointCluster;
 
         /** @brief Sets audio properties like which audio device to use, audio gain etc (see @ref Audio). */
         Audio                                   audio;
@@ -2557,8 +2630,14 @@ namespace AppConfigurationObjects
          */
         int                                     maxRxSecs;
 
+        /** @brief [Optional, Default: true] Set this to true to enable failover to multicast operation if a Rallypoint connection cannot be established. */
         bool                                    enableMulticastFailover;
+
+        /** @brief [Optional, Default: 10] Specifies the number fo seconds to wait after Rallypoint connection failure to switch to multicast operation. */
         int                                     multicastFailoverSecs;
+
+        /** @brief [Optional, Default: false] Set this to true to have event notifications fire when human speech is detected in incoming audio streams. */
+        bool                                    enableRxVad;
 
         /** @brief The network address for receiving RTCP presencing packets */
         NetworkAddress                          rtcpPresenceRx;
@@ -2584,6 +2663,7 @@ namespace AppConfigurationObjects
             alias.clear();
 
             rallypoints.clear();
+            rallypointCluster.clear();
 
             debugAudio = false;
             audio.clear();
@@ -2599,6 +2679,8 @@ namespace AppConfigurationObjects
             multicastFailoverSecs = 10;
 
             rtcpPresenceRx.clear();
+
+            enableRxVad = false;
         }
     };
 
@@ -2617,6 +2699,7 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(cryptoPassword),
             TOJSON_IMPL(alias),
             TOJSON_IMPL(rallypoints),
+            TOJSON_IMPL(rallypointCluster),
             TOJSON_IMPL(alias),
             TOJSON_IMPL(audio),
             TOJSON_IMPL(timeline),
@@ -2625,7 +2708,8 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(maxRxSecs),
             TOJSON_IMPL(enableMulticastFailover),
             TOJSON_IMPL(multicastFailoverSecs),
-            TOJSON_IMPL(rtcpPresenceRx)
+            TOJSON_IMPL(rtcpPresenceRx),
+            TOJSON_IMPL(enableRxVad)
         };
     }
     static void from_json(const nlohmann::json& j, Group& p)
@@ -2643,6 +2727,7 @@ namespace AppConfigurationObjects
         getOptional<TxAudio>("txAudio", p.txAudio, j);
         getOptional<Presence>("presence", p.presence, j);
         getOptional<std::vector<Rallypoint>>("rallypoints", p.rallypoints, j);
+        getOptional<RallypointCluster>("rallypointCluster", p.rallypointCluster, j);        
         getOptional<Audio>("audio", p.audio, j);
         getOptional<GroupTimeline>("timeline", p.timeline, j);
         getOptional<bool>("blockAdvertising", p.blockAdvertising, j, false);
@@ -2651,6 +2736,7 @@ namespace AppConfigurationObjects
         getOptional<bool>("enableMulticastFailover", p.enableMulticastFailover, j, true);
         getOptional<int>("multicastFailoverSecs", p.multicastFailoverSecs, j, 10);
         getOptional<NetworkAddress>("rtcpPresenceRx", p.rtcpPresenceRx, j);
+        getOptional<bool>("enableRxVad", p.enableRxVad, j, false);
     }
 
 
@@ -3084,6 +3170,75 @@ namespace AppConfigurationObjects
     }
 
     //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(Vad)
+    /**
+    * @brief Voice Activity Detection settings
+    *
+    * Helper C++ class to serialize and de-serialize Vad JSON
+    *
+    * Example: @include[doc] examples/Vad.json
+    *
+    * @see TODO: ConfigurationObjects::Vad
+    */
+    class Vad : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(Vad)
+
+    public:
+        /**
+         * @brief VAD enum.
+         *
+         * More detailed Mode_t description.
+         */
+        typedef enum
+        {
+            /** @brief Default */
+            vamDefault          = 0,
+
+            /** @brief Low bit rate */
+            vamLowBitRate       = 1,
+
+            /** @brief Aggressive */
+            vamAggressive       = 2,
+
+            /** @brief High */
+            vamVeryAggressive   = 3
+        } Mode_t;
+
+        /** @brief [Optional, Default: false] Enable VAD */
+        bool                enabled;
+
+        /** @brief [Optional, Default: @ref vamDefault] Specifies VAD mode. See @ref Mode_t for all modes */
+        Mode_t              mode;
+
+        Vad()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            enabled = false;
+            mode = vamDefault;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const Vad& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(enabled),
+            TOJSON_IMPL(mode)
+        };
+    }
+    static void from_json(const nlohmann::json& j, Vad& p)
+    {
+        p.clear();
+        FROMJSON_IMPL(enabled, bool, false);
+        FROMJSON_IMPL(mode, Vad::Mode_t, Vad::Mode_t::vamDefault);
+    }
+
+    //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyAudio)
     /**
     * @brief Default audio settings for Engage Engine policy. TODO: Shaun, can you document this class please
@@ -3127,6 +3282,9 @@ namespace AppConfigurationObjects
         /** @brief [Optional] Acoustic echo cancellation settings */
         Aec                 aec;
 
+        /** @brief [Optional] Voice activity detection settings */
+        Vad                 vad;
+
         EnginePolicyAudio()
         {
             clear();
@@ -3149,6 +3307,7 @@ namespace AppConfigurationObjects
             allowOutputOnTransmit = false;
             muteTxOnTx = false;
             aec.clear();
+            vad.clear();
         }
     };
 
@@ -3167,7 +3326,8 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(outputGainPercentage),
             TOJSON_IMPL(allowOutputOnTransmit),
             TOJSON_IMPL(muteTxOnTx),
-            TOJSON_IMPL(aec)
+            TOJSON_IMPL(aec),
+            TOJSON_IMPL(vad)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyAudio& p)
@@ -3188,6 +3348,7 @@ namespace AppConfigurationObjects
         FROMJSON_IMPL(allowOutputOnTransmit, bool, false);
         FROMJSON_IMPL(muteTxOnTx, bool, false);
         getOptional<Aec>("aec", p.aec, j);
+        getOptional<Vad>("vad", p.vad, j);
     }
 
     //-----------------------------------------------------------
@@ -3843,6 +4004,12 @@ namespace AppConfigurationObjects
         int                 logTaskQueueStatsIntervalMs;
         bool                enableLazySpeakerClosure;
 
+        /** @brief [Optional, Default: @ref csRoundRobin] Specifies the default RP cluster connection strategy to be followed. See @ref ConnectionStrategy_t for all strategy types */
+        RallypointCluster::ConnectionStrategy_t rpClusterStrategy;
+
+        /** @brief Seconds between switching to a new target in a RP cluster */
+        int                                     rpClusterRolloverSecs;
+
         EnginePolicyInternals()
         {
             clear();
@@ -3858,6 +4025,8 @@ namespace AppConfigurationObjects
             maxTxSecs = 30;
             maxRxSecs = 0;
             enableLazySpeakerClosure = false;
+            rpClusterStrategy = RallypointCluster::ConnectionStrategy_t::csRoundRobin;
+            rpClusterRolloverSecs = 10;
         }
     };
 
@@ -3871,7 +4040,9 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(logTaskQueueStatsIntervalMs),
             TOJSON_IMPL(maxTxSecs),
             TOJSON_IMPL(maxRxSecs),
-            TOJSON_IMPL(enableLazySpeakerClosure)
+            TOJSON_IMPL(enableLazySpeakerClosure),
+            TOJSON_IMPL(rpClusterStrategy),
+            TOJSON_IMPL(rpClusterRolloverSecs)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyInternals& p)
@@ -3885,6 +4056,8 @@ namespace AppConfigurationObjects
         getOptional<int>("maxTxSecs", p.maxTxSecs, j, 30);
         getOptional<int>("maxRxSecs", p.maxRxSecs, j, 0);
         getOptional<bool>("enableLazySpeakerClosure", p.enableLazySpeakerClosure, j, false);
+        getOptional<RallypointCluster::ConnectionStrategy_t>("rpClusterStrategy", p.rpClusterStrategy, j, RallypointCluster::ConnectionStrategy_t::csRoundRobin);
+        getOptional<int>("rpClusterRolloverSecs", p.rpClusterRolloverSecs, j, 10);
 
     }
 
@@ -4046,7 +4219,6 @@ namespace AppConfigurationObjects
 
         /** @brief Hex password for the certificate store (if any) */
         std::string                 certStorePasswordHex;
-
 
         EnginePolicy()
         {
@@ -5748,7 +5920,91 @@ namespace AppConfigurationObjects
         getOptional<long>("nonFdxMsHangRemaining", p.nonFdxMsHangRemaining, j, 0);
     }
 
-//-----------------------------------------------------------
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(GroupCreationDetail)
+    /**
+    * @brief Detailed information for a group creation
+    *
+    * Helper C++ class to serialize and de-serialize GroupCreationDetail JSON
+    *
+    */
+    class GroupCreationDetail : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_WRAPPED_JSON_SERIALIZATION(GroupCreationDetail)
+        IMPLEMENT_JSON_DOCUMENTATION(GroupCreationDetail)
+
+    public:
+        /** @brief Creation status */
+        typedef enum
+        {
+            /** @brief Undefined */
+            csUndefined                         = 0,
+
+            /** @brief Creation OK */
+            csOk                                = 1,
+
+            /** @brief Configuration JSON is empty */
+            csNoJson                            = -1,
+
+            /** @brief Conflicting Rallypoint list and cluster */
+            csConflictingRpListAndCluster       = -2,
+
+            /** @brief Group already exists */
+            csAlreadyExists                     = -3,
+
+            /** @brief Invalid configuration */
+            csInvalidConfiguration              = -4,
+
+            /** @brief Invalid JSON */
+            csInvalidJson                       = -5,
+
+            /** @brief Crypto failure */
+            csCryptoFailure                     = -6,
+
+            /** @brief Audio input failure */
+            csAudioInputFailure                 = -7,
+
+            /** @brief Audio input failure */
+            csAudioOutputFailure                = -8,
+
+            /** @brief Unsupported audio encoder */
+            csUnsupporttedAudioEncoder          = -9
+        } CreationStatus_t;
+
+        /** @brief ID of the group */
+        std::string                                     id;
+
+        /** @brief The creation status */
+        CreationStatus_t                                status;
+
+        GroupCreationDetail()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            id.clear();
+            status = csUndefined;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const GroupCreationDetail& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(id),
+            TOJSON_IMPL(status)
+        };
+    }
+    static void from_json(const nlohmann::json& j, GroupCreationDetail& p)
+    {
+        p.clear();
+        getOptional<std::string>("id", p.id, j, EMPTY_STRING);
+        getOptional<GroupCreationDetail::CreationStatus_t>("status", p.status, j, GroupCreationDetail::CreationStatus_t::csUndefined);
+    }
+
+    //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(GroupHealthReport)
     /**
     * @brief Detailed information regarding a group's health
