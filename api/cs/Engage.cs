@@ -202,9 +202,17 @@ public class Engage
 
     public class JsonFields
     {
+        public class GroupCreationDetail
+        {
+            public static String objectName = "groupCreationDetail";
+            public static String id = "id";
+            public static String status = "status";
+        }
+
         public class GroupTxDetail
         {
             public static String objectName = "groupTxDetail";
+            public static String id = "id";
             public static String status = "status";
             public static String localPriority = "localPriority";
             public static String remotePriority = "remotePriority";
@@ -417,6 +425,13 @@ public class Engage
                     public static String mode = "mode";
                     public static String speakerTailMs = "speakerTailMs";
                     public static String cng = "cng";
+                }
+
+                public class Vad
+                {
+                    public static String objectName = "vad";
+                    public static String enabled = "enabled";
+                    public static String mode = "mode";
                 }
             }
 
