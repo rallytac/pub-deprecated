@@ -1,5 +1,10 @@
 # Change List
 
+## June 5, 2020 - 1.162.8938
+- Adds Rallypoint clustering.
+- Adds Acoustic Echo Cancellation.
+- Fixes for Portugese-language code pages on Windows.
+
 ## May 12, 2020 - 1.153.8924
 - Adds group restrictions to Rallypoints.
 - Replaces multicast white and blacklists with multicast resrictions in Rallypoints.
