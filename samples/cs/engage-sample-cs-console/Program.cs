@@ -28,6 +28,33 @@ namespace engage_sample_cs_console
         private int _txPriority = 0;
         private int _txFlags = 0;
 
+        bool loadPolicy(string fn, ref JObject policy)
+        {
+            bool rc = false;
+
+            try
+            {
+                String jsonData;
+
+                using (StreamReader sr = new StreamReader(fn))
+                {
+                    jsonData = sr.ReadToEnd();
+                }
+
+                policy = JObject.Parse(jsonData);
+
+                rc = true;
+            }
+            catch (Exception e)
+            {
+                rc = false;
+                Console.WriteLine("The file '" + fn + "' could not be read or parsed: ");
+                Console.WriteLine(e.Message);
+            }
+
+            return rc;
+        }
+
         bool loadMission(string fn, ref JObject mission)
         {
             bool rc = false;
@@ -130,12 +157,15 @@ namespace engage_sample_cs_console
 
         void showUsage()
         {
-            Console.WriteLine("usage: engage-sample-cs-console -mission:<mission_file>");
+            Console.WriteLine("usage: engage-sample-cs-console -ep:<policy_file> -mission:<mission_file> [-cs:<cert_store_file> [-csp:<cert_store_password_hex>]]");
         }
 
         void run(string[] args)
         {
+            string policyFile = null;
             string missionFile = null;
+            string certStoreFile = null;
+            string certStorePwd = null;
 
             for (int x = 0; x < args.Length; x++)
             {
@@ -143,16 +173,45 @@ namespace engage_sample_cs_console
                 {
                     missionFile = args[x].Substring(9);
                 }
+                else if (args[x].StartsWith("-ep:"))
+                {
+                    policyFile = args[x].Substring(4);
+                }
+                else if (args[x].StartsWith("-cs:"))
+                {
+                    certStoreFile = args[x].Substring(4);
+                }
+                else if (args[x].StartsWith("-csp:"))
+                {
+                    certStorePwd = args[x].Substring(5);
+                }
             }
 
-            if(missionFile == null)
+            if (policyFile == null || missionFile == null)
             {
                 showUsage();
                 return;
             }
 
+            if(certStoreFile != null)
+            {
+                if(certStorePwd == null)
+                {
+                    certStorePwd = "";
+                }
+
+                _engage.openCertStore(certStoreFile, certStorePwd);
+            }
+
             int rc;
+            JObject policy = new JObject();
             JObject mission = new JObject();
+
+            if (!loadPolicy(policyFile, ref policy))
+            {
+                return;
+            }
+
             if (!loadMission(missionFile, ref mission))
             {
                 return;
@@ -181,7 +240,7 @@ namespace engage_sample_cs_console
             _engage.subscribe((Engage.IGroupNotifications)this);
             _engage.subscribe((Engage.ILicenseNotifications)this);
 
-            rc = _engage.initialize("{}", "{}", null);
+            rc = _engage.initialize(policy.ToString(), "{}", null);
             if (rc != Engage.ENGAGE_RESULT_OK)
             {
                 Console.WriteLine("initialize failed");
@@ -496,254 +555,279 @@ namespace engage_sample_cs_console
         }
 
         #region Notification handlers
-        void Engage.IEngineNotifications.onEngineStarted()
+        void Engage.IEngineNotifications.onEngineStarted(string eventExtraJson)
         {
             Console.WriteLine("C#: onEngineStarted");
         }
 
-        void Engage.IEngineNotifications.onEngineStopped()
+        void Engage.IEngineNotifications.onEngineStopped(string eventExtraJson)
         {
             Console.WriteLine("C#: onEngineStopped");
         }
 
-        void Engage.IRallypointNotifications.onRallypointPausingConnectionAttempt(string id)
+        void Engage.IRallypointNotifications.onRallypointPausingConnectionAttempt(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onRallypointPausingConnectionAttempt: " + id);
         }
 
-        void Engage.IRallypointNotifications.onRallypointConnecting(string id)
+        void Engage.IRallypointNotifications.onRallypointConnecting(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onRallypointConnecting: " + id);
         }
 
-        void Engage.IRallypointNotifications.onRallypointConnected(string id)
+        void Engage.IRallypointNotifications.onRallypointConnected(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onRallypointConnected: " + id);
         }
 
-        void Engage.IRallypointNotifications.onRallypointDisconnected(string id)
+        void Engage.IRallypointNotifications.onRallypointDisconnected(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onRallypointDisconnected: " + id);
         }
 
-        void Engage.IRallypointNotifications.onRallypointRoundtripReport(string id, int rtMs, int rtRating)
+        void Engage.IRallypointNotifications.onRallypointRoundtripReport(string id, int rtMs, int rtRating, string eventExtraJson)
         {
             Console.WriteLine("C#: onRallypointRoundtripReport: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupCreated(string id)
+        void Engage.IGroupNotifications.onGroupCreated(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupCreated: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupCreateFailed(string id)
+        void Engage.IGroupNotifications.onGroupCreateFailed(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupCreateFailed: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupDeleted(string id)
+        void Engage.IGroupNotifications.onGroupDeleted(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupDeleted: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupConnected(string id)
+        void Engage.IGroupNotifications.onGroupConnected(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupConnected: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupConnectFailed(string id)
+        void Engage.IGroupNotifications.onGroupConnectFailed(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupConnectFailed: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupDisconnected(string id)
+        void Engage.IGroupNotifications.onGroupDisconnected(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupDisconnected: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupJoined(string id)
+        void Engage.IGroupNotifications.onGroupJoined(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupJoined: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupJoinFailed(string id)
+        void Engage.IGroupNotifications.onGroupJoinFailed(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupJoinFailed: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupLeft(string id)
+        void Engage.IGroupNotifications.onGroupLeft(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupLeft: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupMemberCountChanged(string id, int newCount)
+        void Engage.IGroupNotifications.onGroupMemberCountChanged(string id, int newCount, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupMemberCountChanged: " + id + ", newCount=" + newCount);
         }
 
-        void Engage.IGroupNotifications.onGroupRxStarted(string id)
+        void Engage.IGroupNotifications.onGroupRxStarted(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupRxStarted: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupRxEnded(string id)
+        void Engage.IGroupNotifications.onGroupRxEnded(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupRxEnded: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupRxSpeakersChanged(string id, string groupTalkerJson)
+        void Engage.IGroupNotifications.onGroupRxSpeakersChanged(string id, string groupTalkerJson, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupRxSpeakersChanged: " + id + ", [" + groupTalkerJson + "]");
         }
 
-        void Engage.IGroupNotifications.onGroupTxStarted(string id)
+        void Engage.IGroupNotifications.onGroupTxStarted(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupTxStarted: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupTxEnded(string id)
+        void Engage.IGroupNotifications.onGroupTxEnded(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupTxEnded: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupTxFailed(string id)
+        void Engage.IGroupNotifications.onGroupTxFailed(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupTxFailed: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupTxUsurpedByPriority(string id)
+        void Engage.IGroupNotifications.onGroupTxUsurpedByPriority(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupTxUsurpedByPriority: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupMaxTxTimeExceeded(string id)
+        void Engage.IGroupNotifications.onGroupMaxTxTimeExceeded(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupMaxTxTimeExceeded: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupRxMuted(string id)
+        void Engage.IGroupNotifications.onGroupRxMuted(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupRxMuted: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupRxUnmuted(string id)
+        void Engage.IGroupNotifications.onGroupRxUnmuted(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupRxUnmuted: " + id);
         }
 
-        void Engage.IGroupNotifications.onGroupNodeDiscovered(string id, string nodeJson)
+        void Engage.IGroupNotifications.onGroupNodeDiscovered(string id, string nodeJson, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupNodeDiscovered: " + id + ", " + nodeJson);
         }
 
-        void Engage.IGroupNotifications.onGroupNodeRediscovered(string id, string nodeJson)
+        void Engage.IGroupNotifications.onGroupNodeRediscovered(string id, string nodeJson, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupNodeRediscovered: " + id + ", " + nodeJson);
         }
 
-        void Engage.IGroupNotifications.onGroupNodeUndiscovered(string id, string nodeJson)
+        void Engage.IGroupNotifications.onGroupNodeUndiscovered(string id, string nodeJson, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupNodeUndiscovered: " + id + ", " + nodeJson);
         }
 
-        void Engage.IGroupNotifications.onGroupAssetDiscovered(string id, string nodeJson)
+        void Engage.IGroupNotifications.onGroupAssetDiscovered(string id, string nodeJson, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupAssetDiscovered: " + id + ", " + nodeJson);
         }
 
-        void Engage.IGroupNotifications.onGroupAssetRediscovered(string id, string nodeJson)
+        void Engage.IGroupNotifications.onGroupAssetRediscovered(string id, string nodeJson, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupAssetRediscovered: " + id + ", " + nodeJson);
         }
 
-        void Engage.IGroupNotifications.onGroupAssetUndiscovered(string id, string nodeJson)
+        void Engage.IGroupNotifications.onGroupAssetUndiscovered(string id, string nodeJson, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupAssetUndiscovered: " + id + ", " + nodeJson);
         }
                 
-        void Engage.IGroupNotifications.onGroupBlobSent(string id)
+        void Engage.IGroupNotifications.onGroupBlobSent(string id, string eventExtraJson)
         {  
             Console.WriteLine("C#: onGroupBlobSent: " + id);          
         }
 
-        void Engage.IGroupNotifications.onGroupBlobSendFailed(string id)
+        void Engage.IGroupNotifications.onGroupBlobSendFailed(string id, string eventExtraJson)
         {  
             Console.WriteLine("C#: onGroupBlobSendFailed: " + id);          
         }
 
-        void Engage.IGroupNotifications.onGroupBlobReceived(string id, string blobInfoJson, byte[] blob, int blobSize)
+        void Engage.IGroupNotifications.onGroupBlobReceived(string id, string blobInfoJson, byte[] blob, int blobSize, string eventExtraJson)
         {  
             Console.WriteLine("C#: onGroupBlobReceived: " + id + ", " + blobInfoJson);          
         }
 
-        void Engage.IGroupNotifications.onGroupRtpSent(string id)
+        void Engage.IGroupNotifications.onGroupRtpSent(string id, string eventExtraJson)
         {  
             Console.WriteLine("C#: onGroupRtpSent: " + id);          
         }
 
-        void Engage.IGroupNotifications.onGroupRtpSendFailed(string id)
+        void Engage.IGroupNotifications.onGroupRtpSendFailed(string id, string eventExtraJson)
         {  
             Console.WriteLine("C#: onGroupRtpSendFailed: " + id);          
         }
 
-        void Engage.IGroupNotifications.onGroupRtpReceived(string id, string rtpInfoJson, byte[] payload, int payloadSize)
+        void Engage.IGroupNotifications.onGroupRtpReceived(string id, string rtpInfoJson, byte[] payload, int payloadSize, string eventExtraJson)
         {  
             Console.WriteLine("C#: onGroupRtpReceived: " + id + ", " + rtpInfoJson);          
         }
 
-        void Engage.IGroupNotifications.onGroupRawSent(string id)
+        void Engage.IGroupNotifications.onGroupRawSent(string id, string eventExtraJson)
         {  
             Console.WriteLine("C#: onGroupRawSent: " + id);          
         }
 
-        void Engage.IGroupNotifications.onGroupRawSendFailed(string id)
+        void Engage.IGroupNotifications.onGroupRawSendFailed(string id, string eventExtraJson)
         {  
             Console.WriteLine("C#: onGroupRawSendFailed: " + id);          
         }
 
-        void Engage.IGroupNotifications.onGroupRawReceived(string id, byte[] raw, int rawSize)
+        void Engage.IGroupNotifications.onGroupRawReceived(string id, byte[] raw, int rawSize, string eventExtraJson)
         {  
             Console.WriteLine("C#: onGroupRawReceived: " + id);          
         }
 
-        void Engage.ILicenseNotifications.onLicenseChanged()
+        void Engage.ILicenseNotifications.onLicenseChanged(string eventExtraJson)
         {
             Console.WriteLine("C#: onLicenseChanged");
         }
         
-        void Engage.ILicenseNotifications.onLicenseExpired()
+        void Engage.ILicenseNotifications.onLicenseExpired(string eventExtraJson)
         {
             Console.WriteLine("C#: onLicenseExpired");
         }
                 
-        void Engage.ILicenseNotifications.onLicenseExpiring(long secondsLeft)
+        void Engage.ILicenseNotifications.onLicenseExpiring(double secondsLeft, string eventExtraJson)
         {
             Console.WriteLine("C#: onLicenseExpiring: " + secondsLeft);
         }
 
-        public void onGroupTimelineEventStarted(string id, string eventJson)
+        public void onGroupTimelineEventStarted(string id, string eventJson, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupTimelineEventStarted: " + id + ", event=" + eventJson);
         }
 
-        public void onGroupTimelineEventUpdated(string id, string eventJson)
+        public void onGroupTimelineEventUpdated(string id, string eventJson, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupTimelineEventUpdated: " + id + ", event=" + eventJson);
         }
 
-        public void onGroupTimelineEventEnded(string id, string eventJson)
+        public void onGroupTimelineEventEnded(string id, string eventJson, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupTimelineEventEnded: " + id + ", event=" + eventJson);
         }
 
-        public void onGroupTimelineReport(string id, string reportJson)
+        public void onGroupTimelineReport(string id, string reportJson, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupTimelineReport: " + id + ", event=" + reportJson);
         }
 
-        public void onGroupTimelineReportFailed(string id)
+        public void onGroupTimelineReportFailed(string id, string eventExtraJson)
         {
             Console.WriteLine("C#: onGroupTimelineReportFailed: " + id);
+        }
+
+        public void onGroupTxMuted(string id, string eventExtraJson)
+        {
+            Console.WriteLine("C#: onGroupTxMuted: " + id);
+        }
+
+        public void onGroupTxUnmuted(string id, string eventExtraJson)
+        {
+            Console.WriteLine("C#: onGroupTxUnmuted: " + id);
+        }
+
+        public void onGroupTimelineGroomed(string id, string eventListJson, string eventExtraJson)
+        {
+            Console.WriteLine("C#: onGroupTimelineGroomed: " + id);
+        }
+
+        public void onGroupHealthReport(string id, string healthReportJson, string eventExtraJson)
+        {
+            Console.WriteLine("C#: onGroupHealthReport: " + id);
+        }
+
+        public void onGroupHealthReportFailed(string id, string eventExtraJson)
+        {
+            Console.WriteLine("C#: onGroupHealthReportFailed: " + id);
         }
         #endregion
     }
