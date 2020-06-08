@@ -1755,7 +1755,7 @@ public class Engage
         }
     };
 
-    private EngageStringCallback on_ENGAGE_GROUP_HEALTH_REPORT = (string id, string healthReportJson, string eventExtraJson) =>
+    private EngageString2Callback on_ENGAGE_GROUP_HEALTH_REPORT = (string id, string healthReportJson, string eventExtraJson) =>
     {
         lock (_groupNotificationSubscribers)
         {
