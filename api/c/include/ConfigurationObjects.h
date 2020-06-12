@@ -1351,6 +1351,21 @@ namespace AppConfigurationObjects
             address.clear();
             port = 0;
         }
+
+        bool matches(const NetworkAddress& other)
+        {
+            if(address.compare(other.address) != 0)
+            {
+                return false;
+            }
+
+            if(port != other.port)
+            {
+                return false;
+            }
+
+            return true;
+        }
     };
 
     static void to_json(nlohmann::json& j, const NetworkAddress& p)
@@ -1637,6 +1652,70 @@ namespace AppConfigurationObjects
             verifyPeer = false;
             transactionTimeoutMs = 5000;
             disableMessageSigning = false;
+        }
+
+        bool matches(const Rallypoint& other)
+        {
+            if(!host.matches(other.host))
+            {
+                return false;
+            }
+
+            if(certificate.compare(other.certificate) != 0)
+            {
+                return false;
+            }
+
+            if(certificateKey.compare(other.certificateKey) != 0)
+            {
+                return false;
+            }
+
+            if(verifyPeer != other.verifyPeer)
+            {
+                return false;
+            }
+
+            if(allowSelfSignedCertificate != other.allowSelfSignedCertificate)
+            {
+                return false;
+            }
+
+            if(caCertificates.size() != other.caCertificates.size())
+            {
+                return false;
+            }
+
+            for(size_t x = 0; x < caCertificates.size(); x++)
+            {
+                bool found = false;
+
+                for(size_t y = 0; y < other.caCertificates.size(); y++)
+                {
+                    if(caCertificates[x].compare(other.caCertificates[y]) == 0)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if(!found)
+                {
+                    return false;
+                }
+            }
+
+            if(transactionTimeoutMs != other.transactionTimeoutMs)
+            {
+                return false;
+            }
+
+            if(disableMessageSigning != other.disableMessageSigning)
+            {
+                return false;
+            }
+
+            return true;
         }
     };
 
