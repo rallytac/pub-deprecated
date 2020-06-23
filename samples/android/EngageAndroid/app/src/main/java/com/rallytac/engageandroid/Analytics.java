@@ -63,6 +63,7 @@ public class Analytics
     public static final String LICENSE_ACT_OK_ALREADY = "LIC_ACT_OK_ALREADY";
     public static final String LICENSE_ACT_FAILED_NO_KEY = "LIC_ACT_FAILED_NO_KEY";
     public static final String LICENSE_ACT_FAILED = "LIC_ACT_FAILED";
+    public static final String LICENSE_DEACTIVATED = "LIC_DEACT";
 
     public static final String GROUP_ASSET_DISCOVERED = "GRP_ASSET_DISCOVERED";
     //public static final String GROUP_ASSET_REDISCOVERED = "GRP_ASSET_REDISCOVERED";

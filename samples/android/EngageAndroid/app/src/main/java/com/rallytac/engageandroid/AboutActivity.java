@@ -62,6 +62,9 @@ public class AboutActivity extends
     private boolean _scanning = false;
     private InternalDescriptor _activeLd = null;
     private InternalDescriptor _newLd = null;
+    private ImageView _ivScanLicenseKey = null;
+    private ImageView _ivScanActivationCode = null;
+    private ImageView _ivWebFetchActivationCode = null;
 
 
     private int _numberOfClicksOfAppLogo = 0;
@@ -195,11 +198,17 @@ public class AboutActivity extends
             }
         });
 
+        _ivScanLicenseKey = findViewById(R.id.ivScanLicenseKey);;
+        _ivScanActivationCode = findViewById(R.id.ivScanActivationCode);
+        _ivWebFetchActivationCode = findViewById(R.id.ivWebFetchActivationCode);
+
         String s = _activeLd._ld._deviceId;
         if(Utils.isEmptyString(s))
         {
             s = "unknown";
         }
+
+
 
         _etDeviceId.setText(s);
         _etLicenseKey.setText(_activeLd._ld._key);
@@ -229,6 +238,16 @@ public class AboutActivity extends
     protected void onStop()
     {
         super.onStop();
+    }
+
+    private void clearStoredLicensing()
+    {
+        Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_KEY, "");
+        Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, "");
+        Globals.getSharedPreferencesEditor().apply();
+
+        // Put the new license into effect
+        Globals.getEngageApplication().getEngine().engageUpdateLicense(getString(R.string.licensing_entitlement), "", "", getString(R.string.manufacturer_id));
     }
 
     private void saveLicenseData()
@@ -375,6 +394,33 @@ public class AboutActivity extends
         else
         {
             findViewById(R.id.ivShareLicenseKey).setVisibility(View.VISIBLE);
+        }
+
+        String key = _etLicenseKey.getText().toString();
+        String ac = _etActivationCode.getText().toString();
+
+        if(Utils.isEmptyString(ac))
+        {
+            _etLicenseKey.setEnabled(true);
+            _ivScanLicenseKey.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            _etLicenseKey.setEnabled(false);
+            _ivScanLicenseKey.setVisibility(View.GONE);
+        }
+
+        if(Utils.isEmptyString(key))
+        {
+            _etActivationCode.setEnabled(false);
+            _ivScanActivationCode.setVisibility(View.GONE);
+            _ivWebFetchActivationCode.setVisibility(View.GONE);
+        }
+        else
+        {
+            _etActivationCode.setEnabled(true);
+            _ivScanActivationCode.setVisibility(View.VISIBLE);
+            _ivWebFetchActivationCode.setVisibility(View.VISIBLE);
         }
     }
 
@@ -678,7 +724,10 @@ public class AboutActivity extends
                 @Override
                 public void run()
                 {
+                    Globals.getEngageApplication().logEvent(Analytics.LICENSE_DEACTIVATED);
+                    _etLicenseKey.setText(null);
                     _etActivationCode.setText(null);
+                    clearStoredLicensing();
                     userChangedLicensedData();
                     updateUi();
                     Toast.makeText(AboutActivity.this, R.string.deactivated, Toast.LENGTH_LONG).show();
@@ -742,7 +791,10 @@ public class AboutActivity extends
                     @Override
                     public void onClick(DialogInterface dialog, int which)
                     {
+                        Globals.getEngageApplication().logEvent(Analytics.LICENSE_DEACTIVATED);
+                        _etLicenseKey.setText(null);
                         _etActivationCode.setText(null);
+                        clearStoredLicensing();
                         userChangedLicensedData();
                         updateUi();
                         Toast.makeText(AboutActivity.this, R.string.deactivated, Toast.LENGTH_LONG).show();
