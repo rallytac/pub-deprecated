@@ -71,6 +71,9 @@ public class Analytics
     public static final String GROUP_TIMELINE_REPORT = "GRP_TIMELINE_REPORT";
     public static final String GROUP_TIMELINE_REPORT_FAILED = "GRP_TIMELINE_REPORT_FAILED";
 
+    public static final String GROUP_HEALTH_REPORT = "GRP_HEALTH_REPORT";
+    public static final String GROUP_HEALTH_REPORT_FAILED = "GRP_HEALTH_REPORT_FAILED";
+
     public static final String GROUP_RP_CONNECTED = "GRP_RP_CONN";
     public static final String GROUP_RP_DISCONNECTED = "GRP_RP_DISCONN";
 
@@ -92,6 +95,7 @@ public class Analytics
     public static final String VIEW_CONTACT = "VIEW_CONTACT";
     public static final String VIEW_GROUP_LIST = "VIEW_GROUP_LIST";
     public static final String VIEW_TIMELINE = "VIEW_TIMELINE";
+    public static final String VIEW_CERTIFICATES = "VIEW_CERTIFICATES";
 
     public static final String TOGGLE_NETWORKING = "TOGGLE_NETWORKING";
     public static final String MISSION_CHANGED = "MISS_CHANGED";

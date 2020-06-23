@@ -33,6 +33,12 @@ public class PreferenceKeys
     public static String USER_TONE_LEVEL_NOTIFICATION = "user_toneLevel.notification";
     public static String USER_SPEAKER_OUTPUT_BOOST_FACTOR = "user_audio.output.boostFactor";
 
+    public static String USER_AUDIO_AEC_ENABLED = "user_audio.aec.enabled";
+    public static String USER_AUDIO_AEC_MODE = "user_audio.aec.mode";
+    public static String USER_AUDIO_AEC_CNG = "user_audio.aec.cng";
+    public static String USER_AUDIO_AEC_SPEAKER_TAIL_MS = "user_audio.aec.speakerTailMs";
+    public static String USER_AUDIO_AEC_DISABLE_STEREO = "user_audio.aec.disableStereo";
+
     public static String USER_UI_PTT_LATCHING = "user_ui.pttLatching";
     public static String USER_UI_PTT_VOICE_CONTROL = "user_ui.pttButtonVoiceControl";
 
@@ -95,4 +101,7 @@ public class PreferenceKeys
 
     public static String DEVELOPER_MODE_ACTIVE = "developer_modeActive";
     public static String DEVELOPER_USE_DEV_LICENSING_SYSTEM = "developer_useDevLicensingSystem";
+
+    public static String USER_CERT_STORE_FILE_NAME = "user_activeCertStoreFileName";
+    public static String USER_CERT_STORE_PASSWORD_SET = "user_certStore.passwordSet";
 }

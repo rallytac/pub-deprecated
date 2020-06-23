@@ -240,7 +240,7 @@ public class MissionListActivity extends AppCompatActivity
                         if(!Utils.isEmptyString(passphrase))
                         {
                             String json;
-                            json = Globals.getEngageApplication().getEngine().engageGenerateMission(passphrase, groupCount, rp, name);
+                            json = Globals.getEngageApplication().applyFlavorSpecificGeneratedMissionModifications(Globals.getEngageApplication().getEngine().engageGenerateMission(passphrase, groupCount, rp, name));
                             ActiveConfiguration.installMissionJson(MissionListActivity.this, json, true);
 
                             // Force a recreate to reload the database

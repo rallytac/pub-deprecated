@@ -51,12 +51,13 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.NetworkInterface;
-import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -97,8 +98,9 @@ public class EngageApplication
         void onAnyTxEnding();
         void onAllTxEnded();
         void onGroupUiRefreshNeeded(GroupDescriptor gd);
-        void onGroupTxUsurped(GroupDescriptor gd);
+        void onGroupTxUsurped(GroupDescriptor gd, String eventExtra);
         void onGroupMaxTxTimeExceeded(GroupDescriptor gd);
+        void onGroupTxFailed(GroupDescriptor gd, String eventExtra);
     }
 
     public interface IAssetChangeListener
@@ -128,6 +130,9 @@ public class EngageApplication
         void onGroupTimelineEventEnded(GroupDescriptor gd, String eventJson);
         void onGroupTimelineReport(GroupDescriptor gd, String reportJson);
         void onGroupTimelineReportFailed(GroupDescriptor gd);
+        void onGroupTimelineGroomed(GroupDescriptor gd, String eventListJson);
+        void onGroupHealthReport(GroupDescriptor gd, String reportJson);
+        void onGroupHealthReportFailed(GroupDescriptor gd);
     }
 
     private EngageService _svc = null;
@@ -189,7 +194,12 @@ public class EngageApplication
 	
 	private FirebaseAnalytics _firebaseAnalytics = null;
 
-	public class GroupConnectionTrackerInfo
+    private boolean _hasEngineBeenInitialized = false;
+
+    private boolean _terminateOnEngineStopped = false;
+    private Activity _terminatingActivity = null;
+
+    public class GroupConnectionTrackerInfo
     {
         public GroupConnectionTrackerInfo(boolean mc, boolean mcfo, boolean rp)
         {
@@ -237,6 +247,53 @@ public class EngageApplication
         return (chk.hasMulticastConnection || chk.hasRpConnection);
     }
 
+    private HashMap<String, ArrayList<TextMessage>> _textMessageDatabase = new HashMap<>();
+
+	private void cleanupTextMessageDatabase()
+    {
+        synchronized (_textMessageDatabase)
+        {
+            // TODO: cleanup the text messaging database
+        }
+    }
+
+    public ArrayList<TextMessage> getTextMessagesForGroup(String id)
+    {
+        ArrayList<TextMessage> rc = null;
+
+        synchronized (_textMessageDatabase)
+        {
+            ArrayList<TextMessage> theList = _textMessageDatabase.get(id);
+            if(theList != null)
+            {
+                rc = new ArrayList<>();
+                for(TextMessage tm : theList)
+                {
+                    rc.add(tm);
+                }
+            }
+        }
+
+        return rc;
+    }
+
+    public void addTextMessage(TextMessage tm)
+    {
+        synchronized (_textMessageDatabase)
+        {
+            ArrayList<TextMessage> theList = _textMessageDatabase.get(tm._groupId);
+            if(theList == null)
+            {
+                theList = new ArrayList<>();
+                _textMessageDatabase.put(tm._groupId, theList);
+            }
+
+            theList.add(tm);
+
+            cleanupTextMessageDatabase();
+        }
+    }
+
     private class MyApplicationIntentReceiver extends BroadcastReceiver
     {
         public void start()
@@ -280,11 +337,11 @@ public class EngageApplication
 
             if(action.compareTo(getString(R.string.app_intent_ptt_on)) == 0)
             {
-                Globals.getEngageApplication().startTx(0, 0);
+                startTx(0, 0);
             }
             else if(action.compareTo(getString(R.string.app_intent_ptt_off)) == 0)
             {
-                Globals.getEngageApplication().endTx();
+                endTx();
             }
         }
     }
@@ -504,14 +561,65 @@ public class EngageApplication
         }
     }
 
+    private void setupDirectories()
+    {
+        try
+        {
+            File certStoreDir = new File(getCertStoreCacheDir());
+            if(!certStoreDir.exists())
+            {
+                certStoreDir.mkdirs();
+            }
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void setupFilesystemLogging()
+    {
+        try
+        {
+            File appDirectory = new File( Environment.getExternalStorageDirectory() + "/" + BuildConfig.APPLICATION_ID );
+            File logDirectory = new File( appDirectory + "/log" );
+            File logFile = new File( logDirectory, "logcat-" + System.currentTimeMillis() + ".txt" );
+
+            if ( !appDirectory.exists() )
+            {
+                appDirectory.mkdir();
+            }
+
+            if ( !logDirectory.exists() )
+            {
+                logDirectory.mkdir();
+            }
+
+            try
+            {
+
+                Process process = Runtime.getRuntime().exec( "logcat -c");
+                process = Runtime.getRuntime().exec( "logcat -f " + logFile);
+
+            }
+            catch ( IOException e )
+            {
+                e.printStackTrace();
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void onCreate()
     {
         Log.d(TAG, "onCreate");
 
         super.onCreate();
-
-        startFirebaseAnalytics();
 
         // Its important to set this as soon as possible!
         Engine.setApplicationContext(this.getApplicationContext());
@@ -535,6 +643,11 @@ public class EngageApplication
         Globals.setContext(getApplicationContext());
         Globals.setSharedPreferences(PreferenceManager.getDefaultSharedPreferences(this));
         Globals.setAudioPlayerManager(new AudioPlayerManager(this));
+
+        setupDirectories();
+        //setupFilesystemLogging();
+
+        startFirebaseAnalytics();
 
         runPreflightCheck();
 
@@ -563,6 +676,17 @@ public class EngageApplication
     public void onActivityCreated(Activity activity, Bundle bundle)
     {
         Log.d(TAG, "onActivityCreated: " + activity.toString());
+        if(!_hasEngineBeenInitialized)
+        {
+            if(activity.getClass().getSimpleName().compareTo(LauncherActivity.class.getSimpleName()) != 0)
+            {
+                activity.finish();
+
+                Intent intent = new Intent(this, LauncherActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+        }
     }
 
     @Override
@@ -769,6 +893,71 @@ public class EngageApplication
         return pd;
     }
 
+    public Set<String> getCertificateStoresPasswords()
+    {
+        Set<String> rc = new HashSet<>();
+
+        // Add the empty password
+        rc.add("");
+
+        // Load passwords from resources
+        String[] resPasswords = getResources().getStringArray(R.array.certstore_passwords);
+        if(resPasswords != null && resPasswords.length > 0)
+        {
+            for (String s : resPasswords)
+            {
+                rc.add(s);
+            }
+        }
+
+        // Load passwords from preferences
+        Set<String> prefsPasswords = Globals.getSharedPreferences().getStringSet(PreferenceKeys.USER_CERT_STORE_PASSWORD_SET, null);
+        if(prefsPasswords != null && prefsPasswords.size() > 0)
+        {
+            for(String s : prefsPasswords)
+            {
+                rc.add(s);
+            }
+        }
+
+        return rc;
+    }
+
+    public JSONObject getCertificateStoreDescriptorForFile(String filePath)
+    {
+        JSONObject rc = null;
+        String jsonText;
+
+        try
+        {
+            Set<String> passwords = getCertificateStoresPasswords();
+            for(String pwd : passwords)
+            {
+                jsonText = Globals.getEngageApplication().getEngine().engageQueryCertStoreContents(filePath, pwd);
+                if(!Utils.isEmptyString(jsonText))
+                {
+                    JSONObject tmp = new JSONObject(jsonText);
+                    if(tmp != null)
+                    {
+                        int version = tmp.optInt(Engine.JsonFields.CertStoreDescriptor.version, 0);
+                        if(version > 0)
+                        {
+                            rc = tmp;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        catch(Exception e)
+        {
+            rc = null;
+            e.printStackTrace();
+        }
+
+        return rc;
+    }
+
     public void restartDeviceMonitoring()
     {
         startDeviceMonitor();
@@ -833,7 +1022,6 @@ public class EngageApplication
 
     public void stop()
     {
-        Log.d(TAG, "stop");
 
         stopAppIntentReceiver();
         stopDeviceMonitor();
@@ -841,34 +1029,36 @@ public class EngageApplication
         if(getEngine() != null)
         {
             getEngine().engageStop();
-            getEngine().engageShutdown();
         }
-
-        unbindService(this);
-        stopService(new Intent(this, EngageService.class));
-
-        unregisterActivityLifecycleCallbacks(this);
-
-        goIdle();
-
-        try
+        else
         {
-            Thread.sleep(500);
+            clearOutServiceOperation();
+
+            goIdle();
+
+            try
+            {
+                Thread.sleep(500);
+            }
+            catch (Exception e)
+            {
+                Log.d(TAG, "stop: exception");
+            }
         }
-        catch (Exception e)
-        {
-        }
+    }
+
+    private void clearOutServiceOperation()
+    {
+        unbindService(EngageApplication.this);
+        stopService(new Intent(EngageApplication.this, EngageService.class));
+        unregisterActivityLifecycleCallbacks(EngageApplication.this);
     }
 
     public void terminateApplicationAndReturnToAndroid(Activity callingActivity)
     {
+        _terminateOnEngineStopped = true;
+        _terminatingActivity = callingActivity;
         stop();
-
-        callingActivity.moveTaskToBack(true);
-        callingActivity.finishAndRemoveTask();
-
-        android.os.Process.killProcess(android.os.Process.myPid());
-        System.exit(0);
     }
 
     public void addPresenceChangeListener(IPresenceChangeListener listener)
@@ -1251,6 +1441,7 @@ public class EngageApplication
         {
             for(GroupDescriptor gd : _activeConfiguration.getMissionGroups())
             {
+                Log.d(TAG, "creating " + gd.id + " of mission " + _activeConfiguration.getMissionName());
                 getEngine().engageCreateGroup(buildFinalGroupJsonConfiguration(gd.jsonConfiguration));
                 if(gd.type == GroupDescriptor.Type.gtAudio)
                 {
@@ -1276,15 +1467,18 @@ public class EngageApplication
         {
             for(GroupDescriptor gd : _activeConfiguration.getMissionGroups())
             {
+                boolean joinIt = false;
+
                 if(gd.type == GroupDescriptor.Type.gtPresence)
                 {
                     // All presence groups get joined
-                    getEngine().engageJoinGroup(gd.id);
+                    joinIt = true;
+
                 }
-                if(gd.type == GroupDescriptor.Type.gtRaw)
+                else if(gd.type == GroupDescriptor.Type.gtRaw)
                 {
                     // All raw groups get joined
-                    getEngine().engageJoinGroup(gd.id);
+                    joinIt = true;
                 }
                 else if(gd.type == GroupDescriptor.Type.gtAudio)
                 {
@@ -1293,7 +1487,7 @@ public class EngageApplication
                     {
                         if(gd.selectedForSingleView)
                         {
-                            getEngine().engageJoinGroup(gd.id);
+                            joinIt = true;
                         }
                     }
                     // ... or the multi-view group(s)?
@@ -1301,9 +1495,19 @@ public class EngageApplication
                     {
                         if(gd.selectedForMultiView)
                         {
-                            getEngine().engageJoinGroup(gd.id);
+                            joinIt = true;
                         }
                     }
+                }
+
+                if(joinIt)
+                {
+                    if(gd.joined)
+                    {
+                        Log.w(TAG, "joining a group which is already joined");
+                    }
+
+                    getEngine().engageJoinGroup(gd.id);
                 }
             }
 
@@ -1553,14 +1757,22 @@ public class EngageApplication
 
     private String getCustomCertStoreFn()
     {
-        String fn = null;
+        String fn = Globals.getSharedPreferences().getString(PreferenceKeys.USER_CERT_STORE_FILE_NAME, "");
+        if(!Utils.isEmptyString(fn))
+        {
+            if(!Utils.doesFileExist(fn))
+            {
+                fn = null;
+            }
+        }
 
+        /*
         try
         {
             String tmp;
 
-            // First look in our cache if we have an active file - it would have been placed here by other parts of the app or an MDM
-            tmp = getCertStoreCacheDir() + "/" + Globals.getContext().getString(R.string.certstore_active_fn);
+            // See if our preferences tell us what file to use
+            tmp = Globals.getSharedPreferences().getString(PreferenceKeys.USER_CERT_STORE_FILE_NAME, "");
             if(Utils.doesFileExist(tmp))
             {
                fn = tmp;
@@ -1589,6 +1801,7 @@ public class EngageApplication
             e.printStackTrace();
             fn = null;
         }
+        */
 
         return fn;
 
@@ -1601,7 +1814,7 @@ public class EngageApplication
         try
         {
             String fn = getCustomCertStoreFn();
-            if(fn != null)
+            if(!Utils.isEmptyString(fn))
             {
                 RandomAccessFile raf = new RandomAccessFile(fn, "r");
                 rc = new byte[(int)raf.length()];
@@ -1620,9 +1833,9 @@ public class EngageApplication
         return rc;
     }
 
-    private String createCertStoreForEngine()
+    private boolean openCertificateStore()
     {
-        String fn = null;
+        boolean rc = false;
 
         try
         {
@@ -1640,7 +1853,7 @@ public class EngageApplication
             }
 
             String dir = Globals.getContext().getFilesDir().toString();
-            fn = dir + "/" + Globals.getContext().getString(R.string.certstore_active_fn);
+            String fn = dir + "/" + Globals.getContext().getString(R.string.certstore_active_fn);
 
             File fd = new File(fn);
             fd.deleteOnExit();
@@ -1648,40 +1861,155 @@ public class EngageApplication
             FileOutputStream fos = new FileOutputStream(fd);
             fos.write(certStoreContent);
             fos.close();
+
+            Set<String> passwords = getCertificateStoresPasswords();
+            for(String pwd : passwords)
+            {
+                if(getEngine().engageOpenCertStore(fn, pwd) == 0)
+                {
+                    rc = true;
+                    break;
+                }
+            }
         }
         catch (Exception e)
         {
             e.printStackTrace();
-            fn = null;
+            rc = false;
         }
 
-        return fn;
+        return rc;
+    }
+
+    public String applyFlavorSpecificGeneratedMissionModifications(String json)
+    {
+        String generatedMissionDescription = getString(R.string.generated_mission_description);
+        if(Utils.isEmptyString(generatedMissionDescription))
+        {
+            return json;
+        }
+
+        String rc;
+
+        try
+        {
+            JSONObject jo = new JSONObject(json);
+
+            jo.put(Engine.JsonFields.Mission.description, generatedMissionDescription);
+
+            rc = jo.toString();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            rc = json;
+        }
+
+        return rc;
+    }
+
+    private void createSampleConfiguration()
+    {
+        String enginePolicyJson = ActiveConfiguration.makeBaselineEnginePolicyObject(Utils.getStringResource(this, R.raw.sample_engine_policy)).toString();
+        String identityJson = "{}";
+        String tempDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
+
+        getEngine().engageInitialize(enginePolicyJson,
+                identityJson,
+                tempDirectory);
+
+        String passphrase = BuildConfig.APPLICATION_ID + getString(R.string.manufacturer_id);
+        String mn = String.format(getString(R.string.sample_mission_gen_mission_name_fmt), getString(R.string.app_name));
+        String missionJson = getEngine().engageGenerateMission(passphrase, Integer.parseInt(getString(R.string.sample_mission_gen_group_count)), "", mn);
+
+        try
+        {
+            JSONObject jo = new JSONObject(missionJson);
+
+            // RP
+            String rp = getString(R.string.default_rallypoint);
+            if (!Utils.isEmptyString(rp))
+            {
+                JSONObject rallypoint = new JSONObject();
+                rallypoint.put("use", Utils.boolOpt(getString(R.string.sample_mission_gen_use_default_rallypoint), false));
+                rallypoint.put(Engine.JsonFields.Rallypoint.Host.address, rp);
+                rallypoint.put(Engine.JsonFields.Rallypoint.Host.port, Utils.intOpt(getString(R.string.default_rallypoint_port), Constants.DEF_RP_PORT));
+                jo.put(Engine.JsonFields.Rallypoint.objectName, rallypoint);
+            }
+
+            // Group names
+            String groupNameFmt = getString(R.string.sample_mission_gen_audio_group_name_fmt);
+            if(!Utils.isEmptyString(groupNameFmt))
+            {
+                JSONArray ar = jo.getJSONArray(Engine.JsonFields.Group.arrayName);
+                int idx;
+
+                idx = 1;
+                for(int x = 0; x < ar.length(); x++)
+                {
+                    JSONObject g = ar.getJSONObject(x);
+                    int type = g.getInt(Engine.JsonFields.Group.type);
+                    if(type == GroupDescriptor.Type.gtAudio.ordinal())
+                    {
+                        String gn = String.format(groupNameFmt, idx);
+                        g.put(Engine.JsonFields.Group.name, gn);
+                        idx++;
+                    }
+                }
+            }
+
+            missionJson = applyFlavorSpecificGeneratedMissionModifications(jo.toString());
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            missionJson = "";
+        }
+
+        Globals.getSharedPreferencesEditor().putString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_JSON, missionJson);
+        Globals.getSharedPreferencesEditor().apply();
+
+        if(!Utils.isEmptyString(missionJson))
+        {
+            ActiveConfiguration.installMissionJson(null, missionJson, true);
+        }
+
+        getEngine().deinitialize();
     }
 
     public void startEngine()
     {
         Log.d(TAG, "startEngine");
+
         try
         {
-            updateActiveConfiguration();
-            setMissionChangedStatus(false);
+            if(!openCertificateStore())
+            {
+                throw new Exception("Throw cannot open certificate store");
+            }
 
-            String enginePolicyJson = getActiveConfiguration().makeEnginePolicyObject(Utils.getStringResource(this, R.raw.sample_engine_policy)).toString();
+            updateActiveConfiguration();
+
+            if(_activeConfiguration == null)
+            {
+                createSampleConfiguration();
+                updateActiveConfiguration();
+            }
+
+            setMissionChangedStatus(false);
+            JSONObject policyBaseline = ActiveConfiguration.makeBaselineEnginePolicyObject(Utils.getStringResource(this, R.raw.sample_engine_policy));
+
+            String enginePolicyJson = getActiveConfiguration().makeEnginePolicyObjectFromBaseline(policyBaseline).toString();
             String identityJson = getActiveConfiguration().makeIdentityObject().toString();
             String tempDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
-
-            String certStoreFn = createCertStoreForEngine();
-
-            if(!Utils.isEmptyString(certStoreFn))
-            {
-                getEngine().engageOpenCertStore(certStoreFn, "");
-            }
 
             getEngine().engageInitialize(enginePolicyJson,
                     identityJson,
                     tempDirectory);
 
             getEngine().engageStart();
+
+            _hasEngineBeenInitialized = true;
         }
         catch (Exception e)
         {
@@ -1692,11 +2020,11 @@ public class EngageApplication
 
     public void stopEngine()
     {
-        Log.d(TAG, "stopEngine");
         try
         {
             leaveAllGroups();
             stopLocationUpdates();
+            _engineRunning = false;
             getEngine().engageStop();
             getEngine().engageShutdown();
         }
@@ -1709,48 +2037,51 @@ public class EngageApplication
     public ActiveConfiguration updateActiveConfiguration()
     {
         Log.d(TAG, "updateActiveConfiguration");
-        _activeConfiguration = Utils.loadConfiguration(_dynamicGroups);
+        _activeConfiguration = Utils.loadConfiguration(_activeConfiguration, _dynamicGroups);
 
-        if(!_activeConfiguration.getDiscoverSsdpAssets()
-                && !_activeConfiguration.getDiscoverCistechGv1Assets()
-                && !_activeConfiguration.getDiscoverTrelliswareAssets())
+        if(_activeConfiguration != null)
         {
-            if(!_dynamicGroups.isEmpty())
+            if (!_activeConfiguration.getDiscoverSsdpAssets()
+                    && !_activeConfiguration.getDiscoverCistechGv1Assets()
+                    && !_activeConfiguration.getDiscoverTrelliswareAssets())
             {
-                _dynamicGroups.clear();
-                _activeConfiguration = Utils.loadConfiguration(null);
-            }
-        }
-
-        ArrayList<String> toBeTrashed = new ArrayList<>();
-        ArrayList<GroupDescriptor> groups = _activeConfiguration.getMissionGroups();
-        for(String id : _groupConnections.keySet())
-        {
-            boolean found;
-
-            found = false;
-            for (GroupDescriptor gd : groups)
-            {
-                if(gd.id.compareTo(id) == 0)
+                if (!_dynamicGroups.isEmpty())
                 {
-                    found = true;
-                    break;
+                    _dynamicGroups.clear();
+                    _activeConfiguration = Utils.loadConfiguration(_activeConfiguration, null);
                 }
             }
 
-            if(!found)
+            ArrayList<String> toBeTrashed = new ArrayList<>();
+            ArrayList<GroupDescriptor> groups = _activeConfiguration.getMissionGroups();
+            for (String id : _groupConnections.keySet())
             {
-                toBeTrashed.add(id);
+                boolean found;
+
+                found = false;
+                for (GroupDescriptor gd : groups)
+                {
+                    if (gd.id.compareTo(id) == 0)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    toBeTrashed.add(id);
+                }
             }
-        }
 
-        for(String id : toBeTrashed)
-        {
-            eraseGroupConnectionState(id);
-        }
+            for (String id : toBeTrashed)
+            {
+                eraseGroupConnectionState(id);
+            }
 
-        restartStartHumanBiometricsReporting();
-        restartDeviceMonitoring();
+            restartStartHumanBiometricsReporting();
+            restartDeviceMonitoring();
+        }
 
         return _activeConfiguration;
     }
@@ -1835,6 +2166,7 @@ public class EngageApplication
         }
 
         // See if we have an active configuration.  If we don't we'll make one
+        /*
         val = Globals.getSharedPreferences().getString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_JSON, null);
         if(Utils.isEmptyString(val))
         {
@@ -1855,6 +2187,7 @@ public class EngageApplication
                 }
             }
         }
+        */
 
         updateActiveConfiguration();
 
@@ -1901,164 +2234,183 @@ public class EngageApplication
 
     public void startTx(final int priority, final int flags)
     {
-        try
+        runOnUiThread(new Runnable()
         {
-            synchronized (_groupsSelectedForTx)
+            @Override
+            public void run()
             {
-                if(!_groupsSelectedForTx.isEmpty())
+                try
                 {
-                    Log.e(TAG, "attempt to begin tx while there is already a pending/active tx");
-                    playGeneralErrorNotification();
-                    return;
-                }
-
-                ArrayList<GroupDescriptor> selected = getActiveConfiguration().getSelectedGroups();
-                if(selected.isEmpty())
-                {
-                    playGeneralErrorNotification();
-                    return;
-                }
-
-                for(GroupDescriptor gd : selected)
-                {
-                    _groupsSelectedForTx.add(gd);
-                }
-
-                boolean anyGroupToTxOn = false;
-                for (GroupDescriptor g : _groupsSelectedForTx)
-                {
-                    if(getActiveConfiguration().getUiMode() == Constants.UiMode.vSingle ||
-                            (getActiveConfiguration().getUiMode() == Constants.UiMode.vMulti) && (!g.txMuted) )
+                    synchronized (_groupsSelectedForTx)
                     {
-                        anyGroupToTxOn = true;
-                        g.txPending = true;
-                        break;
-                    }
-                }
-
-                if (!anyGroupToTxOn)
-                {
-                    _groupsSelectedForTx.clear();
-                    playGeneralErrorNotification();
-                    return;
-                }
-
-                // Start TX - in TX muted mode!!
-                synchronized (_groupsSelectedForTx)
-                {
-                    if(!_groupsSelectedForTx.isEmpty())
-                    {
-                        if(_groupsSelectedForTx.size() == 1)
+                        if(!_groupsSelectedForTx.isEmpty())
                         {
-                            logEvent(Analytics.GROUP_TX_REQUESTED_SINGLE);
+                            Log.e(TAG, "attempt to begin tx while there is already a pending/active tx");
+                            playGeneralErrorNotification();
+                            return;
                         }
-                        else
+        
+                        ArrayList<GroupDescriptor> selected = getActiveConfiguration().getSelectedGroups();
+                        if(selected.isEmpty())
                         {
-                            logEvent(Analytics.GROUP_TX_REQUESTED_MULTIPLE);
+                            playGeneralErrorNotification();
+                            return;
                         }
-
+        
+                        for(GroupDescriptor gd : selected)
+                        {
+                            _groupsSelectedForTx.add(gd);
+                        }
+        
+                        boolean anyGroupToTxOn = false;
                         for (GroupDescriptor g : _groupsSelectedForTx)
                         {
                             if(getActiveConfiguration().getUiMode() == Constants.UiMode.vSingle ||
                                     (getActiveConfiguration().getUiMode() == Constants.UiMode.vMulti) && (!g.txMuted) )
                             {
-                                getEngine().engageBeginGroupTxAdvanced(g.id, buildAdvancedTxJson(flags, priority, 0, true, _activeConfiguration.getUserAlias()));
+                                anyGroupToTxOn = true;
+                                g.txPending = true;
+                                break;
+                            }
+                        }
+        
+                        if (!anyGroupToTxOn)
+                        {
+                            _groupsSelectedForTx.clear();
+                            playGeneralErrorNotification();
+                            return;
+                        }
+        
+                        // Start TX - in TX muted mode!!
+                        synchronized (_groupsSelectedForTx)
+                        {
+                            if(!_groupsSelectedForTx.isEmpty())
+                            {
+                                if(_groupsSelectedForTx.size() == 1)
+                                {
+                                    logEvent(Analytics.GROUP_TX_REQUESTED_SINGLE);
+                                }
+                                else
+                                {
+                                    logEvent(Analytics.GROUP_TX_REQUESTED_MULTIPLE);
+                                }
+        
+                                for (GroupDescriptor g : _groupsSelectedForTx)
+                                {
+                                    if(getActiveConfiguration().getUiMode() == Constants.UiMode.vSingle ||
+                                            (getActiveConfiguration().getUiMode() == Constants.UiMode.vMulti) && (!g.txMuted) )
+                                    {
+                                        getEngine().engageBeginGroupTxAdvanced(g.id, buildAdvancedTxJson(flags, priority, 0, true, _activeConfiguration.getUserAlias()));
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                Log.w(TAG, "tx task runnable found no groups to tx on");
+                            }
+                        }
+        
+                        // TODO: we're already in a sync, now going into another.  is this dangerous
+                        // considering what we're calling (maybe not...?)
+                        synchronized (_uiUpdateListeners)
+                        {
+                            for(IUiUpdateListener listener : _uiUpdateListeners)
+                            {
+                                listener.onAnyTxPending();
                             }
                         }
                     }
-                    else
-                    {
-                        Log.w(TAG, "tx task runnable found no groups to tx on");
-                    }
                 }
-
-                // TODO: we're already in a sync, now going into another.  is this dangerous
-                // considering what we're calling (maybe not...?)
-                synchronized (_uiUpdateListeners)
+                catch (Exception e)
                 {
-                    for(IUiUpdateListener listener : _uiUpdateListeners)
-                    {
-                        listener.onAnyTxPending();
-                    }
+                    e.printStackTrace();
                 }
             }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
+        });
     }
 
     public void endTx()
     {
-        try
+        runOnUiThread(new Runnable()
         {
-            synchronized (_groupsSelectedForTx)
+            @Override
+            public void run()
             {
-                if (!_groupsSelectedForTx.isEmpty())
+                try
                 {
-                    for (GroupDescriptor g : _groupsSelectedForTx)
+                    // We'll just end transmit on everything
+                    for(GroupDescriptor gd : _activeConfiguration.getMissionGroups())
                     {
-                        getEngine().engageEndGroupTx(g.id);
+                        if (gd.type == GroupDescriptor.Type.gtAudio)
+                        {
+                            getEngine().engageEndGroupTx(gd.id);
+                        }
                     }
 
-                    _groupsSelectedForTx.clear();
-
-                    // TODO: only play tx off notification if something was already in a TX state of some sort
-                    playTxOffNotification();
-                }
-
-                synchronized (_uiUpdateListeners)
-                {
-                    for (IUiUpdateListener listener : _uiUpdateListeners)
+                    synchronized (_groupsSelectedForTx)
                     {
-                        listener.onAnyTxEnding();
+                        _groupsSelectedForTx.clear();
                     }
+
+                    synchronized (_uiUpdateListeners)
+                    {
+                        for (IUiUpdateListener listener : _uiUpdateListeners)
+                        {
+                            listener.onAnyTxEnding();
+                        }
+                    }
+
+                    checkIfAnyTxStillActiveAndNotify();
+
+                    /*
+                    synchronized (_groupsSelectedForTx)
+                    {
+                        if (!_groupsSelectedForTx.isEmpty())
+                        {
+                            for (GroupDescriptor g : _groupsSelectedForTx)
+                            {
+                                getEngine().engageEndGroupTx(g.id);
+                            }
+
+                            _groupsSelectedForTx.clear();
+
+                            // TODO: only play tx off notification if something was already in a TX state of some sort
+                            playTxOffNotification();
+                        }
+                        else
+                        {
+                            Log.w(TAG, "#SB# - endTx but no groups selected for tx");
+
+                        }
+
+                        synchronized (_uiUpdateListeners)
+                        {
+                            for (IUiUpdateListener listener : _uiUpdateListeners)
+                            {
+                                listener.onAnyTxEnding();
+                            }
+                        }
+
+                        checkIfAnyTxStillActiveAndNotify();
+                    }
+                    */
                 }
-
-                checkIfAnyTxStillActiveAndNotify();
-            }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-
-        /*
-        if(_txPending)
-        {
-            _txPending = false;
-            Log.i(TAG, "cancelling previous tx pending");
-            cancelPreviousTxPending();
-        }
-        */
-    }
-
-    /*
-    private void cancelPreviousTxPending()
-    {
-        boolean notify = false;
-        for (GroupDescriptor g : _activeConfiguration.getMissionGroups())
-        {
-            if(g.txPending)
-            {
-                g.txPending = false;
-                notify = true;
-            }
-        }
-
-        if(notify)
-        {
-            synchronized (_uiUpdateListeners)
-            {
-                for(IUiUpdateListener listener : _uiUpdateListeners)
+                catch (Exception e)
                 {
-                    listener.onAllTxEnded();
+                    e.printStackTrace();
                 }
+    
+            /*
+            if(_txPending)
+            {
+                _txPending = false;
+                Log.i(TAG, "cancelling previous tx pending");
+                cancelPreviousTxPending();
             }
-        }
+            */
+            }
+        });
     }
-    */
 
     private void goIdle()
     {
@@ -2074,38 +2426,45 @@ public class EngageApplication
 
     private void checkIfAnyTxStillActiveAndNotify()
     {
-        synchronized (_groupsSelectedForTx)
+        runOnUiThread(new Runnable()
         {
-            boolean anyStillActive = (!_groupsSelectedForTx.isEmpty());
-
-            // Safety check
-            for (GroupDescriptor testGroup : _activeConfiguration.getMissionGroups())
+            @Override
+            public void run()
             {
-                if(!_groupsSelectedForTx.contains(testGroup))
+                synchronized (_groupsSelectedForTx)
                 {
-                    /*
-                    if (testGroup.tx || testGroup.txPending)
-                    {
-                        Log.wtf(TAG, "data model says group is tx or txPending but the group is not in the tx set!!");
-                    }
-                    */
+                    boolean anyStillActive = (!_groupsSelectedForTx.isEmpty());
 
-                    testGroup.tx = false;
-                    testGroup.txPending = false;
+                    // Safety check
+                    for (GroupDescriptor testGroup : _activeConfiguration.getMissionGroups())
+                    {
+                        if (!_groupsSelectedForTx.contains(testGroup))
+                        {
+                            /*
+                            if (testGroup.tx || testGroup.txPending)
+                            {
+                                Log.wtf(TAG, "data model says group is tx or txPending but the group is not in the tx set!!");
+                            }
+                            */
+
+                            testGroup.tx = false;
+                            testGroup.txPending = false;
+                        }
+                    }
+
+                    if (!anyStillActive)
+                    {
+                        synchronized (_uiUpdateListeners)
+                        {
+                            for (IUiUpdateListener listener : _uiUpdateListeners)
+                            {
+                                listener.onAllTxEnded();
+                            }
+                        }
+                    }
                 }
             }
-
-            if (!anyStillActive)
-            {
-                synchronized (_uiUpdateListeners)
-                {
-                    for (IUiUpdateListener listener : _uiUpdateListeners)
-                    {
-                        listener.onAllTxEnded();
-                    }
-                }
-            }
-        }
+        });
     }
 
     public void initiateMissionDownload(final Activity activity)
@@ -2173,32 +2532,39 @@ public class EngageApplication
         dmt.execute(url);
     }
 
-    public void processDownloadedMissionAndSwitchIfOk(String missionData, String password)
+    public void processDownloadedMissionAndSwitchIfOk(final String missionData, final String password)
     {
-        try
+        runOnUiThread(new Runnable()
         {
-            ActiveConfiguration ac = new ActiveConfiguration();
-            if(!ac.parseTemplate(missionData))
+            @Override
+            public void run()
             {
-                throw new Exception("Invalid mission data");
-            }
-
-            saveAndActivateConfiguration(ac);
-
-            Toast.makeText(EngageApplication.this,  ac.getMissionName() + " processed", Toast.LENGTH_LONG).show();
-
-            synchronized (_configurationChangeListeners)
-            {
-                for (IConfigurationChangeListener listener : _configurationChangeListeners)
+                try
                 {
-                    listener.onMissionChanged();
+                    ActiveConfiguration ac = new ActiveConfiguration();
+                    if (!ac.parseTemplate(missionData))
+                    {
+                        throw new Exception("Invalid mission data");
+                    }
+
+                    saveAndActivateConfiguration(ac);
+
+                    Toast.makeText(EngageApplication.this, ac.getMissionName() + " processed", Toast.LENGTH_LONG).show();
+
+                    synchronized (_configurationChangeListeners)
+                    {
+                        for (IConfigurationChangeListener listener : _configurationChangeListeners)
+                        {
+                            listener.onMissionChanged();
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Toast.makeText(EngageApplication.this, "Exception: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
-        }
-        catch(Exception e)
-        {
-            Toast.makeText(EngageApplication.this, "Exception: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+        });
     }
 
     public int getQrCodeScannerRequestCode()
@@ -2269,6 +2635,7 @@ public class EngageApplication
         {
             // Template
             Globals.getSharedPreferencesEditor().putString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_JSON, ac.getInputJson());
+            Globals.getSharedPreferencesEditor().apply();
 
             // See if any groups have rallypoints.  If any do, then we'll use the first one we find as the RP for the whole mission
             //JSONObject jMission = new JSONObject(ac.getInputJson());
@@ -2396,924 +2763,1141 @@ public class EngageApplication
     @Override
     public void onEngineStarted(String eventExtraJson)
     {
-        logEvent(Analytics.ENGINE_STARTED);
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.ENGINE_STARTED);
 
-        Log.d(TAG, "onEngineStarted");
-        _engineRunning = true;
-        createAllGroupObjects();
-        joinSelectedGroups();
-        startLocationUpdates();
-        startHardwareButtonManager();
+                Log.d(TAG, "onEngineStarted");
+                _engineRunning = true;
+                createAllGroupObjects();
+                joinSelectedGroups();
+                startLocationUpdates();
+                startHardwareButtonManager();
+            }
+        });
     }
 
     @Override
     public void onEngineStartFailed(String eventExtraJson)
     {
-        logEvent(Analytics.ENGINE_START_FAILED);
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.ENGINE_START_FAILED);
 
-        Log.e(TAG, "onEngineStartFailed");
-        _engineRunning = false;
-        stop();
+                Log.e(TAG, "onEngineStartFailed");
+                _engineRunning = false;
+                stop();
+            }
+        });
     }
 
     @Override
     public void onEngineStopped(String eventExtraJson)
     {
-        logEvent(Analytics.ENGINE_STOPPED);
-
-        Log.d(TAG, "onEngineStopped");
-        _engineRunning = false;
-        goIdle();
-    }
-
-    @Override
-    public void onGroupCreated(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_CREATED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupCreated: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupCreated: id='" + id + "', n='" + gd.name + "'");
-
-        gd.resetState();
-        gd.created = true;
-        gd.createError = false;
-        gd.joined = false;
-        gd.joinError = false;
-        setGroupConnectionState(id, false, false, false);
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupCreateFailed(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_CREATE_FAILED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupCreateFailed: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupCreateFailed: id='" + id + "', n='" + gd.name + "'");
-
-        gd.resetState();
-        gd.created = false;
-        gd.createError = true;
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupDeleted(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_DELETED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupDeleted: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupDeleted: id='" + id + "', n='" + gd.name + "'");
-
-        gd.resetState();
-        gd.created = false;
-        gd.createError = false;
-        gd.joined = false;
-        gd.joinError = false;
-        eraseGroupConnectionState(id);
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupConnected(String id, String eventExtraJson)
-    {
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupConnected: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupConnected: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
-
-        try
-        {
-            if(!Utils.isEmptyString(eventExtraJson))
-            {
-                JSONObject eej = new JSONObject(eventExtraJson);
-                JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
-                if(gcd != null)
-                {
-                    GroupConnectionTrackerInfo gts = getGroupConnectionState(id);
-
-                    Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
-                    if(ct == Engine.ConnectionType.ipMulticast)
-                    {
-                        if(gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false))
-                        {
-                            logEvent(Analytics.GROUP_CONNECTED_MC_FAILOVER);
-                        }
-                        else
-                        {
-                            logEvent(Analytics.GROUP_CONNECTED_MC);
-                        }
-
-                        gts.hasMulticastConnection = true;
-                    }
-                    else if(ct == Engine.ConnectionType.rallypoint)
-                    {
-                        logEvent(Analytics.GROUP_CONNECTED_RP);
-                        gts.hasRpConnection = true;
-                    }
-
-                    gts.operatingInMulticastFailover = gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false);
-
-                    setGroupConnectionState(id, gts);
-                }
-                else
-                {
-                    logEvent(Analytics.GROUP_CONNECTED_OTHER);
-                }
-            }
-            else
-            {
-                logEvent(Analytics.GROUP_CONNECTED_OTHER);
-            }
-        }
-        catch(Exception e)
-        {
-            logEvent(Analytics.GROUP_CONNECTED_OTHER);
-
-            // If we have no specializer, assume the following (the Engine should always tell us though)
-            setGroupConnectionState(id, true, false, true);
-        }
-
-        // If we get connected to a presence group ...
-        if(gd.type == GroupDescriptor.Type.gtPresence)
-        {
-            // TODO: If we have multiple presence groups, this will generate extra traffic
-
-            // Build whatever PD we currently have and send it
-            sendUpdatedPd(buildPd());
-        }
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupConnectFailed(String id, String eventExtraJson)
-    {
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupConnectFailed: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupConnectFailed: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
-
-        try
-        {
-            if(!Utils.isEmptyString(eventExtraJson))
-            {
-                JSONObject eej = new JSONObject(eventExtraJson);
-                JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
-                if(gcd != null)
-                {
-                    GroupConnectionTrackerInfo gts = getGroupConnectionState(id);
-
-                    Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
-                    if(ct == Engine.ConnectionType.ipMulticast)
-                    {
-                        if(gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false))
-                        {
-                            logEvent(Analytics.GROUP_CONNECT_FAILED_MC_FAILOVER);
-                        }
-                        else
-                        {
-                            logEvent(Analytics.GROUP_CONNECT_FAILED_MC);
-                        }
-
-                        gts.hasMulticastConnection = false;
-                    }
-                    else if(ct == Engine.ConnectionType.rallypoint)
-                    {
-                        logEvent(Analytics.GROUP_CONNECT_FAILED_RP);
-                        gts.hasRpConnection = false;
-                    }
-
-                    gts.operatingInMulticastFailover = false;
-
-                    setGroupConnectionState(id, gts);
-                }
-                else
-                {
-                    logEvent(Analytics.GROUP_CONNECT_FAILED_OTHER);
-                }
-            }
-            else
-            {
-                logEvent(Analytics.GROUP_CONNECT_FAILED_OTHER);
-            }
-        }
-        catch(Exception e)
-        {
-            logEvent(Analytics.GROUP_CONNECT_FAILED_OTHER);
-
-            // If we have no specializer, assume the following (the Engine should always tell us though)
-            eraseGroupConnectionState(id);
-        }
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupDisconnected(String id, String eventExtraJson)
-    {
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupDisconnected: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupDisconnected: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
-
-        try
-        {
-            if(!Utils.isEmptyString(eventExtraJson))
-            {
-                JSONObject eej = new JSONObject(eventExtraJson);
-                JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
-                if(gcd != null)
-                {
-                    GroupConnectionTrackerInfo gts = getGroupConnectionState(id);
-
-                    Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
-                    if(ct == Engine.ConnectionType.ipMulticast)
-                    {
-                        if(gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false))
-                        {
-                            logEvent(Analytics.GROUP_DISCONNECTED_MC_FAILOVER);
-                        }
-                        else
-                        {
-                            logEvent(Analytics.GROUP_DISCONNECTED_MC);
-                        }
-
-                        gts.hasMulticastConnection = false;
-                    }
-                    else if(ct == Engine.ConnectionType.rallypoint)
-                    {
-                        logEvent(Analytics.GROUP_DISCONNECTED_RP);
-                        gts.hasRpConnection = false;
-                    }
-
-                    gts.operatingInMulticastFailover = false;
-
-                    setGroupConnectionState(id, gts);
-                }
-                else
-                {
-                    logEvent(Analytics.GROUP_DISCONNECTED_OTHER);
-                }
-            }
-            else
-            {
-                logEvent(Analytics.GROUP_DISCONNECTED_OTHER);
-            }
-        }
-        catch(Exception e)
-        {
-            logEvent(Analytics.GROUP_DISCONNECTED_OTHER);
-
-            // If we have no specializer, assume the following (the Engine should always tell us though)
-            setGroupConnectionState(id, false, false, false);
-        }
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupJoined(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_JOINED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupJoined: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupJoined: id='" + id + "', n='" + gd.name + "'");
-
-        gd.joined = true;
-        gd.joinError = false;
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupJoinFailed(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_JOIN_FAILED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupJoinFailed: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.e(TAG, "onGroupJoinFailed: id='" + id + "', n='" + gd.name + "'");
-
-        gd.resetState();
-        gd.joinError = true;
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupLeft(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_LEFT);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupLeft: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupLeft: id='" + id + "', n='" + gd.name + "'");
-
-        gd.resetState();
-        gd.joined = false;
-        gd.joinError = false;
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupMemberCountChanged(String id, long newCount, String eventExtraJson)
-    {
-        //logEvent(Analytics.GROUP_MEMBER_COUNT_CHANGED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupMemberCountChanged: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupMemberCountChanged: id='" + id + "', n=" + gd.name + ", c=" + newCount);
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupRxStarted(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_RX_STARTED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupRxStarted: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupRxStarted: id='" + id + "', n='" + gd.name + "'");
-
-        gd.rx = true;
-
-        long now = Utils.nowMs();
-        if((now - _lastAudioActivity) > (Constants.RX_IDLE_SECS_BEFORE_NOTIFICATION * 1000))
-        {
-            if(_activeConfiguration.getNotifyOnNewAudio())
-            {
-                float volume = _activeConfiguration.getNotificationToneNotificationLevel();
-                if (volume != 0.0)
-                {
-                    try
-                    {
-                        Globals.getAudioPlayerManager().playNotification(R.raw.incoming_rx, volume, null);
-                    }
-                    catch (Exception e)
-                    {
-                    }
-                }
-            }
-        }
-        _lastAudioActivity = now;
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupRxEnded(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_RX_ENDED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupRxEnded: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupRxEnded: id='" + id + "', n='" + gd.name + "'");
-
-        gd.rx = false;
-        _lastAudioActivity = Utils.nowMs();
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupRxSpeakersChanged(String id, String groupTalkerJson, String eventExtraJson)
-    {
-        //logEvent(Analytics.GROUP_RX_SPEAKER_COUNT_CHANGED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupRxSpeakersChanged: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupRxSpeakersChanged: id='" + id + "', n='" + gd.name + "'");
-
-        ArrayList<TalkerDescriptor> talkers = null;
-
-        if(!Utils.isEmptyString(groupTalkerJson))
-        {
-            try
-            {
-                JSONObject root = new JSONObject(groupTalkerJson);
-                JSONArray list = root.getJSONArray(Engine.JsonFields.GroupTalkers.list);
-                if(list != null && list.length() > 0)
-                {
-                    for(int x = 0; x < list.length(); x++)
-                    {
-                        JSONObject obj = list.getJSONObject(x);
-                        TalkerDescriptor td = new TalkerDescriptor();
-                        td.alias = obj.optString(Engine.JsonFields.TalkerInformation.alias);
-                        td.nodeId = obj.optString(Engine.JsonFields.TalkerInformation.nodeId);
-
-                        if(talkers == null)
-                        {
-                            talkers = new ArrayList<>();
-                        }
-
-                        talkers.add(td);
-                    }
-                }
-            }
-            catch(Exception e)
-            {
-                if(talkers != null)
-                {
-                    talkers.clear();
-                    talkers = null;
-                }
-
-                e.printStackTrace();
-            }
-        }
-
-        gd.updateTalkers(talkers);
-        _lastAudioActivity = Utils.nowMs();
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupRxMuted(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_RX_MUTED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupRxMuted: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupRxMuted: id='" + id + "', n='" + gd.name + "'");
-
-        gd.rxMuted = true;
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupRxUnmuted(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_RX_UNMUTED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupRxUnmuted: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupRxUnmuted: id='" + id + "', n='" + gd.name + "'");
-
-        gd.rxMuted = false;
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupTxStarted(final String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_TX_STARTED);
-
-        final GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupTxStarted: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupTxStarted: id='" + id + "', n='" + gd.name + "'");
-
-        // Run this task either right away or after we've played our grant tone
-        Runnable txTask = new Runnable()
+        runOnUiThread(new Runnable()
         {
             @Override
             public void run()
             {
-                gd.tx = true;
-                gd.txPending = false;
-                gd.txError = false;
-                gd.txUsurped = false;
-                gd.lastTxStartTime = Utils.nowMs();
+                logEvent(Analytics.ENGINE_STOPPED);
 
-                // Our TX is always starting in mute, so unmute it here if we're not (still) playing a sound
-                if(_delayTxUnmuteToCaterForSoundPropogation)
+                Log.d(TAG, "onEngineStopped");
+                _engineRunning = false;
+                goIdle();
+
+                if(_terminateOnEngineStopped)
                 {
-                    Timer tmr = new Timer();
-                    tmr.schedule(new TimerTask()
+                    _terminateOnEngineStopped = false;
+                    getEngine().engageShutdown();
+
+                    clearOutServiceOperation();
+
+                    _terminatingActivity.moveTaskToBack(true);
+                    _terminatingActivity.finishAndRemoveTask();
+
+                    android.os.Process.killProcess(android.os.Process.myPid());
+                    System.exit(0);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onGroupCreated(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_CREATED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupCreated: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupCreated: id='" + id + "', n='" + gd.name + "'");
+
+                gd.resetState();
+                gd.created = true;
+                gd.createError = false;
+                gd.joined = false;
+                gd.joinError = false;
+                setGroupConnectionState(id, false, false, false);
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupCreateFailed(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_CREATE_FAILED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupCreateFailed: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupCreateFailed: id='" + id + "', n='" + gd.name + "'");
+
+                gd.resetState();
+                gd.created = false;
+                gd.createError = true;
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupDeleted(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_DELETED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupDeleted: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupDeleted: id='" + id + "', n='" + gd.name + "'");
+
+                gd.resetState();
+                gd.created = false;
+                gd.createError = false;
+                gd.joined = false;
+                gd.joinError = false;
+                eraseGroupConnectionState(id);
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupConnected(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupConnected: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupConnected: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
+
+                try
+                {
+                    if (!Utils.isEmptyString(eventExtraJson))
                     {
-                        @Override
-                        public void run()
+                        JSONObject eej = new JSONObject(eventExtraJson);
+                        JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
+                        if (gcd != null)
                         {
-                            getEngine().engageUnmuteGroupTx(id);
+                            GroupConnectionTrackerInfo gts = getGroupConnectionState(id);
+
+                            Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
+                            if (ct == Engine.ConnectionType.ipMulticast)
+                            {
+                                if (gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false))
+                                {
+                                    logEvent(Analytics.GROUP_CONNECTED_MC_FAILOVER);
+                                }
+                                else
+                                {
+                                    logEvent(Analytics.GROUP_CONNECTED_MC);
+                                }
+
+                                gts.hasMulticastConnection = true;
+                            }
+                            else if (ct == Engine.ConnectionType.rallypoint)
+                            {
+                                logEvent(Analytics.GROUP_CONNECTED_RP);
+                                gts.hasRpConnection = true;
+                            }
+
+                            gts.operatingInMulticastFailover = gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false);
+
+                            setGroupConnectionState(id, gts);
                         }
-                    }, Constants.TX_UNMUTE_DELAY_MS_AFTER_GRANT_TONE);
+                        else
+                        {
+                            logEvent(Analytics.GROUP_CONNECTED_OTHER);
+                        }
+                    }
+                    else
+                    {
+                        logEvent(Analytics.GROUP_CONNECTED_OTHER);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    getEngine().engageUnmuteGroupTx(id);
+                    logEvent(Analytics.GROUP_CONNECTED_OTHER);
+
+                    // If we have no specializer, assume the following (the Engine should always tell us though)
+                    setGroupConnectionState(id, true, false, true);
                 }
 
+                // If we get connected to a presence group ...
+                if (gd.type == GroupDescriptor.Type.gtPresence)
+                {
+                    // TODO: If we have multiple presence groups, this will generate extra traffic
+
+                    // Build whatever PD we currently have and send it
+                    sendUpdatedPd(buildPd());
+                }
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupConnectFailed(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupConnectFailed: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupConnectFailed: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
+
+                try
+                {
+                    if (!Utils.isEmptyString(eventExtraJson))
+                    {
+                        JSONObject eej = new JSONObject(eventExtraJson);
+                        JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
+                        if (gcd != null)
+                        {
+                            GroupConnectionTrackerInfo gts = getGroupConnectionState(id);
+
+                            Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
+                            if (ct == Engine.ConnectionType.ipMulticast)
+                            {
+                                if (gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false))
+                                {
+                                    logEvent(Analytics.GROUP_CONNECT_FAILED_MC_FAILOVER);
+                                }
+                                else
+                                {
+                                    logEvent(Analytics.GROUP_CONNECT_FAILED_MC);
+                                }
+
+                                gts.hasMulticastConnection = false;
+                            }
+                            else if (ct == Engine.ConnectionType.rallypoint)
+                            {
+                                logEvent(Analytics.GROUP_CONNECT_FAILED_RP);
+                                gts.hasRpConnection = false;
+                            }
+
+                            gts.operatingInMulticastFailover = false;
+
+                            setGroupConnectionState(id, gts);
+                        }
+                        else
+                        {
+                            logEvent(Analytics.GROUP_CONNECT_FAILED_OTHER);
+                        }
+                    }
+                    else
+                    {
+                        logEvent(Analytics.GROUP_CONNECT_FAILED_OTHER);
+                    }
+                }
+                catch (Exception e)
+                {
+                    logEvent(Analytics.GROUP_CONNECT_FAILED_OTHER);
+
+                    // If we have no specializer, assume the following (the Engine should always tell us though)
+                    eraseGroupConnectionState(id);
+                }
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupDisconnected(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupDisconnected: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupDisconnected: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
+
+                try
+                {
+                    if (!Utils.isEmptyString(eventExtraJson))
+                    {
+                        JSONObject eej = new JSONObject(eventExtraJson);
+                        JSONObject gcd = eej.optJSONObject(Engine.JsonFields.GroupConnectionDetail.objectName);
+                        if (gcd != null)
+                        {
+                            GroupConnectionTrackerInfo gts = getGroupConnectionState(id);
+
+                            Engine.ConnectionType ct = Engine.ConnectionType.fromInt(gcd.optInt(Engine.JsonFields.GroupConnectionDetail.connectionType));
+                            if (ct == Engine.ConnectionType.ipMulticast)
+                            {
+                                if (gcd.optBoolean(Engine.JsonFields.GroupConnectionDetail.asFailover, false))
+                                {
+                                    logEvent(Analytics.GROUP_DISCONNECTED_MC_FAILOVER);
+                                }
+                                else
+                                {
+                                    logEvent(Analytics.GROUP_DISCONNECTED_MC);
+                                }
+
+                                gts.hasMulticastConnection = false;
+                            }
+                            else if (ct == Engine.ConnectionType.rallypoint)
+                            {
+                                logEvent(Analytics.GROUP_DISCONNECTED_RP);
+                                gts.hasRpConnection = false;
+                            }
+
+                            gts.operatingInMulticastFailover = false;
+
+                            setGroupConnectionState(id, gts);
+                        }
+                        else
+                        {
+                            logEvent(Analytics.GROUP_DISCONNECTED_OTHER);
+                        }
+                    }
+                    else
+                    {
+                        logEvent(Analytics.GROUP_DISCONNECTED_OTHER);
+                    }
+                }
+                catch (Exception e)
+                {
+                    logEvent(Analytics.GROUP_DISCONNECTED_OTHER);
+
+                    // If we have no specializer, assume the following (the Engine should always tell us though)
+                    setGroupConnectionState(id, false, false, false);
+                }
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupJoined(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_JOINED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupJoined: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupJoined: id='" + id + "', n='" + gd.name + "'");
+
+                gd.joined = true;
+                gd.joinError = false;
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupJoinFailed(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_JOIN_FAILED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupJoinFailed: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.e(TAG, "onGroupJoinFailed: id='" + id + "', n='" + gd.name + "'");
+
+                gd.resetState();
+                gd.joinError = true;
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupLeft(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_LEFT);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupLeft: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupLeft: id='" + id + "', n='" + gd.name + "'");
+
+                gd.resetState();
+                gd.joined = false;
+                gd.joinError = false;
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupMemberCountChanged(final String id, final long newCount, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                //logEvent(Analytics.GROUP_MEMBER_COUNT_CHANGED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupMemberCountChanged: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupMemberCountChanged: id='" + id + "', n=" + gd.name + ", c=" + newCount);
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupRxStarted(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_RX_STARTED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupRxStarted: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupRxStarted: id='" + id + "', n='" + gd.name + "'");
+
+                gd.rx = true;
+
+                long now = Utils.nowMs();
+                if ((now - _lastAudioActivity) > (Constants.RX_IDLE_SECS_BEFORE_NOTIFICATION * 1000))
+                {
+                    if (_activeConfiguration.getNotifyOnNewAudio())
+                    {
+                        float volume = _activeConfiguration.getNotificationToneNotificationLevel();
+                        if (volume != 0.0)
+                        {
+                            try
+                            {
+                                Globals.getAudioPlayerManager().playNotification(R.raw.incoming_rx, volume, null);
+                            }
+                            catch (Exception e)
+                            {
+                            }
+                        }
+                    }
+                }
+                _lastAudioActivity = now;
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupRxEnded(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_RX_ENDED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupRxEnded: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupRxEnded: id='" + id + "', n='" + gd.name + "'");
+
+                gd.rx = false;
                 _lastAudioActivity = Utils.nowMs();
 
                 notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupRxSpeakersChanged(final String id, final String groupTalkerJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                //logEvent(Analytics.GROUP_RX_SPEAKER_COUNT_CHANGED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupRxSpeakersChanged: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupRxSpeakersChanged: id='" + id + "', n='" + gd.name + "'");
+
+                ArrayList<TalkerDescriptor> talkers = null;
+
+                if (!Utils.isEmptyString(groupTalkerJson))
+                {
+                    try
+                    {
+                        JSONObject root = new JSONObject(groupTalkerJson);
+                        JSONArray list = root.getJSONArray(Engine.JsonFields.GroupTalkers.list);
+                        if (list != null && list.length() > 0)
+                        {
+                            for (int x = 0; x < list.length(); x++)
+                            {
+                                JSONObject obj = list.getJSONObject(x);
+                                TalkerDescriptor td = new TalkerDescriptor();
+                                td.alias = obj.optString(Engine.JsonFields.TalkerInformation.alias);
+                                td.nodeId = obj.optString(Engine.JsonFields.TalkerInformation.nodeId);
+
+                                if (talkers == null)
+                                {
+                                    talkers = new ArrayList<>();
+                                }
+
+                                talkers.add(td);
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        if (talkers != null)
+                        {
+                            talkers.clear();
+                            talkers = null;
+                        }
+
+                        e.printStackTrace();
+                    }
+                }
+
+                gd.updateTalkers(talkers);
+                _lastAudioActivity = Utils.nowMs();
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupRxMuted(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_RX_MUTED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupRxMuted: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupRxMuted: id='" + id + "', n='" + gd.name + "'");
+
+                gd.rxMuted = true;
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupRxUnmuted(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_RX_UNMUTED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupRxUnmuted: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupRxUnmuted: id='" + id + "', n='" + gd.name + "'");
+
+                gd.rxMuted = false;
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupTxStarted(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_TX_STARTED);
+
+                final GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupTxStarted: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupTxStarted: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
+
+                // Run this task either right away or after we've played our grant tone
+                Runnable txTask = new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        gd.tx = true;
+                        gd.txPending = false;
+                        gd.txError = false;
+                        gd.txUsurped = false;
+                        gd.lastTxStartTime = Utils.nowMs();
+
+                        // Our TX is always starting in mute, so unmute it here if we're not (still) playing a sound
+                        if (_delayTxUnmuteToCaterForSoundPropogation)
+                        {
+                            Timer tmr = new Timer();
+                            tmr.schedule(new TimerTask()
+                            {
+                                @Override
+                                public void run()
+                                {
+                                    getEngine().engageUnmuteGroupTx(id);
+                                }
+                            }, Constants.TX_UNMUTE_DELAY_MS_AFTER_GRANT_TONE);
+                        }
+                        else
+                        {
+                            getEngine().engageUnmuteGroupTx(id);
+                        }
+
+                        _lastAudioActivity = Utils.nowMs();
+
+                        notifyGroupUiListeners(gd);
+
+                        synchronized (_uiUpdateListeners)
+                        {
+                            for (IUiUpdateListener listener : _uiUpdateListeners)
+                            {
+                                listener.onAnyTxActive();
+                            }
+                        }
+                    }
+                };
+
+                long now = Utils.nowMs();
+
+                if (_activeConfiguration.getNotifyPttEveryTime() ||
+                        ((now - _lastTxActivity) > (Constants.TX_IDLE_SECS_BEFORE_NOTIFICATION * 1000)))
+                {
+                    _lastTxActivity = now;
+                    _delayTxUnmuteToCaterForSoundPropogation = true;
+                    if (!playTxOnNotification(txTask))
+                    {
+                        txTask.run();
+                    }
+                }
+                else
+                {
+                    _lastTxActivity = now;
+                    _delayTxUnmuteToCaterForSoundPropogation = true;
+                    vibrate();
+                    txTask.run();
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onGroupTxEnded(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_TX_ENDED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupTxEnded: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupTxEnded: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
+
+                if (gd.lastTxStartTime > 0)
+                {
+                    long txDuration = (Utils.nowMs() - gd.lastTxStartTime);
+                    logEvent(Analytics.GROUP_TX_DURATION, "ms", txDuration);
+                }
+
+                gd.tx = false;
+                gd.txPending = false;
+                gd.txError = false;
+                gd.lastTxStartTime = 0;
+
+                _lastAudioActivity = Utils.nowMs();
+
+                synchronized (_groupsSelectedForTx)
+                {
+                    _groupsSelectedForTx.remove(gd);
+                    notifyGroupUiListeners(gd);
+                    checkIfAnyTxStillActiveAndNotify();
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onGroupTxFailed(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_TX_FAILED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupTxFailed: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupTxFailed: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
+
+                gd.tx = false;
+                gd.txPending = false;
+                gd.txError = true;
+                gd.txUsurped = false;
+
+                _lastAudioActivity = Utils.nowMs();
+
+                synchronized (_groupsSelectedForTx)
+                {
+                    _groupsSelectedForTx.remove(gd);
+                    playGeneralErrorNotification();
+                    notifyGroupUiListeners(gd);
+                    checkIfAnyTxStillActiveAndNotify();
+                }
 
                 synchronized (_uiUpdateListeners)
                 {
-                    for(IUiUpdateListener listener : _uiUpdateListeners)
+                    for (IUiUpdateListener listener : _uiUpdateListeners)
                     {
-                        listener.onAnyTxActive();
+                        listener.onGroupTxFailed(gd, eventExtraJson);
                     }
                 }
             }
-        };
+        });
+    }
 
-        long now = Utils.nowMs();
-
-        if(_activeConfiguration.getNotifyPttEveryTime() ||
-                ((now - _lastTxActivity) > (Constants.TX_IDLE_SECS_BEFORE_NOTIFICATION * 1000)))
+    @Override
+    public void onGroupTxUsurpedByPriority(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
         {
-            _lastTxActivity = now;
-            _delayTxUnmuteToCaterForSoundPropogation = true;
-            if(!playTxOnNotification(txTask))
+            @Override
+            public void run()
             {
-                txTask.run();
-            }
-        }
-        else
-        {
-            _lastTxActivity = now;
-            _delayTxUnmuteToCaterForSoundPropogation = true;
-            vibrate();
-            txTask.run();
-        }
-    }
+                logEvent(Analytics.GROUP_TX_USURPED);
 
-    @Override
-    public void onGroupTxEnded(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_TX_ENDED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupTxEnded: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupTxEnded: id='" + id + "', n='" + gd.name + "'");
-
-        if(gd.lastTxStartTime > 0)
-        {
-            long txDuration = (Utils.nowMs() - gd.lastTxStartTime);
-            logEvent(Analytics.GROUP_TX_DURATION, "ms", txDuration);
-        }
-
-        gd.tx = false;
-        gd.txPending = false;
-        gd.txError = false;
-        gd.lastTxStartTime = 0;
-
-        _lastAudioActivity = Utils.nowMs();
-
-        synchronized (_groupsSelectedForTx)
-        {
-            _groupsSelectedForTx.remove(gd);
-            notifyGroupUiListeners(gd);
-            checkIfAnyTxStillActiveAndNotify();
-        }
-    }
-
-    @Override
-    public void onGroupTxFailed(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_TX_FAILED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupTxFailed: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupTxFailed: id='" + id + "', n='" + gd.name + "'");
-
-        gd.tx = false;
-        gd.txPending = false;
-        gd.txError = true;
-        gd.txUsurped = false;
-
-        _lastAudioActivity = Utils.nowMs();
-
-        synchronized (_groupsSelectedForTx)
-        {
-            _groupsSelectedForTx.remove(gd);
-            playGeneralErrorNotification();
-            notifyGroupUiListeners(gd);
-            checkIfAnyTxStillActiveAndNotify();
-        }
-    }
-
-    @Override
-    public void onGroupTxUsurpedByPriority(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_TX_USURPED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupTxUsurpedByPriority: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupTxUsurpedByPriority: id='" + id + "', n='" + gd.name + "'");
-
-        gd.tx = false;
-        gd.txPending = false;
-        gd.txError = false;
-        gd.txUsurped = true;
-
-        _lastAudioActivity = Utils.nowMs();
-
-        synchronized (_groupsSelectedForTx)
-        {
-            _groupsSelectedForTx.remove(gd);
-            playGeneralErrorNotification();
-            notifyGroupUiListeners(gd);
-            checkIfAnyTxStillActiveAndNotify();
-        }
-
-
-        synchronized (_uiUpdateListeners)
-        {
-            for(IUiUpdateListener listener : _uiUpdateListeners)
-            {
-                listener.onGroupTxUsurped(gd);
-            }
-        }
-    }
-
-    @Override
-    public void onGroupMaxTxTimeExceeded(String id, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_TX_MAX_EXCEEDED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupMaxTxTimeExceeded: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupMaxTxTimeExceeded: id='" + id + "', n='" + gd.name + "'");
-
-        gd.tx = false;
-        gd.txPending = false;
-        gd.txError = false;
-        gd.txUsurped = true;
-
-        _lastAudioActivity = Utils.nowMs();
-
-        synchronized (_groupsSelectedForTx)
-        {
-            _groupsSelectedForTx.remove(gd);
-            playGeneralErrorNotification();
-            notifyGroupUiListeners(gd);
-            checkIfAnyTxStillActiveAndNotify();
-        }
-
-        synchronized (_uiUpdateListeners)
-        {
-            for(IUiUpdateListener listener : _uiUpdateListeners)
-            {
-                listener.onGroupMaxTxTimeExceeded(gd);
-            }
-        }
-    }
-
-    @Override
-    public void onGroupTxMuted(String id, String eventExtraJson)
-    {
-        //logEvent(Analytics.GROUP_TX_MUTED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupTxMuted: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupTxMuted: id='" + id + "', n='" + gd.name + "'");
-
-        // TX muted means something else here
-        //gd.txMuted = true;
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupTxUnmuted(String id, String eventExtraJson)
-    {
-        //logEvent(Analytics.GROUP_TX_UNMUTED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupTxUnmuted: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupTxUnmuted: id='" + id + "', n='" + gd.name + "'");
-
-        // TX muted means something else here
-        //gd.txMuted = false;
-
-        notifyGroupUiListeners(gd);
-    }
-
-    @Override
-    public void onGroupNodeDiscovered(String id, String nodeJson, String eventExtraJson)
-    {
-        //logEvent(Analytics.GROUP_NODE_DISCOVERED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupNodeDiscovered: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupNodeDiscovered: id='" + id + "', n='" + gd.name + "'");
-
-        PresenceDescriptor pd = getActiveConfiguration().processNodeDiscovered(nodeJson);
-        if(pd != null)
-        {
-            if(!pd.self && _activeConfiguration.getNotifyOnNodeJoin())
-            {
-                float volume = _activeConfiguration.getNotificationToneNotificationLevel();
-                if (volume != 0.0)
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
                 {
-                    try
+                    Log.e(TAG, "onGroupTxUsurpedByPriority: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupTxUsurpedByPriority: id='" + id + "', n='" + gd.name + "', x=" + eventExtraJson);
+
+                gd.tx = false;
+                gd.txPending = false;
+                gd.txError = false;
+                gd.txUsurped = true;
+
+                _lastAudioActivity = Utils.nowMs();
+
+                synchronized (_groupsSelectedForTx)
+                {
+                    _groupsSelectedForTx.remove(gd);
+                    playGeneralErrorNotification();
+                    notifyGroupUiListeners(gd);
+                    checkIfAnyTxStillActiveAndNotify();
+                }
+
+                synchronized (_uiUpdateListeners)
+                {
+                    for (IUiUpdateListener listener : _uiUpdateListeners)
                     {
-                        Globals.getAudioPlayerManager().playNotification(R.raw.node_join, volume, null);
-                    }
-                    catch (Exception e)
-                    {
+                        listener.onGroupTxUsurped(gd, eventExtraJson);
                     }
                 }
             }
-
-            synchronized (_presenceChangeListeners)
-            {
-                for(IPresenceChangeListener listener : _presenceChangeListeners)
-                {
-                    listener.onPresenceAdded(pd);
-                }
-            }
-
-            notifyGroupUiListeners(gd);
-        }
+        });
     }
 
     @Override
-    public void onGroupNodeRediscovered(String id, String nodeJson, String eventExtraJson)
+    public void onGroupMaxTxTimeExceeded(final String id, final String eventExtraJson)
     {
-        //logEvent(Analytics.GROUP_NODE_REDISCOVERED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
+        runOnUiThread(new Runnable()
         {
-            Log.e(TAG, "onGroupNodeRediscovered: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupNodeRediscovered: id='" + id + "', n='" + gd.name + "'");
-
-        PresenceDescriptor pd = getActiveConfiguration().processNodeDiscovered(nodeJson);
-        if(pd != null)
-        {
-            synchronized (_presenceChangeListeners)
+            @Override
+            public void run()
             {
-                for(IPresenceChangeListener listener : _presenceChangeListeners)
+                logEvent(Analytics.GROUP_TX_MAX_EXCEEDED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
                 {
-                    listener.onPresenceChange(pd);
+                    Log.e(TAG, "onGroupMaxTxTimeExceeded: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupMaxTxTimeExceeded: id='" + id + "', n='" + gd.name + "'");
+
+                gd.tx = false;
+                gd.txPending = false;
+                gd.txError = false;
+                gd.txUsurped = true;
+
+                _lastAudioActivity = Utils.nowMs();
+
+                synchronized (_groupsSelectedForTx)
+                {
+                    _groupsSelectedForTx.remove(gd);
+                    playGeneralErrorNotification();
+                    notifyGroupUiListeners(gd);
+                    checkIfAnyTxStillActiveAndNotify();
+                }
+
+                synchronized (_uiUpdateListeners)
+                {
+                    for (IUiUpdateListener listener : _uiUpdateListeners)
+                    {
+                        listener.onGroupMaxTxTimeExceeded(gd);
+                    }
                 }
             }
-
-            notifyGroupUiListeners(gd);
-        }
+        });
     }
 
     @Override
-    public void onGroupNodeUndiscovered(String id, String nodeJson, String eventExtraJson)
+    public void onGroupTxMuted(final String id, final String eventExtraJson)
     {
-        //logEvent(Analytics.GROUP_NODE_UNDISCOVERED);
-
-        GroupDescriptor gd = getGroup(id);
-        if(gd == null)
+        runOnUiThread(new Runnable()
         {
-            Log.e(TAG, "onGroupNodeUndiscovered: cannot find group id='" + id + "'");
-            return;
-        }
-
-        Log.d(TAG, "onGroupNodeUndiscovered: id='" + id + "', n='" + gd.name + "'");
-
-        PresenceDescriptor pd = getActiveConfiguration().processNodeUndiscovered(nodeJson);
-        if(pd != null)
-        {
-            if(!pd.self && _activeConfiguration.getNotifyOnNodeLeave())
+            @Override
+            public void run()
             {
-                float volume = _activeConfiguration.getNotificationToneNotificationLevel();
-                if (volume != 0.0)
+                //logEvent(Analytics.GROUP_TX_MUTED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
                 {
-                    try
+                    Log.e(TAG, "onGroupTxMuted: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupTxMuted: id='" + id + "', n='" + gd.name + "'");
+
+                // TX muted means something else here
+                //gd.txMuted = true;
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupTxUnmuted(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                //logEvent(Analytics.GROUP_TX_UNMUTED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupTxUnmuted: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupTxUnmuted: id='" + id + "', n='" + gd.name + "'");
+
+                // TX muted means something else here
+                //gd.txMuted = false;
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+    @Override
+    public void onGroupNodeDiscovered(final String id, final String nodeJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                //logEvent(Analytics.GROUP_NODE_DISCOVERED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupNodeDiscovered: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupNodeDiscovered: id='" + id + "', n='" + gd.name + "'");
+
+                PresenceDescriptor pd = getActiveConfiguration().processNodeDiscovered(nodeJson);
+                if (pd != null)
+                {
+                    if (!pd.self && _activeConfiguration.getNotifyOnNodeJoin())
                     {
-                        Globals.getAudioPlayerManager().playNotification(R.raw.node_leave, volume, null);
+                        float volume = _activeConfiguration.getNotificationToneNotificationLevel();
+                        if (volume != 0.0)
+                        {
+                            try
+                            {
+                                Globals.getAudioPlayerManager().playNotification(R.raw.node_join, volume, null);
+                            }
+                            catch (Exception e)
+                            {
+                            }
+                        }
                     }
-                    catch (Exception e)
+
+                    synchronized (_presenceChangeListeners)
                     {
+                        for (IPresenceChangeListener listener : _presenceChangeListeners)
+                        {
+                            listener.onPresenceAdded(pd);
+                        }
                     }
+
+                    notifyGroupUiListeners(gd);
                 }
             }
+        });
+    }
 
-            synchronized (_presenceChangeListeners)
+    @Override
+    public void onGroupNodeRediscovered(final String id, final String nodeJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
             {
-                for(IPresenceChangeListener listener : _presenceChangeListeners)
+                //logEvent(Analytics.GROUP_NODE_REDISCOVERED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
                 {
-                    listener.onPresenceRemoved(pd);
+                    Log.e(TAG, "onGroupNodeRediscovered: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupNodeRediscovered: id='" + id + "', n='" + gd.name + "'");
+
+                PresenceDescriptor pd = getActiveConfiguration().processNodeDiscovered(nodeJson);
+                if (pd != null)
+                {
+                    synchronized (_presenceChangeListeners)
+                    {
+                        for (IPresenceChangeListener listener : _presenceChangeListeners)
+                        {
+                            listener.onPresenceChange(pd);
+                        }
+                    }
+
+                    notifyGroupUiListeners(gd);
                 }
             }
+        });
+    }
 
-            notifyGroupUiListeners(gd);
-        }
+    @Override
+    public void onGroupNodeUndiscovered(final String id, final String nodeJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                //logEvent(Analytics.GROUP_NODE_UNDISCOVERED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupNodeUndiscovered: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupNodeUndiscovered: id='" + id + "', n='" + gd.name + "'");
+
+                PresenceDescriptor pd = getActiveConfiguration().processNodeUndiscovered(nodeJson);
+                if (pd != null)
+                {
+                    if (!pd.self && _activeConfiguration.getNotifyOnNodeLeave())
+                    {
+                        float volume = _activeConfiguration.getNotificationToneNotificationLevel();
+                        if (volume != 0.0)
+                        {
+                            try
+                            {
+                                Globals.getAudioPlayerManager().playNotification(R.raw.node_leave, volume, null);
+                            }
+                            catch (Exception e)
+                            {
+                            }
+                        }
+                    }
+
+                    synchronized (_presenceChangeListeners)
+                    {
+                        for (IPresenceChangeListener listener : _presenceChangeListeners)
+                        {
+                            listener.onPresenceRemoved(pd);
+                        }
+                    }
+
+                    notifyGroupUiListeners(gd);
+                }
+            }
+        });
     }
 
     public boolean getLicenseExpired()
@@ -3327,63 +3911,84 @@ public class EngageApplication
     }
 
     @Override
-    public void onLicenseChanged(String eventExtraJson)
+    public void onLicenseChanged(final String eventExtraJson)
     {
-        logEvent(Analytics.LICENSE_CHANGED);
-
-        Log.d(TAG, "onLicenseChanged");
-        _licenseExpired = false;
-        _licenseSecondsLeft = 0;
-        cancelObtainingActivationCode();
-
-        synchronized (_licenseChangeListeners)
+        runOnUiThread(new Runnable()
         {
-            for (ILicenseChangeListener listener : _licenseChangeListeners)
+            @Override
+            public void run()
             {
-                listener.onLicenseChanged();
+                logEvent(Analytics.LICENSE_CHANGED);
+
+                Log.d(TAG, "onLicenseChanged");
+                _licenseExpired = false;
+                _licenseSecondsLeft = 0;
+                cancelObtainingActivationCode();
+
+                synchronized (_licenseChangeListeners)
+                {
+                    for (ILicenseChangeListener listener : _licenseChangeListeners)
+                    {
+                        listener.onLicenseChanged();
+                    }
+                }
             }
-        }
+        });
     }
 
     @Override
-    public void onLicenseExpired(String eventExtraJson)
+    public void onLicenseExpired(final String eventExtraJson)
     {
-        if(!_licenseExpired)
+        runOnUiThread(new Runnable()
         {
-            logEvent(Analytics.LICENSE_EXPIRED);
-        }
-
-        Log.d(TAG, "onLicenseExpired");
-        _licenseExpired = true;
-        _licenseSecondsLeft = 0;
-        scheduleObtainingActivationCode();
-
-        synchronized (_licenseChangeListeners)
-        {
-            for (ILicenseChangeListener listener : _licenseChangeListeners)
+            @Override
+            public void run()
             {
-                listener.onLicenseExpired();
+                if (!_licenseExpired)
+                {
+                    logEvent(Analytics.LICENSE_EXPIRED);
+                }
+
+                Log.d(TAG, "onLicenseExpired");
+                _licenseExpired = true;
+                _licenseSecondsLeft = 0;
+                scheduleObtainingActivationCode();
+
+                synchronized (_licenseChangeListeners)
+                {
+                    for (ILicenseChangeListener listener : _licenseChangeListeners)
+                    {
+                        listener.onLicenseExpired();
+                    }
+                }
             }
-        }
+        });
     }
 
     @Override
-    public void onLicenseExpiring(double secondsLeft, String eventExtraJson)
+    public void onLicenseExpiring(final double secondsLeft, final String eventExtraJson)
     {
-        //logEvent(Analytics.LICENSE_EXPIRING);
-
-        Log.d(TAG, "onLicenseExpiring - " + secondsLeft + " seconds remaining");
-        _licenseExpired = false;
-        _licenseSecondsLeft = secondsLeft;
-        scheduleObtainingActivationCode();
-
-        synchronized (_licenseChangeListeners)
+        runOnUiThread(new Runnable()
         {
-            for (ILicenseChangeListener listener : _licenseChangeListeners)
+            @Override
+            public void run()
             {
-                listener.onLicenseExpiring(secondsLeft);
+                //logEvent(Analytics.LICENSE_EXPIRING);
+
+                Log.d(TAG, "onLicenseExpiring - " + secondsLeft + " seconds remaining");
+                _licenseExpired = false;
+                _licenseSecondsLeft = secondsLeft;
+                scheduleObtainingActivationCode();
+
+                synchronized (_licenseChangeListeners)
+                {
+                    for (ILicenseChangeListener listener : _licenseChangeListeners)
+                    {
+                        listener.onLicenseExpiring(secondsLeft);
+                    }
+                }
             }
-        }
+        });
     }
 
     private String __devOnly__groupId = "SIM0001";
@@ -3648,401 +4253,631 @@ public class EngageApplication
     }
 
     @Override
-    public void onGroupAssetDiscovered(String id, String nodeJson, String eventExtraJson)
+    public void onGroupAssetDiscovered(final String id, final String nodeJson, final String eventExtraJson)
     {
-        logEvent(Analytics.GROUP_ASSET_DISCOVERED);
-
-        Log.d(TAG, "onGroupAssetDiscovered: id='" + id + "', json='" + nodeJson + "'");
-
-        synchronized (_assetChangeListeners)
+        runOnUiThread(new Runnable()
         {
-            for(IAssetChangeListener listener : _assetChangeListeners)
+            @Override
+            public void run()
             {
-                listener.onAssetDiscovered(id, nodeJson);
-            }
-        }
+                logEvent(Analytics.GROUP_ASSET_DISCOVERED);
 
-        boolean notify = false;
-        synchronized (_dynamicGroups)
-        {
-            GroupDescriptor gd = _dynamicGroups.get(id);
-            if(gd == null)
-            {
-                gd = new GroupDescriptor();
-                if(gd.loadFromJson(nodeJson))
+                Log.d(TAG, "onGroupAssetDiscovered: id='" + id + "', json='" + nodeJson + "'");
+
+                synchronized (_assetChangeListeners)
                 {
-                    gd.setDynamic(true);
-                    gd.selectedForMultiView = true;
-                    _dynamicGroups.put(id, gd);
-                    notify = true;
-                }
-                else
-                {
-                    Log.e(TAG, "onGroupAssetDiscovered: failed to load group descriptor from json");
-                }
-            }
-        }
-
-        if(notify)
-        {
-            playAssetDiscoveredNotification();
-
-            synchronized (_configurationChangeListeners)
-            {
-                for (IConfigurationChangeListener listener : _configurationChangeListeners)
-                {
-                    listener.onCriticalConfigurationChange();
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onGroupAssetRediscovered(String id, String nodeJson, String eventExtraJson)
-    {
-        //logEvent(Analytics.GROUP_ASSET_REDISCOVERED);
-
-        synchronized (_assetChangeListeners)
-        {
-            for(IAssetChangeListener listener : _assetChangeListeners)
-            {
-                listener.onAssetRediscovered(id, nodeJson);
-            }
-        }
-
-        boolean notify = false;
-        synchronized (_dynamicGroups)
-        {
-            GroupDescriptor gd = _dynamicGroups.get(id);
-            if(gd == null)
-            {
-                gd = new GroupDescriptor();
-                if(gd.loadFromJson(nodeJson))
-                {
-                    gd.setDynamic(true);
-                    gd.selectedForMultiView = true;
-                    _dynamicGroups.put(id, gd);
-                    notify = true;
-                }
-                else
-                {
-                    Log.e(TAG, "onGroupAssetRediscovered: failed to load group descriptor from json");
-                }
-            }
-        }
-
-        if(notify)
-        {
-            playAssetDiscoveredNotification();
-
-            synchronized (_configurationChangeListeners)
-            {
-                for (IConfigurationChangeListener listener : _configurationChangeListeners)
-                {
-                    listener.onCriticalConfigurationChange();
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onGroupAssetUndiscovered(String id, String nodeJson, String eventExtraJson)
-    {
-        logEvent(Analytics.GROUP_ASSET_UNDISCOVERED);
-
-        synchronized (_assetChangeListeners)
-        {
-            for(IAssetChangeListener listener : _assetChangeListeners)
-            {
-                listener.onAssetUndiscovered(id, nodeJson);
-            }
-        }
-
-        boolean notify = false;
-        synchronized (_dynamicGroups)
-        {
-            if(_dynamicGroups.containsKey(id))
-            {
-                _dynamicGroups.remove(id);
-                notify = true;
-            }
-        }
-
-        if(notify)
-        {
-            playAssetUndiscoveredNotification();
-            synchronized (_configurationChangeListeners)
-            {
-                for (IConfigurationChangeListener listener : _configurationChangeListeners)
-                {
-                    listener.onCriticalConfigurationChange();
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onGroupBlobSent(String id, String eventExtraJson)
-    {
-        Log.d(TAG, "onGroupBlobSent");
-    }
-
-    @Override
-    public void onGroupBlobSendFailed(String id, String eventExtraJson)
-    {
-        Log.e(TAG, "onGroupBlobSendFailed");
-    }
-
-    @Override
-    public void onGroupBlobReceived(String id, String blobInfoJson, byte[] blob, long blobSize, String eventExtraJson)
-    {
-        Log.d(TAG, "onGroupBlobReceived: blobInfoJson=" + blobInfoJson);
-
-        try
-        {
-            JSONObject blobInfo = new JSONObject(blobInfoJson);
-
-            int payloadType = blobInfo.getInt(Engine.JsonFields.BlobHeader.payloadType);
-            String source = blobInfo.getString(Engine.JsonFields.BlobHeader.source);
-            String target = blobInfo.getString(Engine.JsonFields.BlobHeader.target);
-
-            PresenceDescriptor pd = _activeConfiguration.getPresenceDescriptor(source);
-
-            // Make a super basic PD if we couldn't find one for some reason
-            if(pd == null)
-            {
-                pd = new PresenceDescriptor();
-                pd.self = false;
-                pd.nodeId = source;
-            }
-
-            // Human biometrics ... ?
-            if (Engine.BlobType.fromInt(payloadType) == Engine.BlobType.engageHumanBiometrics)
-            {
-                int blobOffset = 0;
-                int bytesLeft = (int)blobSize;
-                boolean anythingUpdated = false;
-
-                while( bytesLeft > 0 )
-                {
-                    DataSeries ds = new DataSeries();
-                    int bytesProcessed = ds.parseByteArray(blob, blobOffset, bytesLeft);
-                    if(bytesProcessed <= 0)
+                    for (IAssetChangeListener listener : _assetChangeListeners)
                     {
-                        throw new Exception("Error processing HBM");
-                    }
-
-                    bytesLeft -= bytesProcessed;
-                    blobOffset += bytesProcessed;
-
-                    if(pd.updateBioMetrics(ds))
-                    {
-                        anythingUpdated = true;
+                        listener.onAssetDiscovered(id, nodeJson);
                     }
                 }
 
-                if(anythingUpdated)
+                boolean notify = false;
+                synchronized (_dynamicGroups)
                 {
-                    synchronized (_presenceChangeListeners)
+                    GroupDescriptor gd = _dynamicGroups.get(id);
+                    if (gd == null)
                     {
-                        for(IPresenceChangeListener listener : _presenceChangeListeners)
+                        gd = new GroupDescriptor();
+                        if (gd.loadFromJson(nodeJson))
                         {
-                            listener.onPresenceChange(pd);
+                            gd.setDynamic(true);
+                            gd.selectedForMultiView = true;
+                            _dynamicGroups.put(id, gd);
+                            notify = true;
+                        }
+                        else
+                        {
+                            Log.e(TAG, "onGroupAssetDiscovered: failed to load group descriptor from json");
+                        }
+                    }
+                }
+
+                if (notify)
+                {
+                    playAssetDiscoveredNotification();
+
+                    synchronized (_configurationChangeListeners)
+                    {
+                        for (IConfigurationChangeListener listener : _configurationChangeListeners)
+                        {
+                            listener.onCriticalConfigurationChange();
                         }
                     }
                 }
             }
-            else if (Engine.BlobType.fromInt(payloadType) == Engine.BlobType.appTextUtf8)
+        });
+    }
+
+    @Override
+    public void onGroupAssetRediscovered(final String id, final String nodeJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
             {
-                // TODO: only pass on if for this node or for everyone!
+                //logEvent(Analytics.GROUP_ASSET_REDISCOVERED);
 
-                String message = new String(blob, Constants.CHARSET);
-
-                synchronized (_groupTextMessageListeners)
+                synchronized (_assetChangeListeners)
                 {
-                    for (IGroupTextMessageListener listener : _groupTextMessageListeners)
+                    for (IAssetChangeListener listener : _assetChangeListeners)
                     {
-                        listener.onGroupTextMessageRx(pd, message);
+                        listener.onAssetRediscovered(id, nodeJson);
                     }
                 }
 
+                boolean notify = false;
+                synchronized (_dynamicGroups)
+                {
+                    GroupDescriptor gd = _dynamicGroups.get(id);
+                    if (gd == null)
+                    {
+                        gd = new GroupDescriptor();
+                        if (gd.loadFromJson(nodeJson))
+                        {
+                            gd.setDynamic(true);
+                            gd.selectedForMultiView = true;
+                            _dynamicGroups.put(id, gd);
+                            notify = true;
+                        }
+                        else
+                        {
+                            Log.e(TAG, "onGroupAssetRediscovered: failed to load group descriptor from json");
+                        }
+                    }
+                }
+
+                if (notify)
+                {
+                    playAssetDiscoveredNotification();
+
+                    synchronized (_configurationChangeListeners)
+                    {
+                        for (IConfigurationChangeListener listener : _configurationChangeListeners)
+                        {
+                            listener.onCriticalConfigurationChange();
+                        }
+                    }
+                }
             }
-        }
-        catch (Exception e)
+        });
+    }
+
+    @Override
+    public void onGroupAssetUndiscovered(final String id, final String nodeJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
         {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onGroupRtpSent(String id, String eventExtraJson)
-    {
-        Log.d(TAG, "onGroupRtpSent");
-    }
-
-    @Override
-    public void onGroupRtpSendFailed(String id, String eventExtraJson)
-    {
-        Log.e(TAG, "onGroupRtpSendFailed");
-    }
-
-    @Override
-    public void onGroupRtpReceived(String id, String rtpHeaderJson, byte[] payload, long payloadSize, String eventExtraJson)
-    {
-        Log.d(TAG, "onGroupRtpReceived: rtpHeaderJson=" + rtpHeaderJson);
-    }
-
-    public void onGroupRawSent(String id, String eventExtraJson)
-    {
-        Log.d(TAG, "onGroupRawSent");
-    }
-
-    @Override
-    public void onGroupRawSendFailed(String id, String eventExtraJson)
-    {
-        Log.e(TAG, "onGroupRawSendFailed");
-    }
-
-    @Override
-    public void onGroupRawReceived(String id, byte[] raw, long rawsize, String eventExtraJson)
-    {
-        Log.d(TAG, "onGroupRawReceived");
-    }
-
-    @Override
-    public void onGroupTimelineEventStarted(String id, String eventJson, String eventExtraJson)
-    {
-        Log.d(TAG, "onGroupTimelineEventStarted: " + id);
-
-        final GroupDescriptor gd = getGroup(id);
-        if(gd == null)
-        {
-            Log.e(TAG, "onGroupTimelineEventStarted: cannot find group id='" + id + "'");
-            return;
-        }
-
-        synchronized (_groupTimelineListeners)
-        {
-            for (IGroupTimelineListener listener : _groupTimelineListeners)
+            @Override
+            public void run()
             {
-                listener.onGroupTimelineEventStarted(gd, eventJson);
+                logEvent(Analytics.GROUP_ASSET_UNDISCOVERED);
+
+                synchronized (_assetChangeListeners)
+                {
+                    for (IAssetChangeListener listener : _assetChangeListeners)
+                    {
+                        listener.onAssetUndiscovered(id, nodeJson);
+                    }
+                }
+
+                boolean notify = false;
+                synchronized (_dynamicGroups)
+                {
+                    if (_dynamicGroups.containsKey(id))
+                    {
+                        _dynamicGroups.remove(id);
+                        notify = true;
+                    }
+                }
+
+                if (notify)
+                {
+                    playAssetUndiscoveredNotification();
+                    synchronized (_configurationChangeListeners)
+                    {
+                        for (IConfigurationChangeListener listener : _configurationChangeListeners)
+                        {
+                            listener.onCriticalConfigurationChange();
+                        }
+                    }
+                }
             }
-        }
+        });
     }
 
     @Override
-    public void onGroupTimelineEventUpdated(String id, String eventJson, String eventExtraJson)
+    public void onGroupBlobSent(final String id, final String eventExtraJson)
     {
-        Log.d(TAG, "onGroupTimelineEventUpdated: " + id);
-
-        final GroupDescriptor gd = getGroup(id);
-        if(gd == null)
+        runOnUiThread(new Runnable()
         {
-            Log.e(TAG, "onGroupTimelineEventUpdated: cannot find group id='" + id + "'");
-            return;
-        }
-
-        synchronized (_groupTimelineListeners)
-        {
-            for (IGroupTimelineListener listener : _groupTimelineListeners)
+            @Override
+            public void run()
             {
-                listener.onGroupTimelineEventUpdated(gd, eventJson);
+                Log.d(TAG, "onGroupBlobSent");
             }
-        }
+        });
     }
 
     @Override
-    public void onGroupTimelineEventEnded(String id, String eventJson, String eventExtraJson)
+    public void onGroupBlobSendFailed(final String id, final String eventExtraJson)
     {
-        Log.d(TAG, "onGroupTimelineEventEnded: " + id);
-
-        final GroupDescriptor gd = getGroup(id);
-        if(gd == null)
+        runOnUiThread(new Runnable()
         {
-            Log.e(TAG, "onGroupTimelineEventEnded: cannot find group id='" + id + "'");
-            return;
-        }
-
-        synchronized (_groupTimelineListeners)
-        {
-            for (IGroupTimelineListener listener : _groupTimelineListeners)
+            @Override
+            public void run()
             {
-                listener.onGroupTimelineEventEnded(gd, eventJson);
+                Log.e(TAG, "onGroupBlobSendFailed");
             }
-        }
+        });
     }
 
     @Override
-    public void onGroupTimelineReport(String id, String reportJson, String eventExtraJson)
+    public void onGroupBlobReceived(final String id, final String blobInfoJson, final byte[] blob, final long blobSize, final String eventExtraJson)
     {
-        logEvent(Analytics.GROUP_TIMELINE_REPORT);
-
-        Log.d(TAG, "onGroupTimelineReport: " + id);
-
-        final GroupDescriptor gd = getGroup(id);
-        if(gd == null)
+        runOnUiThread(new Runnable()
         {
-            Log.e(TAG, "onGroupTimelineReport: cannot find group id='" + id + "'");
-            return;
-        }
-
-        synchronized (_groupTimelineListeners)
-        {
-            for (IGroupTimelineListener listener : _groupTimelineListeners)
+            @Override
+            public void run()
             {
-                listener.onGroupTimelineReport(gd, reportJson);
+                Log.d(TAG, "onGroupBlobReceived: blobInfoJson=" + blobInfoJson);
+
+                try
+                {
+                    JSONObject blobInfo = new JSONObject(blobInfoJson);
+
+                    int payloadType = blobInfo.getInt(Engine.JsonFields.BlobHeader.payloadType);
+                    String source = blobInfo.getString(Engine.JsonFields.BlobHeader.source);
+                    String target = blobInfo.getString(Engine.JsonFields.BlobHeader.target);
+
+                    PresenceDescriptor pd = _activeConfiguration.getPresenceDescriptor(source);
+
+                    // Make a super basic PD if we couldn't find one for some reason
+                    if (pd == null)
+                    {
+                        pd = new PresenceDescriptor();
+                        pd.self = false;
+                        pd.nodeId = source;
+                    }
+
+                    // Human biometrics ... ?
+                    if (Engine.BlobType.fromInt(payloadType) == Engine.BlobType.engageHumanBiometrics)
+                    {
+                        int blobOffset = 0;
+                        int bytesLeft = (int) blobSize;
+                        boolean anythingUpdated = false;
+
+                        while (bytesLeft > 0)
+                        {
+                            DataSeries ds = new DataSeries();
+                            int bytesProcessed = ds.parseByteArray(blob, blobOffset, bytesLeft);
+                            if (bytesProcessed <= 0)
+                            {
+                                throw new Exception("Error processing HBM");
+                            }
+
+                            bytesLeft -= bytesProcessed;
+                            blobOffset += bytesProcessed;
+
+                            if (pd.updateBioMetrics(ds))
+                            {
+                                anythingUpdated = true;
+                            }
+                        }
+
+                        if (anythingUpdated)
+                        {
+                            synchronized (_presenceChangeListeners)
+                            {
+                                for (IPresenceChangeListener listener : _presenceChangeListeners)
+                                {
+                                    listener.onPresenceChange(pd);
+                                }
+                            }
+                        }
+                    }
+                    else if (Engine.BlobType.fromInt(payloadType) == Engine.BlobType.appTextUtf8)
+                    {
+                        // TODO: only pass on if for this node or for everyone!
+
+                        String message = new String(blob, Constants.CHARSET);
+
+                        synchronized (_groupTextMessageListeners)
+                        {
+                            for (IGroupTextMessageListener listener : _groupTextMessageListeners)
+                            {
+                                listener.onGroupTextMessageRx(pd, message);
+                            }
+                        }
+
+                    }
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
             }
-        }
+        });
     }
 
     @Override
-    public void onGroupTimelineReportFailed(String id, String eventExtraJson)
+    public void onGroupRtpSent(final String id, final String eventExtraJson)
     {
-        logEvent(Analytics.GROUP_TIMELINE_REPORT_FAILED);
-
-        Log.d(TAG, "onGroupTimelineReportFailed: " + id);
-
-        final GroupDescriptor gd = getGroup(id);
-        if(gd == null)
+        runOnUiThread(new Runnable()
         {
-            Log.e(TAG, "onGroupTimelineReportFailed: cannot find group id='" + id + "'");
-            return;
-        }
-
-        synchronized (_groupTimelineListeners)
-        {
-            for (IGroupTimelineListener listener : _groupTimelineListeners)
+            @Override
+            public void run()
             {
-                listener.onGroupTimelineReportFailed(gd);
+                Log.d(TAG, "onGroupRtpSent");
             }
-        }
+        });
     }
 
     @Override
-    public void onRallypointPausingConnectionAttempt(String id, String eventExtraJson)
+    public void onGroupRtpSendFailed(final String id, final String eventExtraJson)
     {
-        Log.d(TAG, "onRallypointPausingConnectionAttempt");
-        // Stub
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Log.e(TAG, "onGroupRtpSendFailed");
+            }
+        });
     }
 
     @Override
-    public void onRallypointConnecting(String id, String eventExtraJson)
+    public void onGroupRtpReceived(final String id, final String rtpHeaderJson, final byte[] payload, final long payloadSize, final String eventExtraJson)
     {
-        Log.d(TAG, "onRallypointConnecting: " + id);
-        // Stub
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Log.d(TAG, "onGroupRtpReceived: rtpHeaderJson=" + rtpHeaderJson);
+            }
+        });
     }
 
-    @Override
-    public void onRallypointConnected(String id, String eventExtraJson)
+    public void onGroupRawSent(final String id, final String eventExtraJson)
     {
-        logEvent(Analytics.GROUP_RP_CONNECTED);
-
-        Log.d(TAG, "onRallypointConnected: " + id);
-        // Stub
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Log.d(TAG, "onGroupRawSent");
+            }
+        });
     }
 
     @Override
-    public void onRallypointDisconnected(String id, String eventExtraJson)
+    public void onGroupRawSendFailed(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Log.e(TAG, "onGroupRawSendFailed");
+            }
+        });
+    }
+
+    @Override
+    public void onGroupRawReceived(final String id, final byte[] raw, final long rawsize, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Log.d(TAG, "onGroupRawReceived");
+            }
+        });
+    }
+
+    @Override
+    public void onGroupTimelineEventStarted(final String id, final String eventJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Log.d(TAG, "onGroupTimelineEventStarted: " + id);
+
+                final GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupTimelineEventStarted: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                synchronized (_groupTimelineListeners)
+                {
+                    for (IGroupTimelineListener listener : _groupTimelineListeners)
+                    {
+                        listener.onGroupTimelineEventStarted(gd, eventJson);
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onGroupTimelineEventUpdated(final String id, final String eventJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Log.d(TAG, "onGroupTimelineEventUpdated: " + id);
+
+                final GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupTimelineEventUpdated: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                synchronized (_groupTimelineListeners)
+                {
+                    for (IGroupTimelineListener listener : _groupTimelineListeners)
+                    {
+                        listener.onGroupTimelineEventUpdated(gd, eventJson);
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onGroupTimelineEventEnded(final String id, final String eventJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Log.d(TAG, "onGroupTimelineEventEnded: " + id);
+
+                final GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupTimelineEventEnded: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                synchronized (_groupTimelineListeners)
+                {
+                    for (IGroupTimelineListener listener : _groupTimelineListeners)
+                    {
+                        listener.onGroupTimelineEventEnded(gd, eventJson);
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onGroupTimelineReport(final String id, final String reportJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_TIMELINE_REPORT);
+
+                Log.d(TAG, "onGroupTimelineReport: " + id);
+
+                final GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupTimelineReport: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                synchronized (_groupTimelineListeners)
+                {
+                    for (IGroupTimelineListener listener : _groupTimelineListeners)
+                    {
+                        listener.onGroupTimelineReport(gd, reportJson);
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onGroupTimelineReportFailed(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_TIMELINE_REPORT_FAILED);
+
+                Log.d(TAG, "onGroupTimelineReportFailed: " + id);
+
+                final GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupTimelineReportFailed: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                synchronized (_groupTimelineListeners)
+                {
+                    for (IGroupTimelineListener listener : _groupTimelineListeners)
+                    {
+                        listener.onGroupTimelineReportFailed(gd);
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onGroupTimelineGroomed(final String id, final String eventListJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                //logEvent(Analytics.GROUP_TIMELINE_REPORT);
+
+                Log.d(TAG, "onGroupTimelineGroomed: " + id);
+
+                final GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupTimelineGroomed: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                synchronized (_groupTimelineListeners)
+                {
+                    for (IGroupTimelineListener listener : _groupTimelineListeners)
+                    {
+                        listener.onGroupTimelineGroomed(gd, eventListJson);
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onGroupHealthReport(final String id, final String reportJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_HEALTH_REPORT);
+
+                Log.d(TAG, "onGroupHealthReport: " + id);
+
+                final GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupHealthReport: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                synchronized (_groupTimelineListeners)
+                {
+                    for (IGroupTimelineListener listener : _groupTimelineListeners)
+                    {
+                        listener.onGroupHealthReport(gd, reportJson);
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onGroupHealthReportFailed(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_HEALTH_REPORT_FAILED);
+
+                Log.d(TAG, "onGroupHealthReportFailed: " + id);
+
+                final GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupHealthReportFailed: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                synchronized (_groupTimelineListeners)
+                {
+                    for (IGroupTimelineListener listener : _groupTimelineListeners)
+                    {
+                        listener.onGroupHealthReportFailed(gd);
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onRallypointPausingConnectionAttempt(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Log.d(TAG, "onRallypointPausingConnectionAttempt");
+                // Stub
+            }
+        });
+    }
+
+    @Override
+    public void onRallypointConnecting(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Log.d(TAG, "onRallypointConnecting: " + id);
+                // Stub
+            }
+        });
+    }
+
+    @Override
+    public void onRallypointConnected(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_RP_CONNECTED);
+
+                Log.d(TAG, "onRallypointConnected: " + id);
+                // Stub
+            }
+        });
+    }
+
+    @Override
+    public void onRallypointDisconnected(final String id, final String eventExtraJson)
     {
         logEvent(Analytics.GROUP_RP_DISCONNECTED);
 
@@ -4051,35 +4886,42 @@ public class EngageApplication
     }
 
     @Override
-    public void onRallypointRoundtripReport(String id, long rtMs, long rtQualityRating, String eventExtraJson)
+    public void onRallypointRoundtripReport(final String id, final long rtMs, final long rtQualityRating, final String eventExtraJson)
     {
-        if(rtQualityRating >= 100)
+        runOnUiThread(new Runnable()
         {
-            logEvent(Analytics.GROUP_RP_RT_100);
-        }
-        else if(rtQualityRating >= 75)
-        {
-            logEvent(Analytics.GROUP_RP_RT_75);
-        }
-        else if(rtQualityRating >= 50)
-        {
-            logEvent(Analytics.GROUP_RP_RT_50);
-        }
-        else if(rtQualityRating >= 25)
-        {
-            logEvent(Analytics.GROUP_RP_RT_25);
-        }
-        else if(rtQualityRating >= 10)
-        {
-            logEvent(Analytics.GROUP_RP_RT_10);
-        }
-        else
-        {
-            logEvent(Analytics.GROUP_RP_RT_0);
-        }
+            @Override
+            public void run()
+            {
+                if (rtQualityRating >= 100)
+                {
+                    logEvent(Analytics.GROUP_RP_RT_100);
+                }
+                else if (rtQualityRating >= 75)
+                {
+                    logEvent(Analytics.GROUP_RP_RT_75);
+                }
+                else if (rtQualityRating >= 50)
+                {
+                    logEvent(Analytics.GROUP_RP_RT_50);
+                }
+                else if (rtQualityRating >= 25)
+                {
+                    logEvent(Analytics.GROUP_RP_RT_25);
+                }
+                else if (rtQualityRating >= 10)
+                {
+                    logEvent(Analytics.GROUP_RP_RT_10);
+                }
+                else
+                {
+                    logEvent(Analytics.GROUP_RP_RT_0);
+                }
 
-        Log.d(TAG, "onRallypointRoundtripReport: " + id + ", ms=" + rtMs + ", qual=" + rtQualityRating);
-        // Stub
+                Log.d(TAG, "onRallypointRoundtripReport: " + id + ", ms=" + rtMs + ", qual=" + rtQualityRating);
+                // Stub
+            }
+        });
     }
 
     public void pauseLicenseActivation()
@@ -4229,13 +5071,13 @@ public class EngageApplication
                         String stringToHash = key + deviceId + getString(R.string.licensing_entitlement);
                         String hValue = Utils.md5HashOfString(stringToHash);
 
-                        LicenseActivationTask lat = new LicenseActivationTask(EngageApplication.this, url, getString(R.string.licensing_entitlement), key, ac, deviceId, hValue, EngageApplication.this);
+                        LicenseActivationTask lat = new LicenseActivationTask(url, getString(R.string.licensing_entitlement), key, ac, deviceId, hValue, EngageApplication.this);
 
                         lat.execute();
                     }
                     catch (Exception e)
                     {
-                        Log.e(TAG, "obtainActivationCode: " + e.getMessage());
+                        Log.d(TAG, "obtainActivationCode: " + e.getMessage());
                         scheduleObtainingActivationCode();
                     }
                 }

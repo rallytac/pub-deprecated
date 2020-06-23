@@ -29,6 +29,11 @@ public class Constants
     public final static float DEF_ERROR_TONE_LEVEL = (float)0.2;
 
     public final static int DEF_SPEAKER_OUTPUT_BOOST_FACTOR = 3;
+    public final static boolean DEF_AEC_ENABLED = false;
+    public final static boolean DEF_AEC_CNG = true;
+    public final static int DEF_AEC_MODE = 5;
+    public final static int DEF_AEC_SPEAKER_TAIL_MS = 60;
+    public final static boolean DEF_AEC_STEREO_DISABLED = true;
 
     public final static boolean DEF_USE_RP = false;
     public final static String DEF_RP_ADDRESS = "";
@@ -78,4 +83,11 @@ public class Constants
     public final static boolean DEF_USER_UI_PTT_VOICE_CONTROL = false;
 
     public final static int TX_UNMUTE_DELAY_MS_AFTER_GRANT_TONE = 120;
+
+    public final static int UNLIMITED_TX_SECS = 86400;
+    public final static int DEFAULT_TX_SECS = 120;
+
+    public final static int DEFAULT_ENCODER = 25;
+    public final static int DEFAULT_TX_FRAMING_MS = 60;
+    public static final String CERTSTORE_CHANGED_TO_FN = "CertStoreChangedToFn";
 }

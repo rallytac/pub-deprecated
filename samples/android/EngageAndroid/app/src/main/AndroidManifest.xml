@@ -51,13 +51,7 @@
         <activity android:name=".ContactActivity" />
         <activity android:name=".OfflineActivationActivity" />
         <activity android:name=".OfflineDeactivationActivity" />
-
-        <activity android:name=".CertificateManagerActivity">
-            <intent-filter>
-                <action android:name="com.rallytac.engageandroid.ACTION_CERTIFICATE_MANAGER_ACTIVITY"/>
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
+        <activity android:name=".CertificateManagerActivity"/>
 
         <!-- Sharing out -->
         <provider
@@ -74,9 +68,7 @@
         <activity android:name=".AndroidIntentActionListenerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
@@ -102,7 +94,6 @@
             android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -115,6 +106,10 @@
         <activity
             android:name=".MissionListActivity"
             android:label="@string/title_activity_missions" />
+
+        <activity android:name=".CertStoreListActivity"
+                  android:label="@string/title_activity_certstores"/>
+
         <activity
             android:name=".OrientationIndependentQrCodeScanActivity"
             android:screenOrientation="fullSensor"
@@ -127,7 +122,6 @@
         <activity android:name=".ShareMissionActivity">
             <intent-filter>
                 <action android:name="@string/share_mission_activity_action" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

@@ -537,8 +537,37 @@ public class LauncherActivity extends AppCompatActivity
         }
     }
 
+    private void launchUiActivity()
+    {
+        String launchActivityName = Utils.getMetaData("Launcher.LAUNCH_ACTIVITY");
+        if(!Utils.isEmptyString(launchActivityName))
+        {
+            try
+            {
+                Class<?> cls = getClassLoader().loadClass(launchActivityName);
+                startActivity(new Intent(getApplicationContext(), cls));
+                finish();
+            }
+            catch (Exception e)
+            {
+                showIssueAndFinish(getString(R.string.title_ui_launch_error), "Cannot launch the UI named : '" + launchActivityName + "'.\n\nPlease check your Android manifest.");
+            }
+        }
+        else
+        {
+            showIssueAndFinish(getString(R.string.title_ui_launch_error), "No launch UI named.\n\nPlease check your Android manifest.");
+        }
+    }
+
     private void startEngineWhenServiceIsOnline()
     {
+        if(Globals.getEngageApplication().isEngineRunning())
+        {
+            Log.i(TAG, "engine is already running - ui was likely relaunched");
+            launchUiActivity();
+            return;
+        }
+
         Log.i(TAG, "engaging ...");
 
         long tmrDelay;
@@ -566,25 +595,7 @@ public class LauncherActivity extends AppCompatActivity
                 {
                     _waitForEngageOnlineTimer.cancel();
                     Globals.getEngageApplication().startEngine();
-
-                    String launchActivityName = Utils.getMetaData("Launcher.LAUNCH_ACTIVITY");
-                    if(!Utils.isEmptyString(launchActivityName))
-                    {
-                        try
-                        {
-                            Class<?> cls = getClassLoader().loadClass(launchActivityName);
-                            startActivity(new Intent(getApplicationContext(), cls));
-                            finish();
-                        }
-                        catch (Exception e)
-                        {
-                            showIssueAndFinish(getString(R.string.title_ui_launch_error), "Cannot launch the UI named : '" + launchActivityName + "'.\n\nPlease check your Android manifest.");
-                        }
-                    }
-                    else
-                    {
-                        showIssueAndFinish(getString(R.string.title_ui_launch_error), "No launch UI named.\n\nPlease check your Android manifest.");
-                    }
+                    launchUiActivity();
                 }
                 else
                 {

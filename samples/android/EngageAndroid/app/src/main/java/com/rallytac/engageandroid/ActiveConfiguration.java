@@ -266,7 +266,6 @@ public class ActiveConfiguration
         Globals.getSharedPreferencesEditor().apply();
     }
 
-
     public int getSpeakerOutputBoostFactor()
     {
         return _speakerOutputBoostFactor;
@@ -824,7 +823,7 @@ public class ActiveConfiguration
         return rc;
     }
 
-    public JSONObject makeEnginePolicyObject(String template)
+    public static JSONObject makeBaselineEnginePolicyObject(String template)
     {
         JSONObject rc = null;
 
@@ -902,6 +901,61 @@ public class ActiveConfiguration
                 rc.put(Engine.JsonFields.EnginePolicy.Licensing.objectName, licensing);
             }
 
+            // Audio
+            {
+                JSONObject audio = rc.optJSONObject(Engine.JsonFields.EnginePolicy.Audio.objectName);
+                if(audio == null)
+                {
+                    audio = new JSONObject();
+                }
+
+                // Default to stereo output
+                audio.put(Engine.JsonFields.EnginePolicy.Audio.outputChannels, 2);
+
+                JSONObject aec = audio.optJSONObject(Engine.JsonFields.EnginePolicy.Audio.Aec.objectName);
+                if(aec == null)
+                {
+                    aec = new JSONObject();
+                }
+
+                boolean aecEnabled = Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_AUDIO_AEC_ENABLED, Constants.DEF_AEC_ENABLED);
+                aec.put(Engine.JsonFields.EnginePolicy.Audio.Aec.enabled, aecEnabled);
+                aec.put(Engine.JsonFields.EnginePolicy.Audio.Aec.cng, Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_AUDIO_AEC_CNG, Constants.DEF_AEC_CNG));
+                aec.put(Engine.JsonFields.EnginePolicy.Audio.Aec.mode, Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.USER_AUDIO_AEC_MODE, Integer.toString(Constants.DEF_AEC_MODE))));
+                aec.put(Engine.JsonFields.EnginePolicy.Audio.Aec.speakerTailMs, Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.USER_AUDIO_AEC_SPEAKER_TAIL_MS, Integer.toString(Constants.DEF_AEC_SPEAKER_TAIL_MS))));
+
+                audio.put(Engine.JsonFields.EnginePolicy.Audio.Aec.objectName, aec);
+
+                // Maybe change to mono output if desired
+                if(aecEnabled)
+                {
+                    boolean disableStereo = Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_AUDIO_AEC_DISABLE_STEREO, Constants.DEF_AEC_STEREO_DISABLED);
+                    if(disableStereo)
+                    {
+                        audio.put(Engine.JsonFields.EnginePolicy.Audio.outputChannels, 1);
+                    }
+                }
+
+                rc.put(Engine.JsonFields.EnginePolicy.Audio.objectName, audio);
+            }
+
+
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            rc = null;
+        }
+
+        return rc;
+    }
+
+    public JSONObject makeEnginePolicyObjectFromBaseline(JSONObject baseLine)
+    {
+        JSONObject rc = baseLine;
+
+        try
+        {
             // Networking
             {
                 JSONObject networking = rc.optJSONObject(Engine.JsonFields.EnginePolicy.Networking.objectName);
@@ -1141,23 +1195,35 @@ public class ActiveConfiguration
                     if( database.addOrUpdateMissionFromActiveConfiguration(ac) )
                     {
                         database.save(Globals.getSharedPreferences(), Constants.MISSION_DATABASE_NAME);
-                        Toast.makeText(ctx, "Installed the mission", Toast.LENGTH_SHORT).show();
+                        if(ctx != null)
+                        {
+                            Toast.makeText(ctx, "Installed the mission", Toast.LENGTH_SHORT).show();
+                        }
                     }
                     else
                     {
-                        Toast.makeText(ctx, "Failed to install the mission", Toast.LENGTH_SHORT).show();
+                        if(ctx != null)
+                        {
+                            Toast.makeText(ctx, "Failed to install the mission", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
             }
             else
             {
-                Toast.makeText(ctx, "Cannot open the mission database", Toast.LENGTH_SHORT).show();
+                if(ctx != null)
+                {
+                    Toast.makeText(ctx, "Cannot open the mission database", Toast.LENGTH_SHORT).show();
+                }
             }
 
         }
         else
         {
-            Toast.makeText(ctx, "Cannot parse the mission template", Toast.LENGTH_SHORT).show();
+            if(ctx != null)
+            {
+                Toast.makeText(ctx, "Cannot parse the mission template", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -1316,6 +1382,7 @@ public class ActiveConfiguration
                     txAudio.put(Engine.JsonFields.TxAudio.framingMs, dbg._txFramingMs);
                     txAudio.put(Engine.JsonFields.TxAudio.noHdrExt, dbg._noHdrExt);
                     txAudio.put(Engine.JsonFields.TxAudio.fdx, dbg._fdx);
+                    txAudio.put(Engine.JsonFields.TxAudio.maxTxSecs, dbg._maxTxSecs);
                     groupObject.put(Engine.JsonFields.TxAudio.objectName, txAudio);
 
                     gd.jsonConfiguration = groupObject.toString();
@@ -1329,5 +1396,25 @@ public class ActiveConfiguration
         }
 
         return rc;
+    }
+
+    public void updateGroupStates(ActiveConfiguration ac)
+    {
+        if(ac == null || ac._missionGroups == null || ac._missionGroups.size() == 0 ||
+           _missionGroups == null || _missionGroups.size() == 0)
+        {
+            return;
+        }
+
+        for(GroupDescriptor prevGroup : ac._missionGroups)
+        {
+            for(GroupDescriptor thisGroup : _missionGroups)
+            {
+                if(prevGroup.id.compareTo(thisGroup.id) == 0)
+                {
+                    thisGroup.updateStateFrom(prevGroup);
+                }
+            }
+        }
     }
 }

@@ -25,6 +25,10 @@
     </item>
 
     <item
+        android:id="@+id/action_security"
+        android:title="Security" />
+
+    <item
         android:id="@+id/action_settings"
         android:title="Settings" />
 

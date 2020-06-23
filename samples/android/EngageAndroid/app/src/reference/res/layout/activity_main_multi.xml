@@ -9,6 +9,7 @@
 
     <TextView
         android:id="@+id/tvTitleBar"
+        android:onClick="onClickTitleBar"
         android:layout_width="0dp"
         android:layout_height="24dp"
         android:gravity="center_horizontal|center_vertical"
@@ -20,6 +21,7 @@
 
     <TextView
         android:id="@+id/tvNotificationBar"
+        android:onClick="onClickNotificationBar"
         android:layout_width="0dp"
         android:layout_height="24dp"
         android:background="@android:color/holo_red_dark"
@@ -276,6 +278,7 @@
 
     <ImageView
         android:id="@+id/ivHeart"
+        android:onClick="onClickBiometricsIcon"
         android:layout_width="24dp"
         android:layout_height="24dp"
         app:layout_constraintBottom_toBottomOf="@+id/ivPtt"
@@ -286,6 +289,7 @@
 
     <TextView
         android:id="@+id/tvLicensingBar"
+        android:onClick="onClickLicensingBar"
         android:layout_width="0dp"
         android:layout_height="24dp"
         android:background="@android:color/holo_red_dark"

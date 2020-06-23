@@ -4,6 +4,9 @@
     <string name="certstore_active_fn">active-certstore.certstore</string>
     <string name="certstore_default_certificate_id">rtsFactoryDefaultEngage</string>
 
+    <string-array name="certstore_passwords">
+    </string-array>
+
     <string name="app_intent_ptt_on">PTT_ON</string>
     <string name="app_intent_ptt_off">PTT_OFF</string>
     <string name="app_intent_next_group">NEXT_GROUP</string>
@@ -22,6 +25,9 @@
     <string name="app_ptt_voice_control_on">engage</string>
     <string name="app_ptt_voice_control_off">disengage</string>
 
+    <string name="default_rallypoint"></string>
+    <string name="default_rallypoint_port">7443</string>
+
     <string name="license_key"></string>
     <string name="activation_code"></string>
     <string name="manufacturer_id"></string>
@@ -32,6 +38,13 @@
 
     <string name="fmt_user_alias_id_generate">ANDR%1$08X</string>
     <string name="fmt_user_display_name_generate">Android User - %1$s</string>
+
+    <string name="sample_mission_gen_mission_name_fmt">%1$s Sample Mission</string>
+    <string name="sample_mission_gen_group_count">4</string>
+    <string name="sample_mission_gen_audio_group_name_fmt">Sample Group %1$d</string>
+    <string name="sample_mission_gen_use_default_rallypoint">0</string>
+
+    <string name="generated_mission_description"></string>
 
     <string name="online_licensing_activation_url_prod">https://licensing.rallytac.com/api/v1/activations</string>
     <string name="offline_licensing_activation_url_prod">https://licensing.rallytac.com/api/v1/getactivationqrcode</string>
@@ -48,6 +61,7 @@
     <string name="title_activity_settings">Settings</string>
     <string name="title_activity_missions">Available Mission</string>
     <string name="title_activity_edit_mission">Mission</string>
+    <string name="title_activity_certstores">Certificate Stores</string>
     <string name="title_activity_map">Map</string>
     <string name="wifi_lock_name">.WifiLock</string>
     <string name="multicast_lock_name">.MulticastLock</string>
@@ -192,6 +206,21 @@
     <string name="currently_operating_in_mc_failover_mode">Currently operating in multicast failover mode</string>
     <string name="license_type_does_not_require_activation">This license type does not require activation</string>
     <string name="failed_to_validate_license_info">Failed to validate the license information provided</string>
+    <string name="text_message_send_message">Send message</string>
+    <string name="text_message_hint_enter_text_message">enter a text message</string>
+    <string name="tx_usurped_by_higher_priority">Transmit usurped by higher priority</string>
+    <string name="max_tx_time_exceeded">Maximum transmit time exceeded</string>
+    <string name="tx_status_reason_started">TX started</string>
+    <string name="tx_status_reason_ended">TX ended</string>
+    <string name="tx_status_reason_tx_on_non_audio">Attempt to transmit on a non-audio group</string>
+    <string name="tx_status_reason_tx_on_non_joined">Attempt to transmit on a group that has not been joined</string>
+    <string name="tx_status_reason_tx_on_non_connected">Attempt to transmit on a group that has not been connected</string>
+    <string name="tx_status_reason_akready_tx">Already transmitting on this group</string>
+    <string name="tx_status_reason_another_already_tx">Another user is already transmitting</string>
+    <string name="tx_status_reason_another_already_tx_higher_priority">Another user is transmitting at a higher-priority</string>
+    <string name="tx_status_reason_cannot_open_mic">Cannot open the microphone</string>
+    <string name="tx_status_reason_invalid_group_id">Invalid group ID</string>
+    <string name="tx_status_reason_unknown">Unknown error</string>
 
     <string-array name="lp_tx_encoder_names">
         <item>G.711 ulaw (64 kbps)</item>
@@ -296,6 +325,21 @@
         <item>3</item>
     </string-array>
 
+    <string-array name="lp_tx_max_tx_secs_names">
+        <item>10 seconds</item>
+        <item>30 seconds</item>
+        <item>1 minute</item>
+        <item>5 minutes</item>
+        <item>Unlimited</item>
+    </string-array>
+    <string-array name="lp_tx_max_tx_secs_values">
+        <item>10</item>
+        <item>30</item>
+        <item>60</item>
+        <item>300</item>
+        <item>0</item>
+    </string-array>
+
     <string-array name="notification_tone_level_names">
         <item>Use Android Notification level</item>
         <item>None</item>
@@ -393,6 +437,23 @@
         <item>40</item>
         <item>50</item>
         <item>60</item>
+    </string-array>
+
+    <string-array name="aec_mode_names">
+        <item>Default</item>
+        <item>Low</item>
+        <item>Medium</item>
+        <item>High</item>
+        <item>Very High</item>
+        <item>Highest</item>
+    </string-array>
+    <string-array name="aec_mode_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
     </string-array>
 
 

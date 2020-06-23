@@ -267,6 +267,13 @@ public class SettingsActivity extends AppCompatPreferenceActivity
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_NEW_AUDIO_RX));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_NETWORK_ERROR));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_SPEAKER_OUTPUT_BOOST_FACTOR));
+
+            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_ENABLED));
+            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_MODE));
+            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_CNG));
+            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_SPEAKER_TAIL_MS));
+            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_DISABLE_STEREO));
+
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_VIBRATIONS));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_PTT_EVERY_TIME));
 
@@ -380,13 +387,13 @@ public class SettingsActivity extends AppCompatPreferenceActivity
                 // Fill the input selector
                 for(JSONObject ad : inputs)
                 {
-                    Log.e(TAG, ad.toString());
+                    //Log.e(TAG, ad.toString());
                 }
 
                 // Fill the output selector
                 for(JSONObject ad : outputs)
                 {
-                    Log.e(TAG, ad.toString());
+                    //Log.e(TAG, ad.toString());
                 }
             }
 

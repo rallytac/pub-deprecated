@@ -8,6 +8,7 @@ package com.rallytac.engageandroid;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -20,6 +21,7 @@ import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
@@ -30,8 +32,6 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.rallytac.engage.engine.Engine;
-
-import org.json.JSONObject;
 
 import java.util.Date;
 
@@ -326,7 +326,7 @@ public class AboutActivity extends
         {
             if(_newLd.isValid())
             {
-                if(_newLd._ld._theType == Engine.LicenseType.expires)
+                if(_newLd._ld._theType == Engine.LicenseType.expires && _newLd._ld._expires != null)
                 {
                     Date dt = new Date();
                     if(_newLd._ld._expires.after(dt))
@@ -366,6 +366,15 @@ public class AboutActivity extends
         else
         {
             findViewById(R.id.btnDeactivate).setVisibility(View.VISIBLE);
+        }
+
+        if(Utils.isEmptyString(_etLicenseKey.getText().toString()))
+        {
+            findViewById(R.id.ivShareLicenseKey).setVisibility(View.GONE);
+        }
+        else
+        {
+            findViewById(R.id.ivShareLicenseKey).setVisibility(View.VISIBLE);
         }
     }
 
@@ -510,6 +519,30 @@ public class AboutActivity extends
         dlg.show();
     }
 
+    public void onClickShareLicenseKey(View view)
+    {
+        String licenseString = _etLicenseKey.getText().toString();
+        if(Utils.isEmptyString(licenseString))
+        {
+            return;
+        }
+
+        Bitmap bm = Utils.stringToQrCodeBitmap(licenseString, Constants.QR_CODE_WIDTH, Constants.QR_CODE_HEIGHT);
+
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+        View dialogView = layoutInflater.inflate(R.layout.qr_code_displayer, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setView(dialogView);
+        alertDialogBuilder.setCancelable(true);
+        AlertDialog alert = alertDialogBuilder.create();
+
+        ImageView iv = dialogView.findViewById(R.id.ivQrCode);
+        iv.setImageBitmap(bm);
+
+        alert.show();
+    }
+
+
     public void onClickScanLicenseKey(View view)
     {
         scanData(getString(R.string.scan_license_key), ScanType.stLicenseKey);
@@ -613,7 +646,7 @@ public class AboutActivity extends
                 throw new Exception("");
             }
 
-            if (testDescriptor._status != Engine.LicensingStatusCode.requiresActivation)
+            if (testDescriptor._status != Engine.LicensingStatusCode.ok && testDescriptor._status != Engine.LicensingStatusCode.requiresActivation)
             {
                 Utils.showErrorMsg(this, getString(R.string.about_invalid_license_key));
                 throw new Exception("");
@@ -622,7 +655,7 @@ public class AboutActivity extends
             String stringToHash = key + _activeLd._ld._deviceId + entitlementKey;
             String hValue = Utils.md5HashOfString(stringToHash);
 
-            LicenseActivationTask lat = new LicenseActivationTask(this, url, getString(R.string.licensing_entitlement), key, ac, _activeLd._ld._deviceId, hValue, this);
+            LicenseActivationTask lat = new LicenseActivationTask(url, getString(R.string.licensing_entitlement), key, ac, _activeLd._ld._deviceId, hValue, this);
 
             _progressDialog = Utils.showProgressMessage(this, getString(R.string.obtaining_activation_code), _progressDialog);
             lat.execute();

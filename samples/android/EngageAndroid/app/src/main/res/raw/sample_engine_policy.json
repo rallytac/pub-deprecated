@@ -14,7 +14,7 @@
     "watchdogIntervalMs":1000,
     "watchdogHangDetectionMs":2000,
     "housekeeperIntervalMs":1000,
-    "maxTxSecs":30,
+    "maxTxSecs":86400,
     "logTaskQueueStatsIntervalMs":0,
     "enableLazySpeakerClosure":false
   },
@@ -32,7 +32,7 @@
     "rtpJitterMinMs":100,
     "rtpJitterMaxFactor":8,
     "rtpJitterOverflowTrimPercentage":10,
-    "rtpJitterUnderrunReductionThresholdMs":1000,
+    "rtpJitterUnderrunReductionThresholdMs":1500,
     "rtpLatePacketSequenceRange":5,
     "rtpLatePacketTimestampRangeMs":2000,
     "rtpInboundProcessorInactivityMs":2000,
@@ -45,7 +45,6 @@
     "logRtpJitterBufferStats":true
   },
 
-
   "audio":{
     "speakerQueueMs":250,
     "microphoneQueueMs":60,
@@ -55,7 +54,8 @@
     "pcmSpeakerBuffers":5,
     "outputChannels":2,
     "outputGainPercentage":0,
-    "allowOutputOnTransmit": false
+    "allowOutputOnTransmit": true,
+    "enableAec":true
   },
 
   "security":{

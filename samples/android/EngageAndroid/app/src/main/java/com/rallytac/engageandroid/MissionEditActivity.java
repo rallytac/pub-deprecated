@@ -155,8 +155,9 @@ public class MissionEditActivity extends AppCompatActivity
         {
             group = new DatabaseGroup();
             group._id = Utils.generateGroupId();
-            group._txFramingMs = 60;
-            group._txCodecId = 25;
+            group._txFramingMs = Constants.DEFAULT_TX_FRAMING_MS;
+            group._txCodecId = Constants.DEFAULT_ENCODER;
+            group._maxTxSecs = Constants.DEFAULT_TX_SECS;
         }
         else
         {
@@ -180,6 +181,7 @@ public class MissionEditActivity extends AppCompatActivity
         final TextView tvCryptoSignature = view.findViewById(R.id.tvCryptoSignature);
         final Switch swDisableHeaderExtensions = view.findViewById(R.id.swDisableHeaderExtensions);
         final Switch swFullDuplex = view.findViewById(R.id.swFullDuplex);
+        final Switch swUnlimitedTx = view.findViewById(R.id.swUnlimitedTx);
 
         dialogBuilder.setCancelable(true)
                 .setTitle("Group")
@@ -208,6 +210,7 @@ public class MissionEditActivity extends AppCompatActivity
                     group._txFramingMs = Utils.parseIntSafe(getResources().getStringArray(R.array.lp_tx_encoder_framing_values)[spnFraming.getSelectedItemPosition()]);
                     group._noHdrExt = swDisableHeaderExtensions.isChecked();
                     group._fdx = swFullDuplex.isChecked();
+                    group._maxTxSecs = (swUnlimitedTx.isChecked() ? Constants.UNLIMITED_TX_SECS : Constants.DEFAULT_TX_SECS);
 
                     if(Utils.isEmptyString(group._txAddress))
                     {
@@ -270,7 +273,6 @@ public class MissionEditActivity extends AppCompatActivity
             index++;
         }
 
-
         swEncrypted.setChecked(group._useCrypto);
         swEncrypted.setOnClickListener(new View.OnClickListener()
         {
@@ -310,6 +312,7 @@ public class MissionEditActivity extends AppCompatActivity
 
         swDisableHeaderExtensions.setChecked(group._noHdrExt);
         swFullDuplex.setChecked(group._fdx);
+        swUnlimitedTx.setChecked(group._maxTxSecs == Constants.UNLIMITED_TX_SECS);
 
         etGroupName.setEnabled(_allowEdit);
         etRxAddress.setEnabled(_allowEdit);
@@ -322,6 +325,7 @@ public class MissionEditActivity extends AppCompatActivity
         btnRegen.setEnabled(_allowEdit && group._useCrypto);
         swDisableHeaderExtensions.setEnabled(_allowEdit);
         swFullDuplex.setEnabled(_allowEdit);
+        swUnlimitedTx.setEnabled(_allowEdit);
 
         alertDialog.show();
     }
@@ -390,7 +394,7 @@ public class MissionEditActivity extends AppCompatActivity
             _mission = new DatabaseMission();
             _mission._id = Utils.generateMissionId();
             _mission._rpAddress = getString(R.string.default_rallypoint);
-            _mission._rpPort = 7443;
+            _mission._rpPort = Utils.intOpt(getString(R.string.default_rallypoint_port), Constants.DEF_RP_PORT);
             _mission._mcId = Utils.generateGroupId();
             _mission._mcCryptoPassword = Utils.generateCryptoPassword();
 

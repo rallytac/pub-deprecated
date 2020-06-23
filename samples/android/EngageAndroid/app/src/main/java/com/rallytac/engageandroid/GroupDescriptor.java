@@ -176,7 +176,7 @@ public class GroupDescriptor implements Parcelable
 
     public void updateTalkers(ArrayList<TalkerDescriptor> list)
     {
-        synchronized (talkerList)
+        synchronized (this)
         {
             talkerList.clear();
             if (list != null)
@@ -193,7 +193,7 @@ public class GroupDescriptor implements Parcelable
     {
         StringBuilder sb = new StringBuilder();
 
-        synchronized (talkerList)
+        synchronized (this)
         {
             for(TalkerDescriptor td : talkerList)
             {
@@ -233,5 +233,39 @@ public class GroupDescriptor implements Parcelable
         }
 
         return rc;
+    }
+
+    public void updateStateFrom(GroupDescriptor gd)
+    {
+        synchronized (this)
+        {
+            this.selectedForSingleView = gd.selectedForSingleView;
+            this.selectedForMultiView = gd.selectedForMultiView;
+            this.created = gd.created;
+            this.createError = gd.createError;
+            this.joined = gd.joined;
+            this.joinError = gd.joinError;
+            this.rx = gd.rx;
+            this.tx = gd.tx;
+            this.txPending = gd.txPending;
+            this.txError = gd.txError;
+            this.txUsurped = gd.txUsurped;
+            this.rxMuted = gd.rxMuted;
+            this.txMuted = gd.txMuted;
+
+            if (gd.talkerList != null && gd.talkerList.size() > 0)
+            {
+                for (TalkerDescriptor td : gd.talkerList)
+                {
+                    this.talkerList.add(td);
+                }
+            }
+            else
+            {
+                this.talkerList.clear();
+            }
+
+            this.lastTxStartTime = gd.lastTxStartTime;
+        }
     }
 }

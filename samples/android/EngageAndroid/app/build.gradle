@@ -4,21 +4,12 @@ apply plugin: 'com.android.application'
 // google-services.json file for Firebase.
 apply plugin: 'com.google.gms.google-services'
 
-// The directory where Engage-specific items are stored
-def engageEngineDir = "libs/"
-
-// The version of the Engage Engine we want to use
-def engageEngineVersion = "1.140.8903"
-
-// The build type of the Engage Engine we want
-def engageEngineBuildType = "release"
-
 // Addition flavors that we want to build for
 def additionalFlavorsFile = "flavors/flavors.gradle"
 
 // The application ID in the final APK.  Change this string for a different
 // APK package name .
-def apkPackageName = "com.rallytac.engageandroid.reference"
+def apkPackageName = "com.rallytac.engageandroid"
 
 android {
     flavorDimensions "version"
@@ -27,6 +18,7 @@ android {
         // This is the Rally Tactical Systems "reference" flavor
         reference {
             dimension "version"
+            applicationIdSuffix ".reference"
         }
     }
 
@@ -43,8 +35,8 @@ android {
         applicationId apkPackageName
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 1204
-        versionName "1204"
+        versionCode 1217
+        versionName "1217"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -75,11 +67,17 @@ android {
             outputFileName = new File(newApkName)
         }
     }
+
+    repositories {
+        maven {
+            url  'https://dl.bintray.com/rallytac/maven'
+        }
+    }
 }
 
 dependencies {
     // Engage Engine
-    implementation fileTree(dir: engageEngineDir, include: ["engage-engine-" + engageEngineBuildType + "-" + engageEngineVersion + ".aar"])
+    implementation 'com.rallytac.engage:engage-engine-release:1.165.8941@aar'
 
     // Android goodies
     implementation 'androidx.appcompat:appcompat:1.0.0'

@@ -94,6 +94,7 @@ public class SimpleUiMainActivity
     private static int SETTINGS_REQUEST_CODE = 42;
     private static int MISSION_LISTING_REQUEST_CODE = 43;
     private static int PICK_MISSION_FILE_REQUEST_CODE = 44;
+    private static int CERTIFICATE_MANAGER_REQUEST_CODE = 45;
 
     private ActiveConfiguration _ac = null;
     private Timer _waitForEngineStartedTimer = null;
@@ -713,6 +714,17 @@ public class SimpleUiMainActivity
                 }
             }
         }
+        else if(requestCode == CERTIFICATE_MANAGER_REQUEST_CODE)
+        {
+            if(intent != null && intent.hasExtra(Constants.CERTSTORE_CHANGED_TO_FN))
+            {
+                String newFn = intent.getStringExtra(Constants.CERTSTORE_CHANGED_TO_FN);
+
+                ActiveConfiguration ac = Globals.getEngageApplication().updateActiveConfiguration();
+                Toast.makeText(this, "Activated " + ac.getMissionName(), Toast.LENGTH_SHORT).show();
+                onMissionChanged();
+            }
+        }
         else if (requestCode == Globals.getEngageApplication().getQrCodeScannerRequestCode())
         {
             try
@@ -920,15 +932,6 @@ public class SimpleUiMainActivity
                         _notificationBarAnimation = AnimationUtils.loadAnimation(SimpleUiMainActivity.this, R.anim.notification_bar_pulse);
                         v.startAnimation(_notificationBarAnimation);
                         v.setVisibility(View.VISIBLE);
-                        v.setOnClickListener(new View.OnClickListener()
-                        {
-                            @Override
-                            public void onClick(View v)
-                            {
-                                hideNotificationBar();
-                                executeActionOnNotificationBarClick();
-                            }
-                        });
                     }
                 }
             }
@@ -1000,15 +1003,6 @@ public class SimpleUiMainActivity
                         _licensingBarAnimation = AnimationUtils.loadAnimation(SimpleUiMainActivity.this, R.anim.licensing_bar_pulse);
                         v.startAnimation(_licensingBarAnimation);
                         v.setVisibility(View.VISIBLE);
-                        v.setOnClickListener(new View.OnClickListener()
-                        {
-                            @Override
-                            public void onClick(View v)
-                            {
-                                hideLicensingBar();
-                                executeActionOnLicensingBarClick();
-                            }
-                        });
                     }
                 }
             }
@@ -1078,14 +1072,6 @@ public class SimpleUiMainActivity
                         _humanBiometricsAnimation = AnimationUtils.loadAnimation(SimpleUiMainActivity.this, R.anim.heart_pulse);
                         v.startAnimation(_humanBiometricsAnimation);
                         v.setVisibility(View.VISIBLE);
-                        v.setOnClickListener(new View.OnClickListener()
-                        {
-                            @Override
-                            public void onClick(View v)
-                            {
-                                executeActionOnBiometricsClick();
-                            }
-                        });
                     }
                 }
             }
@@ -1242,14 +1228,19 @@ public class SimpleUiMainActivity
     }
 
     @Override
-    public void onGroupTxUsurped(GroupDescriptor gd)
+    public void onGroupTxUsurped(GroupDescriptor gd, final String eventExtra)
     {
+        if(Utils.isEmptyString(eventExtra))
+        {
+            return;
+        }
+
         runOnUiThread(new Runnable()
         {
             @Override
             public void run()
             {
-                Toast.makeText(SimpleUiMainActivity.this, "Transmit usurped by higher priority", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SimpleUiMainActivity.this, txMsgFromExtra(eventExtra), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -1262,7 +1253,25 @@ public class SimpleUiMainActivity
             @Override
             public void run()
             {
-                Toast.makeText(SimpleUiMainActivity.this, "Maximum transmit time exceeded", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SimpleUiMainActivity.this, R.string.max_tx_time_exceeded, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public void onGroupTxFailed(GroupDescriptor gd, final String eventExtra)
+    {
+        if(Utils.isEmptyString(eventExtra))
+        {
+            return;
+        }
+
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Toast.makeText(SimpleUiMainActivity.this, txMsgFromExtra(eventExtra), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -1677,6 +1686,24 @@ public class SimpleUiMainActivity
         });
     }
 
+    @Override
+    public void onGroupTimelineGroomed(final GroupDescriptor gd, final String eventListJson)
+    {
+        // TODO: Nothing to do for now in the UI when we're notified that an event was groomed
+    }
+
+    @Override
+    public void onGroupHealthReport(final GroupDescriptor gd, final String reportJson)
+    {
+
+    }
+
+    @Override
+    public void onGroupHealthReportFailed(final GroupDescriptor gd)
+    {
+        // TODO: Nothing to do for now in the UI when we're notified that a health report failed
+    }
+
     private class TeamListAdapter extends ArrayAdapter<PresenceDescriptor>
     {
         private Context _ctx;
@@ -1891,6 +1918,13 @@ public class SimpleUiMainActivity
         startActivity(intent);
     }
 
+    private void startCertificateStoresListActivity()
+    {
+        Globals.getEngageApplication().logEvent(Analytics.VIEW_CERTIFICATES);
+        Intent intent = new Intent(this, CertStoreListActivity.class);
+        startActivityForResult(intent, CERTIFICATE_MANAGER_REQUEST_CODE);
+    }
+
     private void requestGroupTimeline(String groupId)
     {
         Globals.getEngageApplication().logEvent(Analytics.VIEW_TIMELINE);
@@ -2072,8 +2106,10 @@ public class SimpleUiMainActivity
 
                             Globals.getSharedPreferencesEditor().putString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_SELECTED_GROUPS_SINGLE, gd.id);
                             Globals.getSharedPreferencesEditor().apply();
-
-                            break;
+                        }
+                        else if(f instanceof TextMessagingFragment)
+                        {
+                            ((TextMessagingFragment)f).setGroupDescriptor(gd);
                         }
                     }
 
@@ -2113,6 +2149,12 @@ public class SimpleUiMainActivity
                 {
                     trash.add(f);
                 }
+            }
+
+            // TODO: Show the text message fragment
+            if(f instanceof TextMessagingFragment)
+            {
+                trash.add(f);
             }
         }
 
@@ -2274,6 +2316,41 @@ public class SimpleUiMainActivity
         }
     }
 
+    public void onClickSendTextMessageIcon(View view)
+    {
+        FragmentManager fragMan = getSupportFragmentManager();
+        List<Fragment> fragments = fragMan.getFragments();
+
+        for(Fragment f : fragments)
+        {
+            if(f instanceof TextMessagingFragment)
+            {
+                ((TextMessagingFragment)f).sendEnteredTextIfAny();
+            }
+        }
+    }
+
+    public void onClickTitleBar(View view)
+    {
+    }
+
+    public void onClickNotificationBar(View view)
+    {
+        hideNotificationBar();
+        executeActionOnNotificationBarClick();
+    }
+
+    public void onClickLicensingBar(View view)
+    {
+        hideLicensingBar();
+        executeActionOnLicensingBarClick();
+    }
+
+    public void onClickBiometricsIcon(View view)
+    {
+        executeActionOnBiometricsClick();
+    }
+
     private void setupMainScreen()
     {
         ImageView iv;
@@ -2329,11 +2406,13 @@ public class SimpleUiMainActivity
                 {
                     if (event.getAction() == MotionEvent.ACTION_DOWN)
                     {
+                        Log.w(TAG, "#SB#: onTouch ACTION_DOWN - startTx");
                         _pttRequested = true;
                         Globals.getEngageApplication().startTx(0, 0);
                     }
                     else if (event.getAction() == MotionEvent.ACTION_UP)
                     {
+                        Log.w(TAG, "#SB#: onTouch ACTION_UP - endTx");
                         _pttRequested = false;
                         Globals.getEngageApplication().endTx();
                     }
@@ -2531,6 +2610,11 @@ public class SimpleUiMainActivity
                 else if (id == R.id.action_shutdown)
                 {
                     verifyShutdown();
+                    return true;
+                }
+                else if (id == R.id.action_security)
+                {
+                    startCertificateStoresListActivity();
                     return true;
                 }
 
@@ -2832,4 +2916,84 @@ public class SimpleUiMainActivity
         switchToNextIdInList(false);
     }
 
+    private String txMsgFromExtra(String eventExtraJson)
+    {
+        String rc;
+
+        try
+        {
+            JSONObject j = new JSONObject(eventExtraJson);
+            JSONObject txd = j.getJSONObject(Engine.JsonFields.GroupTxDetail.objectName);
+            Engine.TxStatus status = Engine.TxStatus.fromInt(txd.getInt(Engine.JsonFields.GroupTxDetail.status));
+
+            switch(status)
+            {
+                case started:
+                    rc = getString(R.string.tx_status_reason_started);
+                    break;
+
+                case ended:
+                    rc = getString(R.string.tx_status_reason_ended);
+                    break;
+
+                case notAnAudioGroup:
+                    rc = getString(R.string.tx_status_reason_tx_on_non_audio);
+                    break;
+
+                case notJoined:
+                    rc = getString(R.string.tx_status_reason_tx_on_non_joined);
+                    break;
+
+                case notConnected:
+                    rc = getString(R.string.tx_status_reason_tx_on_non_connected);
+                    break;
+
+                case alreadyTransmitting:
+                    rc = getString(R.string.tx_status_reason_akready_tx);
+                    break;
+
+                case invalidParams:
+                    rc = "Invalid parameters";
+                    break;
+
+                case priorityTooLow:
+                    int localPriority = txd.optInt(Engine.JsonFields.GroupTxDetail.localPriority, 0);
+                    int remotePriority = txd.optInt(Engine.JsonFields.GroupTxDetail.remotePriority, 0);
+
+                    if(localPriority == remotePriority)
+                    {
+                        rc = getString(R.string.tx_status_reason_another_already_tx);
+                    }
+                    else
+                    {
+                        rc = getString(R.string.tx_status_reason_another_already_tx_higher_priority);
+                    }
+                    break;
+
+                case rxActiveOnNonFdx:
+                    rc = getString(R.string.tx_status_reason_another_already_tx);
+                    break;
+
+                case cannotSubscribeToMic:
+                    rc = getString(R.string.tx_status_reason_cannot_open_mic);
+                    break;
+
+                case invalidId:
+                    rc = getString(R.string.tx_status_reason_invalid_group_id);
+                    break;
+
+                case undefined:
+                default:
+                    rc = getString(R.string.tx_status_reason_unknown);
+                    break;
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            rc = "?";
+        }
+
+        return rc;
+    }
 }

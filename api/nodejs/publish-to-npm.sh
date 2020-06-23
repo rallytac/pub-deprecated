@@ -81,12 +81,14 @@ function publish_it()
     mkdir -p lib/win32.x64
     cp ${BIN_ROOT}/${SRC_BIN_VERSION}/win_x64/engage-shared.dll lib/win32.x64
     cp ${BIN_ROOT}/${SRC_BIN_VERSION}/win_x64/engage-shared.lib lib/win32.x64
-    cp "${WINDOWS_REDIST_ROOT}/x64/"* lib/win32.x64
+    cp ${BIN_ROOT}/${SRC_BIN_VERSION}/win_x64/engage-shared.pdb lib/win32.x64
+    cp -r "${WINDOWS_REDIST_ROOT}/x64/"* lib/win32.x64
 
     mkdir -p lib/win32.ia32
     cp ${BIN_ROOT}/${SRC_BIN_VERSION}/win_ia32/engage-shared.dll lib/win32.ia32
     cp ${BIN_ROOT}/${SRC_BIN_VERSION}/win_ia32/engage-shared.lib lib/win32.ia32
-    cp "${WINDOWS_REDIST_ROOT}/ia32/"* lib/win32.ia32
+    cp ${BIN_ROOT}/${SRC_BIN_VERSION}/win_ia32/engage-shared.pdb lib/win32.ia32
+    cp -r "${WINDOWS_REDIST_ROOT}/ia32/"* lib/win32.ia32
 
     npm version ${SRC_BIN_VERSION}${VERSION_EXTENSION}
     npm publish

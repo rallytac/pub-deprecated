@@ -213,7 +213,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvOther" />
 
-
         <Switch
             android:id="@+id/swFullDuplex"
             android:layout_width="0dp"
@@ -222,10 +221,22 @@
             android:layout_marginLeft="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
-            android:text="Enable full Duplex"
+            android:text="Enable full duplex"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/swDisableHeaderExtensions" />
 
+        <Switch
+            android:id="@+id/swUnlimitedTx"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:text="Enable unlimited TX"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/swFullDuplex" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

@@ -9,16 +9,6 @@
             android:title="Use development licensing system"/>
     </PreferenceCategory>
 
-    <!--
-    <PreferenceCategory android:title="Security">
-        <PreferenceScreen android:title="Certificate Manager"
-            android:summary="Manage certificates">
-
-            <intent android:action="com.rallytac.engageandroid.ACTION_CERTIFICATE_MANAGER_ACTIVITY"/>
-        </PreferenceScreen>
-    </PreferenceCategory>
-    -->
-
     <PreferenceCategory android:title="Identity">
         <EditTextPreference
             android:key="user_id"
@@ -127,11 +117,50 @@
             android:dependency="user_bt.use"/>
     </PreferenceCategory>
 
-    <SwitchPreference
-        android:key="user_notify.vibrations"
-        android:title="Enable vibrations"/>
+    <PreferenceCategory android:title="Acoustic Echo Cancellation">
+        <SwitchPreference
+            android:key="user_audio.aec.enabled"
+            android:title="Enable"
+            android:defaultValue="true"/>
 
-    <PreferenceCategory android:title="Notify Me ..">
+        <ListPreference
+            android:defaultValue="5"
+            android:entries="@array/aec_mode_names"
+            android:entryValues="@array/aec_mode_values"
+            android:key="user_audio.aec.mode"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="Aggressiveness"
+            android:dependency="user_audio.aec.enabled"/>
+
+        <SwitchPreference
+            android:key="user_audio.aec.cng"
+            android:title="Enable Comfort Noise Generation"
+            android:defaultValue="true"
+            android:dependency="user_audio.aec.enabled"/>
+
+        <EditTextPreference
+            android:key="user_audio.aec.speakerTailMs"
+            android:title="Speaker Tail Milliseconds"
+            android:inputType="number"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:defaultValue="60"
+            android:dependency="user_audio.aec.enabled"/>
+
+        <SwitchPreference
+            android:key="user_audio.aec.disableStereo"
+            android:title="Disable Stereo Output"
+            android:defaultValue="true"
+            android:dependency="user_audio.aec.enabled"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Notifications">
+        <SwitchPreference
+            android:key="user_notify.vibrations"
+            android:title="Enable vibrations"/>
+
         <SwitchPreference
             android:key="user_notify.nodeJoin"
             android:title="When team members join"/>

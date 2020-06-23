@@ -39,7 +39,7 @@ public class Globals
     public static void setSharedPreferences(SharedPreferences sp)
     {
         _sp = sp;
-        _spEd = _sp.edit();
+        _spEd = sp.edit();
     }
 
     public static SharedPreferences getSharedPreferences()

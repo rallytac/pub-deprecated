@@ -22,6 +22,7 @@ public class DatabaseGroup
     public int _txFramingMs;
     public boolean _noHdrExt;
     public boolean _fdx;
+    public int _maxTxSecs;
 
     @Override
     public String toString()
@@ -50,6 +51,7 @@ public class DatabaseGroup
             root.put("_txFramingMs", _txFramingMs);
             root.put("_noHdrExt", _noHdrExt);
             root.put("_fdx", _fdx);
+            root.put("_maxTxSecs", _maxTxSecs);
         }
         catch (Exception e)
         {
@@ -79,6 +81,7 @@ public class DatabaseGroup
             group._txFramingMs = root.optInt("_txFramingMs");
             group._noHdrExt = root.optBoolean("_noHdrExt");
             group._fdx = root.optBoolean("_fdx");
+            group._maxTxSecs = root.optInt("_maxTxSecs");
         }
         catch (Exception e)
         {

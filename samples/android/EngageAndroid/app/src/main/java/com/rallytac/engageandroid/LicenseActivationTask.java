@@ -33,7 +33,6 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
         void onLicenseActivationTaskComplete(int result, String activationCode, String resultMessage);
     }
 
-    private Context _ctx;
     private String _url;
     private String _entitlement;
     private String _key;
@@ -46,8 +45,7 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
     private String _resultActivationCode;
     private String _resultMessage;
 
-    public LicenseActivationTask(Context ctx,
-                                 String url,
+    public LicenseActivationTask(String url,
                                  String entitlement,
                                  String key,
                                  String activationCode,
@@ -55,7 +53,6 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
                                  String hValue,
                                  ITaskCompletionNotification completionNotification)
     {
-        _ctx = ctx;
         _url = url;
         _entitlement = entitlement;
         _key = key;
@@ -104,7 +101,7 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
                 throw new Exception("cannot parse into testDescriptor");
             }
 
-            if(testDescriptor._status != Engine.LicensingStatusCode.requiresActivation)
+            if(testDescriptor._status != Engine.LicensingStatusCode.ok && testDescriptor._status != Engine.LicensingStatusCode.requiresActivation)
             {
                 throw new Exception("license type does not require activation");
             }

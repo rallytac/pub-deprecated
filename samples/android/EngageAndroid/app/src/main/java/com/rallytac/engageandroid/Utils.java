@@ -51,6 +51,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -322,6 +323,7 @@ public class Utils
         return rc;
     }
 
+    /*
     public static void generateSampleMission(Context ctx)
     {
         ActiveConfiguration ac = new ActiveConfiguration();
@@ -331,6 +333,7 @@ public class Utils
         Globals.getSharedPreferencesEditor().putString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_JSON, tmp);
         Globals.getSharedPreferencesEditor().apply();
     }
+    */
 
     public static boolean isValidMulticastAddress(String addr)
     {
@@ -490,7 +493,7 @@ public class Utils
     }
 
 
-    public static ActiveConfiguration loadConfiguration(HashMap<String, GroupDescriptor> dynamics)
+    public static ActiveConfiguration loadConfiguration(ActiveConfiguration previousConfiguration, HashMap<String, GroupDescriptor> dynamics)
     {
         ActiveConfiguration rc;
 
@@ -575,6 +578,9 @@ public class Utils
                 mc.enabled = Globals.getSharedPreferences().getBoolean(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_ENABLED, Constants.DEF_MULTICAST_FAILOVER_ENABLED);
                 mc.thresholdSecs = Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_SECS, Integer.toString(Constants.DEF_MULTICAST_FAILOVER_THRESHOLD_SECS)));
                 rc.setMulticastFailoverConfiguration(mc);
+
+                // Update states from the previous configuration
+                rc.updateGroupStates(previousConfiguration);
 
                 selectPreviouslySavedSelectedGroups(rc);
             }
@@ -1143,6 +1149,39 @@ public class Utils
 
         return rc;
     }
+
+    /*
+    public static byte[] readBinaryFile(Context ctx, Uri uri)
+    {
+        byte[] rc;
+
+        try
+        {
+            FileInputStream fis = new FileInputStream(uri.getPath());
+
+            rc = new byte[(int) file.length()];
+            InputStreamReader inputStreamReader = new InputStreamReader(ctx.getContentResolver().openInputStream(uri));
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            bufferedReader.re
+            StringBuilder sb = new StringBuilder();
+
+            String s;
+            while ((s = bufferedReader.readLine()) != null)
+            {
+                sb.append(s);
+            }
+
+            rc = sb.toString();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            rc = null;
+        }
+
+        return rc;
+    }
+    */
 
     public static boolean doesFileExist(String fn)
     {
