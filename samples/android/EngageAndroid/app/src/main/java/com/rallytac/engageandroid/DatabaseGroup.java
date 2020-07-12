@@ -38,20 +38,20 @@ public class DatabaseGroup
         try
         {
             root = new JSONObject();
-            root.put("_id", Utils.trimString(_id));
-            root.put("_type", _type);
-            root.put("_name", Utils.trimString(_name));
-            root.put("_useCrypto", _useCrypto);
-            root.put("_cryptoPassword", Utils.trimString(_cryptoPassword));
-            root.put("_rxAddress", Utils.trimString(_rxAddress));
-            root.put("_rxPort", _rxPort);
-            root.put("_txAddress", Utils.trimString(_txAddress));
-            root.put("_txPort", _txPort);
-            root.put("_txCodecId", _txCodecId);
-            root.put("_txFramingMs", _txFramingMs);
-            root.put("_noHdrExt", _noHdrExt);
-            root.put("_fdx", _fdx);
-            root.put("_maxTxSecs", _maxTxSecs);
+            root.put("_id", Utils.trimString(_id));//NON-NLS
+            root.put("_type", _type);//NON-NLS
+            root.put("_name", Utils.trimString(_name));//NON-NLS
+            root.put("_useCrypto", _useCrypto);//NON-NLS
+            root.put("_cryptoPassword", Utils.trimString(_cryptoPassword));//NON-NLS
+            root.put("_rxAddress", Utils.trimString(_rxAddress));//NON-NLS
+            root.put("_rxPort", _rxPort);//NON-NLS
+            root.put("_txAddress", Utils.trimString(_txAddress));//NON-NLS
+            root.put("_txPort", _txPort);//NON-NLS
+            root.put("_txCodecId", _txCodecId);//NON-NLS
+            root.put("_txFramingMs", _txFramingMs);//NON-NLS
+            root.put("_noHdrExt", _noHdrExt);//NON-NLS
+            root.put("_fdx", _fdx);//NON-NLS
+            root.put("_maxTxSecs", _maxTxSecs);//NON-NLS
         }
         catch (Exception e)
         {
@@ -68,20 +68,20 @@ public class DatabaseGroup
         try
         {
             JSONObject root = new JSONObject(json);
-            group._id = root.getString("_id").trim();
-            group._type = root.getInt("_type");
-            group._name = Utils.trimString(root.optString("_name"));
-            group._useCrypto = root.optBoolean("_useCrypto");
-            group._cryptoPassword = Utils.trimString(root.optString("_cryptoPassword"));
-            group._rxAddress = Utils.trimString(root.optString("_rxAddress"));
-            group._rxPort = root.optInt("_rxPort");
-            group._txAddress = Utils.trimString(root.optString("_txAddress"));
-            group._txPort = root.optInt("_txPort");
-            group._txCodecId = root.optInt("_txCodecId");
-            group._txFramingMs = root.optInt("_txFramingMs");
-            group._noHdrExt = root.optBoolean("_noHdrExt");
-            group._fdx = root.optBoolean("_fdx");
-            group._maxTxSecs = root.optInt("_maxTxSecs");
+            group._id = root.getString("_id").trim();//NON-NLS
+            group._type = root.getInt("_type");//NON-NLS
+            group._name = Utils.trimString(root.optString("_name"));//NON-NLS
+            group._useCrypto = root.optBoolean("_useCrypto");//NON-NLS
+            group._cryptoPassword = Utils.trimString(root.optString("_cryptoPassword"));//NON-NLS
+            group._rxAddress = Utils.trimString(root.optString("_rxAddress"));//NON-NLS
+            group._rxPort = root.optInt("_rxPort");//NON-NLS
+            group._txAddress = Utils.trimString(root.optString("_txAddress"));//NON-NLS
+            group._txPort = root.optInt("_txPort");//NON-NLS
+            group._txCodecId = root.optInt("_txCodecId");//NON-NLS
+            group._txFramingMs = root.optInt("_txFramingMs");//NON-NLS
+            group._noHdrExt = root.optBoolean("_noHdrExt");//NON-NLS
+            group._fdx = root.optBoolean("_fdx");//NON-NLS
+            group._maxTxSecs = root.optInt("_maxTxSecs");//NON-NLS
         }
         catch (Exception e)
         {

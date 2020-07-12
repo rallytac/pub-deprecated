@@ -13,8 +13,8 @@ public class HardwareButtonManager implements IPushToTalkRequestHandler,
     private IPushToTalkRequestHandler _handler;
     private SonimBroadcastReceiver _sonimBroadcastReceiver = null;
 
-    private String pttOn = "+PTT=P";
-    private String pttOff = "+PTT=R";
+    private String pttOn = "+PTT=P";//NON-NLS
+    private String pttOff = "+PTT=R";//NON-NLS
     private BluetoothManager _btm;
     private BluetoothManager.IBtNotification _btNotification;
 
@@ -29,7 +29,7 @@ public class HardwareButtonManager implements IPushToTalkRequestHandler,
 
     public void start()
     {
-        if(Build.MANUFACTURER.toUpperCase().contains("SONIM"))
+        if(Build.MANUFACTURER.toUpperCase().contains("SONIM"))//NON-NLS
         {
             _sonimBroadcastReceiver = new SonimBroadcastReceiver(_ctx, this);
             _sonimBroadcastReceiver.start();
@@ -66,7 +66,7 @@ public class HardwareButtonManager implements IPushToTalkRequestHandler,
     @Override
     public void onBluetoothDeviceConnected()
     {
-        Log.d(TAG, "onBluetoothDeviceConnected");
+        Log.d(TAG, "onBluetoothDeviceConnected");//NON-NLS
         if(_btNotification != null)
         {
             _btNotification.onBluetoothDeviceConnected();
@@ -76,7 +76,7 @@ public class HardwareButtonManager implements IPushToTalkRequestHandler,
     @Override
     public void onBluetoothDeviceDisconnected()
     {
-        Log.d(TAG, "onBluetoothDeviceDisconnected");
+        Log.d(TAG, "onBluetoothDeviceDisconnected");//NON-NLS
         if(_btNotification != null)
         {
             _btNotification.onBluetoothDeviceDisconnected();

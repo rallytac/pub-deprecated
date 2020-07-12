@@ -73,7 +73,7 @@ public class MissionListActivity extends AppCompatActivity
             }
             else
             {
-                ((TextView)convertView.findViewById(R.id.tvMissionName)).setText("(no name)");
+                ((TextView)convertView.findViewById(R.id.tvMissionName)).setText(R.string.no_mission_name);
             }
 
             if(!Utils.isEmptyString(item._description))
@@ -82,7 +82,7 @@ public class MissionListActivity extends AppCompatActivity
             }
             else
             {
-                ((TextView)convertView.findViewById(R.id.tvDescription)).setText("(no description)");
+                ((TextView)convertView.findViewById(R.id.tvDescription)).setText(R.string.no_mission_description);
             }
 
             int groupCount;
@@ -269,14 +269,14 @@ public class MissionListActivity extends AppCompatActivity
     {
         final TextView message = new TextView(this);
 
-        message.setText("You can add a mission manually or have it generated based on a word or phrase.");
+        message.setText(R.string.you_can_add_a_mission_manually_or_generate);
         message.setMovementMethod(LinkMovementMethod.getInstance());
         message.setPadding(32, 32, 32, 32);
 
         AlertDialog dlg = new AlertDialog.Builder(this)
-                .setTitle("Add Mission")
+                .setTitle(getString(R.string.add_mission))
                 .setCancelable(false)
-                .setPositiveButton("Manual", new DialogInterface.OnClickListener()
+                .setPositiveButton(getString(R.string.button_manual), new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i)
@@ -284,14 +284,14 @@ public class MissionListActivity extends AppCompatActivity
                         Intent intent = new Intent(MissionListActivity.this, MissionEditActivity.class);
                         startActivityForResult(intent, EDIT_ACTION_REQUEST_CODE);
                     }
-                }).setNegativeButton("Generate", new DialogInterface.OnClickListener()
+                }).setNegativeButton(getString(R.string.button_generate), new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i)
                     {
                         promptToGenerateMission();
                     }
-                }).setNeutralButton("Cancel", new DialogInterface.OnClickListener()
+                }).setNeutralButton(getString(R.string.button_cancel), new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i)
@@ -313,7 +313,7 @@ public class MissionListActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent)
     {
-        Log.d(TAG, "onActivityResult");
+        Log.d(TAG, "onActivityResult");//NON-NLS
 
         if(resultCode == RESULT_OK)
         {
@@ -360,14 +360,12 @@ public class MissionListActivity extends AppCompatActivity
     {
         if(id.compareTo(_activeMissionId) == 0)
         {
-            Toast.makeText(this, "The active mission cannot be deleted", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.active_mission_cannot_be_deleted, Toast.LENGTH_SHORT).show();
         }
         else
         {
             DatabaseMission mission = _database.getMissionById(id);
-            String s;
-
-            s = "Are you sure you want to delete " + mission._name + "?";
+            String s = String.format(getString(R.string.are_you_sure_you_want_to_delete_mission), mission._name);
 
             final TextView message = new TextView(this);
             final SpannableString ss = new SpannableString(s);
@@ -377,16 +375,16 @@ public class MissionListActivity extends AppCompatActivity
             message.setPadding(32, 32, 32, 32);
 
             AlertDialog dlg = new AlertDialog.Builder(this)
-                    .setTitle("Delete Mission")
+                    .setTitle(getString(R.string.delete_mission))
                     .setCancelable(false)
-                    .setPositiveButton("Yes", new DialogInterface.OnClickListener()
+                    .setPositiveButton(getString(R.string.button_yes), new DialogInterface.OnClickListener()
                     {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i)
                         {
                             deleteMission(id);
                         }
-                    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+                    }).setNegativeButton(getString(R.string.button_cancel), new DialogInterface.OnClickListener()
                     {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i)

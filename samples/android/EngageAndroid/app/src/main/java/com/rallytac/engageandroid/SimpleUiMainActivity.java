@@ -95,6 +95,7 @@ public class SimpleUiMainActivity
     private static int MISSION_LISTING_REQUEST_CODE = 43;
     private static int PICK_MISSION_FILE_REQUEST_CODE = 44;
     private static int CERTIFICATE_MANAGER_REQUEST_CODE = 45;
+    private static int ENGINE_POLICY_EDIT_REQUEST_CODE = 46;
 
     private ActiveConfiguration _ac = null;
     private Timer _waitForEngineStartedTimer = null;
@@ -349,7 +350,7 @@ public class SimpleUiMainActivity
                     return;
                 }
 
-                ArrayList<PresenceDescriptor> nodes = Globals.getEngageApplication().getActiveConfiguration().getMissionNodes();
+                ArrayList<PresenceDescriptor> nodes = Globals.getEngageApplication().getActiveConfiguration().getMissionNodes(null);
 
                 if(nodes != null)
                 {
@@ -556,6 +557,7 @@ public class SimpleUiMainActivity
         else if (_ac.getUiMode() == Constants.UiMode.vMulti)
         {
             setContentView(R.layout.activity_main_multi);
+            //setContentView(R.layout.activity_main_single_multi);
         }
 
         // Hide things we don't necessarily need right now
@@ -589,7 +591,7 @@ public class SimpleUiMainActivity
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         if(mapFragment != null)
         {
-            String googleMapsApiKey = Utils.getMetaData("com.google.android.geo.API_KEY");
+            String googleMapsApiKey = Utils.getMetaData("com.google.android.geo.API_KEY");//NON-NLS
             if(!Utils.isEmptyString(googleMapsApiKey))
             {
                 mapFragment.getMapAsync(this);
@@ -616,7 +618,7 @@ public class SimpleUiMainActivity
     @Override
     protected void onSaveInstanceState(Bundle outState)
     {
-        Log.d(TAG, "onSaveInstanceState");
+        Log.d(TAG, "onSaveInstanceState");//NON-NLS
         saveState(outState);
         super.onSaveInstanceState(outState);
     }
@@ -624,14 +626,14 @@ public class SimpleUiMainActivity
     @Override
     protected void onStart()
     {
-        Log.d(TAG, "onStart");
+        Log.d(TAG, "onStart");//NON-NLS
         super.onStart();
     }
 
     @Override
     protected void onResume()
     {
-        Log.d(TAG, "onResume");
+        Log.d(TAG, "onResume");//NON-NLS
         super.onResume();
         registerWithApp();
         updateLicensingBar();
@@ -641,7 +643,7 @@ public class SimpleUiMainActivity
     @Override
     protected void onPause()
     {
-        Log.d(TAG, "onPause");
+        Log.d(TAG, "onPause");//NON-NLS
         super.onPause();
         stopAllTx();
         cancelTimers();
@@ -651,7 +653,7 @@ public class SimpleUiMainActivity
     @Override
     protected void onStop()
     {
-        Log.d(TAG, "onStop");
+        Log.d(TAG, "onStop");//NON-NLS
         stopAllTx();
         cancelTimers();
         super.onStop();
@@ -660,7 +662,7 @@ public class SimpleUiMainActivity
     @Override
     protected void onDestroy()
     {
-        Log.d(TAG, "onDestroy");
+        Log.d(TAG, "onDestroy");//NON-NLS
         stopAllTx();
         cancelTimers();
         super.onDestroy();
@@ -683,8 +685,23 @@ public class SimpleUiMainActivity
         {
             if(resultCode == SettingsActivity.MISSION_CHANGED_RESULT || Globals.getEngageApplication().getMissionChangedStatus())
             {
-                Log.i(TAG, "============= mission has changed, recreating =======================");
+                Log.i(TAG, "============= mission has changed, recreating =======================");//NON-NLS
                 onMissionChanged();
+            }
+        }
+        else if(requestCode == ENGINE_POLICY_EDIT_REQUEST_CODE)
+        {
+            if(resultCode == RESULT_OK)
+            {
+                if (intent != null && intent.hasExtra(JsonEditorActivity.JSON_DATA))
+                {
+                    String json = intent.getStringExtra(JsonEditorActivity.JSON_DATA);
+                    SharedPreferences.Editor ed = Globals.getSharedPreferencesEditor();
+                    ed.putString(PreferenceKeys.ENGINE_POLICY_JSON, json);
+                    ed.apply();
+                    Utils.showShortPopupMsg(this, getString(R.string.applying_policy));
+                    onMissionChanged();
+                }
             }
         }
         else if(requestCode == MISSION_LISTING_REQUEST_CODE)
@@ -695,7 +712,7 @@ public class SimpleUiMainActivity
                 if(Globals.getEngageApplication().switchToMission(activatedId))
                 {
                     ActiveConfiguration ac = Globals.getEngageApplication().updateActiveConfiguration();
-                    Toast.makeText(this, "Activated " + ac.getMissionName(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, String.format(getString(R.string.activated_mission_fmt), ac.getMissionName()), Toast.LENGTH_SHORT).show();
                     onMissionChanged();
                 }
             }
@@ -707,6 +724,7 @@ public class SimpleUiMainActivity
                 try
                 {
                     Globals.getEngageApplication().processDownloadedMissionAndSwitchIfOk(Utils.readTextFile(SimpleUiMainActivity.this, intent.getData()), null);
+                    onMissionChanged();
                 }
                 catch(Exception e)
                 {
@@ -721,7 +739,7 @@ public class SimpleUiMainActivity
                 String newFn = intent.getStringExtra(Constants.CERTSTORE_CHANGED_TO_FN);
 
                 ActiveConfiguration ac = Globals.getEngageApplication().updateActiveConfiguration();
-                Toast.makeText(this, "Activated " + ac.getMissionName(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, String.format(getString(R.string.activated_mission_fmt), ac.getMissionName()), Toast.LENGTH_SHORT).show();
                 onMissionChanged();
             }
         }
@@ -732,7 +750,7 @@ public class SimpleUiMainActivity
                 ActiveConfiguration ac = Globals.getEngageApplication().processScannedQrCodeResultIntent(requestCode, resultCode, intent);
                 if(ac != null)
                 {
-                    Utils.showLongPopupMsg(SimpleUiMainActivity.this, "Loaded " + ac.getMissionName());
+                    Utils.showLongPopupMsg(SimpleUiMainActivity.this, String.format(getString(R.string.loaded_mission_fmt), ac.getMissionName()));
                     onMissionChanged();
                 }
             }
@@ -775,13 +793,13 @@ public class SimpleUiMainActivity
 
                     if (_pttRequested)
                     {
-                        Log.d(TAG, "---onKeyDown requesting startTx (latched)");
+                        Log.d(TAG, "---onKeyDown requesting startTx (latched)");//NON-NLS
                         _pttRequestIsLatched = true;
                         Globals.getEngageApplication().startTx(0, 0);
                     }
                     else
                     {
-                        Log.d(TAG, "---onKeyDown requesting endTx");
+                        Log.d(TAG, "---onKeyDown requesting endTx");//NON-NLS
                         _pttRequestIsLatched = false;
                         Globals.getEngageApplication().endTx();
                     }
@@ -792,7 +810,7 @@ public class SimpleUiMainActivity
                     {
                         _pttRequested = false;
                         _pttRequestIsLatched = false;
-                        Log.d(TAG, "---onKeyDown requesting endTx");
+                        Log.d(TAG, "---onKeyDown requesting endTx");//NON-NLS
                         Globals.getEngageApplication().endTx();
                     }
                 }
@@ -805,7 +823,7 @@ public class SimpleUiMainActivity
                 {
                     _pttRequested = true;
                     _pttRequestIsLatched = false;
-                    Log.d(TAG, "---onKeyDown requesting startTx (ptt hold)");
+                    Log.d(TAG, "---onKeyDown requesting startTx (ptt hold)");//NON-NLS
                     Globals.getEngageApplication().startTx(0, 0);
                 }
             }
@@ -829,12 +847,12 @@ public class SimpleUiMainActivity
 
                         if (_pttRequested)
                         {
-                            Log.d(TAG, "---onKeyDown requesting startTx due to media button double-push");
+                            Log.d(TAG, "---onKeyDown requesting startTx due to media button double-push");//NON-NLS
                             Globals.getEngageApplication().startTx(0, 0);
                         }
                         else
                         {
-                            Log.d(TAG, "---onKeyDown requesting endTx due to media button double-push");
+                            Log.d(TAG, "---onKeyDown requesting endTx due to media button double-push");//NON-NLS
                             Globals.getEngageApplication().endTx();
                         }
                     }
@@ -870,7 +888,7 @@ public class SimpleUiMainActivity
             {
                 _pttRequested = false;
                 _pttRequestIsLatched = false;
-                Log.d(TAG, "---onKeyUp requesting endTx");
+                Log.d(TAG, "---onKeyUp requesting endTx");//NON-NLS
                 Globals.getEngageApplication().endTx();
             }
         }
@@ -1143,7 +1161,7 @@ public class SimpleUiMainActivity
             }
         };
 
-        showNotificationBar("Configuration change detected - Tap to activate");
+        showNotificationBar(getString(R.string.config_change_tap_to_activate));
     }
 
     @Override
@@ -1183,7 +1201,7 @@ public class SimpleUiMainActivity
     @Override
     public void onAnyTxPending()
     {
-        Log.d(TAG, "onAnyTxPending");
+        Log.d(TAG, "onAnyTxPending");//NON-NLS
         _anyTxPending = true;
         redrawPttButton();
         redrawCardFragments();
@@ -1192,7 +1210,7 @@ public class SimpleUiMainActivity
     @Override
     public void onAnyTxActive()
     {
-        Log.d(TAG, "onAnyTxActive");
+        Log.d(TAG, "onAnyTxActive");//NON-NLS
         _anyTxActive = true;
         _anyTxPending = true;
         redrawPttButton();
@@ -1203,14 +1221,14 @@ public class SimpleUiMainActivity
     @Override
     public void onAnyTxEnding()
     {
-        Log.d(TAG, "onAnyTxEnding");
+        Log.d(TAG, "onAnyTxEnding");//NON-NLS
         // Nothing to do here
     }
 
     @Override
     public void onAllTxEnded()
     {
-        Log.d(TAG, "onAllTxEnded");
+        Log.d(TAG, "onAllTxEnded");//NON-NLS
         _anyTxActive = false;
         _anyTxPending = false;
         _pttRequested = false;
@@ -1363,17 +1381,17 @@ public class SimpleUiMainActivity
 
     private void saveState(Bundle bundle)
     {
-        Log.d(TAG, "saveState");
+        Log.d(TAG, "saveState");//NON-NLS
     }
 
     private void restoreSavedState(Bundle bundle)
     {
-        Log.d(TAG, "restoreSavedState");
+        Log.d(TAG, "restoreSavedState");//NON-NLS
     }
 
     private void performDevSimulation()
     {
-        Toast.makeText(this, "DEVELOPER!! - __devOnly__RunTest", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "DEVELOPER!! - __devOnly__RunTest", Toast.LENGTH_LONG).show();//NON-NLS
         Globals.getEngageApplication().__devOnly__RunTest();
     }
 
@@ -1837,7 +1855,14 @@ public class SimpleUiMainActivity
     {
         Globals.getEngageApplication().logEvent(Analytics.VIEW_TEAM);
 
-        if(_ac == null || _ac.getMissionNodeCount() == 0)
+        String idToUse = null;
+
+        if(_ac.getUiMode() == Constants.UiMode.vSingle)
+        {
+            idToUse = Globals.getSharedPreferences().getString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_SELECTED_GROUPS_SINGLE, "");
+        }
+
+        if(_ac == null || _ac.getMissionNodeCount(idToUse) == 0)
         {
             Utils.showPopupMsg(this, getString(R.string.no_team_members_present));
             return;
@@ -1845,7 +1870,7 @@ public class SimpleUiMainActivity
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        final ArrayList<PresenceDescriptor> theList = _ac.getMissionNodes();
+        final ArrayList<PresenceDescriptor> theList = _ac.getMissionNodes(idToUse);
 
         final TeamListAdapter arrayAdapter = new TeamListAdapter(this, R.layout.team_list_row_item, theList);
 
@@ -1862,12 +1887,25 @@ public class SimpleUiMainActivity
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             intent.setType("*/*");
             intent.addCategory(Intent.CATEGORY_OPENABLE);
-            startActivityForResult(Intent.createChooser(intent, "Select a File"), PICK_MISSION_FILE_REQUEST_CODE);
+            startActivityForResult(Intent.createChooser(intent, getString(R.string.select_a_file)), PICK_MISSION_FILE_REQUEST_CODE);
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
+    }
+
+    private void startJsonPolicyEditorActivity()
+    {
+        String json = Globals.getSharedPreferences().getString(PreferenceKeys.ENGINE_POLICY_JSON, "");
+        if(Utils.isEmptyString(json))
+        {
+            json = Utils.getStringResource(this, R.raw.default_engine_policy_template);
+        }
+
+        Intent intent = new Intent(this, JsonEditorActivity.class);
+        intent.putExtra(JsonEditorActivity.JSON_DATA, json);
+        startActivityForResult(intent, ENGINE_POLICY_EDIT_REQUEST_CODE);
     }
 
     private void startDevTestActivity()
@@ -1942,7 +1980,7 @@ public class SimpleUiMainActivity
             catch(Exception e)
             {
                 e.printStackTrace();
-                Toast.makeText(this, "Error constructing timeline query", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.error_constructing_timeline_query, Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -1968,7 +2006,7 @@ public class SimpleUiMainActivity
             {
                 if(Globals.getEngageApplication().isEngineRunning())
                 {
-                    Log.i(TAG, "engine is running, proceeding");
+                    Log.i(TAG, "engine is running, proceeding");//NON-NLS
                     _waitForEngineStartedTimer.cancel();
 
                     runOnUiThread(new Runnable()
@@ -1982,7 +2020,7 @@ public class SimpleUiMainActivity
                 }
                 else
                 {
-                    Log.i(TAG, "waiting for engage engine to restart");
+                    Log.i(TAG, "waiting for engage engine to restart");//NON-NLS
                 }
             }
         }, 0, 100);
@@ -2007,6 +2045,11 @@ public class SimpleUiMainActivity
         {
             showSingleView(null);
         }
+    }
+
+    public void setSingleMultiPrimaryGroup(String groupId)
+    {
+
     }
 
     public void showSingleView(String groupId)
@@ -2062,10 +2105,29 @@ public class SimpleUiMainActivity
         });
     }
 
+    private void enableTxForAllGroups()
+    {
+        for(GroupDescriptor gd : _ac.getMissionGroups())
+        {
+            gd.txMuted = false;
+        }
+    }
+
+    private void disableTxForAllGroups()
+    {
+        for(GroupDescriptor gd : _ac.getMissionGroups())
+        {
+            gd.txMuted = true;
+        }
+    }
+
     private void assignGroupsToFragments()
     {
         FragmentManager fragMan = getSupportFragmentManager();
         List<Fragment> fragments = fragMan.getFragments();
+
+        // Default all to no TX
+        disableTxForAllGroups();
 
         if(_ac.getUiMode() == Constants.UiMode.vSingle)
         {
@@ -2102,6 +2164,9 @@ public class SimpleUiMainActivity
                     {
                         if(f instanceof CardFragment)
                         {
+                            // Allow TX on this group
+                            gd.txMuted = false;
+
                             ((CardFragment)f).setGroupDescriptor(gd);
 
                             Globals.getSharedPreferencesEditor().putString(PreferenceKeys.ACTIVE_MISSION_CONFIGURATION_SELECTED_GROUPS_SINGLE, gd.id);
@@ -2197,12 +2262,12 @@ public class SimpleUiMainActivity
 
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 
-            alertDialogBuilder.setTitle("Networking");
+            alertDialogBuilder.setTitle(getString(R.string.networking));
 
             if(_ac.getUseRp())
             {
-                msg = "Currently connected globally via " + _ac.getRpAddress() + ":" + _ac.getRpPort();
-                alertDialogBuilder.setPositiveButton("Go Local", new DialogInterface.OnClickListener()
+                msg = String.format(getString(R.string.currently_connected_globally_fmt),_ac.getRpAddress(), _ac.getRpPort());
+                alertDialogBuilder.setPositiveButton(getString(R.string.go_local), new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which)
@@ -2213,8 +2278,8 @@ public class SimpleUiMainActivity
             }
             else
             {
-                msg = "Currently connected locally via IP multicast";
-                alertDialogBuilder.setPositiveButton("Go Global", new DialogInterface.OnClickListener()
+                msg = getString(R.string.currently_connected_via_ip_multicast);
+                alertDialogBuilder.setPositiveButton(getString(R.string.go_global), new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which)
@@ -2226,7 +2291,7 @@ public class SimpleUiMainActivity
 
             alertDialogBuilder.setMessage(msg);
             alertDialogBuilder.setCancelable(true);
-            alertDialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+            alertDialogBuilder.setNegativeButton(getString(R.string.button_cancel), new DialogInterface.OnClickListener()
             {
                 @Override
                 public void onClick(DialogInterface dialog, int which)
@@ -2240,7 +2305,7 @@ public class SimpleUiMainActivity
         }
         else
         {
-            Utils.showLongPopupMsg(SimpleUiMainActivity.this, "Local connection via IP multicast");
+            Utils.showLongPopupMsg(SimpleUiMainActivity.this, getString(R.string.local_connection_via_ip_multicast));
         }
     }
 
@@ -2406,13 +2471,13 @@ public class SimpleUiMainActivity
                 {
                     if (event.getAction() == MotionEvent.ACTION_DOWN)
                     {
-                        Log.w(TAG, "#SB#: onTouch ACTION_DOWN - startTx");
+                        Log.w(TAG, "#SB#: onTouch ACTION_DOWN - startTx");//NON-NLS
                         _pttRequested = true;
                         Globals.getEngageApplication().startTx(0, 0);
                     }
                     else if (event.getAction() == MotionEvent.ACTION_UP)
                     {
-                        Log.w(TAG, "#SB#: onTouch ACTION_UP - endTx");
+                        Log.w(TAG, "#SB#: onTouch ACTION_UP - endTx");//NON-NLS
                         _pttRequested = false;
                         Globals.getEngageApplication().endTx();
                     }
@@ -2549,9 +2614,12 @@ public class SimpleUiMainActivity
         MenuInflater inflater = popup.getMenuInflater();
         inflater.inflate(R.menu.main_activity_menu, popup.getMenu());
 
-        // Display the developer test menu option if necessary
-        popup.getMenu()
-                .findItem(R.id.action_dev_test)
+        // Display the advanced menu options if necessary
+        popup.getMenu().findItem(R.id.action_dev_json_policy_editor)
+                .setVisible(Globals.getSharedPreferences().getBoolean(PreferenceKeys.ADVANCED_MODE_ACTIVE, false));
+
+        // Display the developer menu options if necessary
+        popup.getMenu().findItem(R.id.action_dev_test)
                 .setVisible(Globals.getSharedPreferences().getBoolean(PreferenceKeys.DEVELOPER_MODE_ACTIVE, false));
 
         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener()
@@ -2605,6 +2673,11 @@ public class SimpleUiMainActivity
                 else if (id == R.id.action_dev_test)
                 {
                     startDevTestActivity();
+                    return true;
+                }
+                else if (id == R.id.action_dev_json_policy_editor)
+                {
+                    startJsonPolicyEditorActivity();
                     return true;
                 }
                 else if (id == R.id.action_shutdown)
@@ -2694,8 +2767,8 @@ public class SimpleUiMainActivity
         builder
                 .setView(v)
                 .setCancelable(false)
-                .setTitle("Adjust Group Volume")
-                .setPositiveButton("Save", new DialogInterface.OnClickListener()
+                .setTitle(getString(R.string.adjust_group_volume))
+                .setPositiveButton(getString(R.string.button_save), new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which)
@@ -2704,7 +2777,7 @@ public class SimpleUiMainActivity
                         Globals.getEngageApplication().saveVolumeLevels(groupId, _vlInProgress);
                     }
                 })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+                .setNegativeButton(getString(R.string.button_cancel), new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which)
@@ -2714,7 +2787,7 @@ public class SimpleUiMainActivity
                         setVolumeLevels(groupId, _vlInProgress);
                     }
                 })
-                .setNeutralButton("Reset", new DialogInterface.OnClickListener()
+                .setNeutralButton(getString(R.string.button_reset), new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which)
@@ -2995,5 +3068,32 @@ public class SimpleUiMainActivity
         }
 
         return rc;
+    }
+
+    private void dev_setRtpFactor(int f)
+    {
+        String json = Globals.getSharedPreferences().getString(PreferenceKeys.ENGINE_POLICY_JSON, "");
+        if(Utils.isEmptyString(json))
+        {
+            json = Utils.getStringResource(this, R.raw.default_engine_policy_template);
+        }
+
+        try
+        {
+            JSONObject jo = new JSONObject(json);
+            JSONObject networking = jo.getJSONObject("networking");
+            networking.put("rtpJitterMaxFactor", f);
+            json = jo.toString();
+
+            SharedPreferences.Editor ed = Globals.getSharedPreferencesEditor();
+            ed.putString(PreferenceKeys.ENGINE_POLICY_JSON, json);
+            ed.apply();
+
+            onMissionChanged();
+        }
+        catch (Exception e)
+        {
+            Utils.showLongPopupMsg(this, e.getMessage());
+        }
     }
 }

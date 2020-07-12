@@ -158,16 +158,43 @@ public class MissionDatabase
                     dbg._cryptoPassword = jo.optString(Engine.JsonFields.Group.cryptoPassword);
                     dbg._useCrypto = !Utils.isEmptyString(dbg._cryptoPassword);
 
-                    dbg._rxAddress = jo.getJSONObject(Engine.JsonFields.Rx.objectName).optString(Engine.JsonFields.Rx.address, "");
-                    dbg._rxPort = jo.getJSONObject(Engine.JsonFields.Rx.objectName).optInt(Engine.JsonFields.Rx.port, 0);
-                    dbg._txAddress = jo.getJSONObject(Engine.JsonFields.Tx.objectName).optString(Engine.JsonFields.Tx.address, dbg._rxAddress);
-                    dbg._txPort = jo.getJSONObject(Engine.JsonFields.Tx.objectName).optInt(Engine.JsonFields.Tx.port, dbg._rxPort);
+                    JSONObject opt;
 
-                    dbg._txCodecId = jo.getJSONObject(Engine.JsonFields.TxAudio.objectName).optInt(Engine.JsonFields.TxAudio.encoder, Constants.DEFAULT_ENCODER);
-                    dbg._txFramingMs = jo.getJSONObject(Engine.JsonFields.TxAudio.objectName).optInt(Engine.JsonFields.TxAudio.framingMs, Constants.DEFAULT_TX_FRAMING_MS);
-                    dbg._noHdrExt = jo.getJSONObject(Engine.JsonFields.TxAudio.objectName).optBoolean(Engine.JsonFields.TxAudio.noHdrExt, false);
-                    dbg._fdx = jo.getJSONObject(Engine.JsonFields.TxAudio.objectName).optBoolean(Engine.JsonFields.TxAudio.fdx, false);
-                    dbg._maxTxSecs = jo.getJSONObject(Engine.JsonFields.TxAudio.objectName).optInt(Engine.JsonFields.TxAudio.maxTxSecs, Constants.DEFAULT_TX_SECS);
+                    opt = jo.optJSONObject(Engine.JsonFields.Rx.objectName);
+                    {
+                        if (opt == null)
+                        {
+                            opt = new JSONObject();
+                        }
+
+                        dbg._rxAddress = opt.optString(Engine.JsonFields.Rx.address, "");
+                        dbg._rxPort = opt.optInt(Engine.JsonFields.Rx.port, 0);
+                    }
+
+                    opt = jo.optJSONObject(Engine.JsonFields.Tx.objectName);
+                    {
+                        if (opt == null)
+                        {
+                            opt = new JSONObject();
+                        }
+
+                        dbg._txAddress = opt.optString(Engine.JsonFields.Tx.address, "");
+                        dbg._txPort = opt.optInt(Engine.JsonFields.Tx.port, 0);
+                    }
+
+                    opt = jo.optJSONObject(Engine.JsonFields.TxAudio.objectName);
+                    {
+                        if (opt == null)
+                        {
+                            opt = new JSONObject();
+                        }
+
+                        dbg._txCodecId = opt.optInt(Engine.JsonFields.TxAudio.encoder, Constants.DEFAULT_ENCODER);
+                        dbg._txFramingMs = opt.optInt(Engine.JsonFields.TxAudio.framingMs, Constants.DEFAULT_TX_FRAMING_MS);
+                        dbg._noHdrExt = opt.optBoolean(Engine.JsonFields.TxAudio.noHdrExt, false);
+                        dbg._fdx = opt.optBoolean(Engine.JsonFields.TxAudio.fdx, false);
+                        dbg._maxTxSecs = opt.optInt(Engine.JsonFields.TxAudio.maxTxSecs, Constants.DEFAULT_TX_SECS);
+                    }
 
                     mission._groups.add(dbg);
                 }

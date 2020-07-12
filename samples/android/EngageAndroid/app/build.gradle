@@ -26,7 +26,7 @@ android {
     try {
         apply from: additionalFlavorsFile
     }
-    catch(ignored) {
+    catch (ignored) {
     }
 
     compileSdkVersion 28
@@ -35,8 +35,8 @@ android {
         applicationId apkPackageName
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 1218
-        versionName "1218"
+        versionCode 1220
+        versionName "1220"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -60,7 +60,7 @@ android {
             def SEP = "_"
             def buildType = variant.variantData.variantConfiguration.buildType.name
             def version = variant.versionCode
-            def date = new Date();
+            def date = new Date()
             def formattedDate = date.format('yyyyMMdd_HHmmss')
             def newApkName = apkBaseName + SEP + version + SEP + buildType + SEP + formattedDate + ".apk"
 
@@ -70,14 +70,14 @@ android {
 
     repositories {
         maven {
-            url  'https://dl.bintray.com/rallytac/maven'
+            url 'https://dl.bintray.com/rallytac/maven'
         }
     }
 }
 
 dependencies {
     // Engage Engine
-    implementation 'com.rallytac.engage:engage-engine-release:1.165.8941@aar'
+    implementation 'com.rallytac.engage:engage-engine-release:1.171.9003@aar'
 
     // Android goodies
     implementation 'androidx.appcompat:appcompat:1.0.0'
@@ -108,4 +108,7 @@ dependencies {
     // Firebase
     implementation 'com.google.firebase:firebase-analytics:17.2.2'
     implementation 'com.google.firebase:firebase-core:17.2.3'
+
+    // JSON
+    implementation 'com.tzx.json:jsonhandleview:1.2.2'
 }

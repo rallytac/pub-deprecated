@@ -18,8 +18,8 @@ public class OfflineDeactivationActivity extends AppCompatActivity
 {
     private static String TAG = OfflineDeactivationActivity.class.getSimpleName();
 
-    public static String EXTRA_LICENSE_KEY = "$LICENSEKEY";
-    public static String EXTRA_DEVICE_ID = "$DEVICEID";
+    public static String EXTRA_LICENSE_KEY = "$LICENSEKEY";//NON-NLS
+    public static String EXTRA_DEVICE_ID = "$DEVICEID";//NON-NLS
 
     private String _licenseKey = null;
     private String _deviceId = null;
@@ -95,14 +95,14 @@ public class OfflineDeactivationActivity extends AppCompatActivity
                 sb.append(getString(R.string.offline_licensing_deactivation_url_prod));
             }
 
-            sb.append("?");
-            sb.append("licenseId=");
+            sb.append("?");//NON-NLS
+            sb.append("licenseId=");//NON-NLS
             sb.append(_licenseKey);
-            sb.append("&");
-            sb.append("deviceSerialNumber=");
+            sb.append("&");//NON-NLS
+            sb.append("deviceSerialNumber=");//NON-NLS
             sb.append(_deviceId);
-            sb.append("&");
-            sb.append("h=");
+            sb.append("&");//NON-NLS
+            sb.append("h=");//NON-NLS
             sb.append(hValue);
 
             String url = sb.toString();

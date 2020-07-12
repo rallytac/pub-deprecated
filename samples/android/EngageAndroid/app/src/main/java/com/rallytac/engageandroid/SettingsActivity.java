@@ -55,12 +55,12 @@ public class SettingsActivity extends AppCompatPreferenceActivity
             if(!_prefChangeIsBeingForcedByBinding)
             {
                 String key = preference.getKey();
-                if(key.startsWith("rallypoint_")
-                    || key.startsWith("user_")
-                    || key.startsWith("network_")
-                    || key.startsWith("mission_"))
+                if(key.startsWith("rallypoint_")//NON-NLS
+                    || key.startsWith("user_")//NON-NLS
+                    || key.startsWith("network_")//NON-NLS
+                    || key.startsWith("mission_"))//NON-NLS
                 {
-                    Log.i(TAG, "mission parameters changed");
+                    Log.i(TAG, "mission parameters changed");//NON-NLS
                     _thisActivity.indicateMissionChanged();
                 }
             }
@@ -105,7 +105,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity
 
             String className = preference.getClass().toString();
 
-            if(className.contains("SeekBarPreference"))
+            if(className.contains("SeekBarPreference"))//NON-NLS
             {
                 strVal = Integer.toString(PreferenceManager
                                     .getDefaultSharedPreferences(preference.getContext())
@@ -249,7 +249,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity
             }
             else
             {
-                hidePreferenceCategory("prefcat_developer_options");
+                hidePreferenceCategory("prefcat_developer_options");//NON-NLS
             }
 
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_ID));
@@ -273,6 +273,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_CNG));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_SPEAKER_TAIL_MS));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_DISABLE_STEREO));
+            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_JITTER_LOW_LATENCY_ENABLED));
 
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_VIBRATIONS));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_PTT_EVERY_TIME));
@@ -420,7 +421,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity
 
             if(!Utils.boolOpt(getString(R.string.opt_experimental_general_enabled), false))
             {
-                hidePreferenceCategory("prefcat_experimental_general");
+                hidePreferenceCategory("prefcat_experimental_general");//NON-NLS
             }
             else
             {
@@ -439,7 +440,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity
 
             if(!Utils.boolOpt(getString(R.string.opt_experimental_human_biometrics_enabled), false))
             {
-                hidePreferenceCategory("prefcat_experimental_human_biometrics");
+                hidePreferenceCategory("prefcat_experimental_human_biometrics");//NON-NLS
             }
             else
             {

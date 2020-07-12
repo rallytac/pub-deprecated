@@ -51,6 +51,7 @@ public class AboutActivity extends
     private enum ScanType {stUnknown, stLicenseKey, stActivationCode}
 
     private ImageView _ivAppLogo;
+    private TextView _tvAppName;
     private TextView _tvLicenseHeader;
     private TextView _tvLicensingMessage;
     private EditText _etDeviceId;
@@ -68,6 +69,7 @@ public class AboutActivity extends
 
 
     private int _numberOfClicksOfAppLogo = 0;
+    private int _numberOfClicksOfAppName = 0;
 
     private class InternalDescriptor
     {
@@ -132,11 +134,38 @@ public class AboutActivity extends
 
                         if(devModeActive)
                         {
-                            Toast.makeText(AboutActivity.this, "Developer mode activated", Toast.LENGTH_LONG).show();
+                            Toast.makeText(AboutActivity.this, getString(R.string.developer_mode_activated), Toast.LENGTH_LONG).show();
                         }
                         else
                         {
-                            Toast.makeText(AboutActivity.this, "Developer mode deactivated", Toast.LENGTH_LONG).show();
+                            Toast.makeText(AboutActivity.this, getString(R.string.developer_mode_deactivated), Toast.LENGTH_LONG).show();
+                        }
+                    }
+                }
+            });
+
+            _tvAppName = findViewById(R.id.tvAppName);
+            _tvAppName.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View v)
+                {
+                    _numberOfClicksOfAppName++;
+                    if(_numberOfClicksOfAppName >= 5)
+                    {
+                        _numberOfClicksOfAppName = 0;
+                        boolean advModeActive = Globals.getSharedPreferences().getBoolean(PreferenceKeys.ADVANCED_MODE_ACTIVE, false);
+                        advModeActive = !advModeActive;
+                        Globals.getSharedPreferencesEditor().putBoolean(PreferenceKeys.ADVANCED_MODE_ACTIVE, advModeActive);
+                        Globals.getSharedPreferencesEditor().apply();
+
+                        if(advModeActive)
+                        {
+                            Toast.makeText(AboutActivity.this, getString(R.string.advanced_mode_activated), Toast.LENGTH_LONG).show();
+                        }
+                        else
+                        {
+                            Toast.makeText(AboutActivity.this, getString(R.string.advanced_mode_deactivated), Toast.LENGTH_LONG).show();
                         }
                     }
                 }
@@ -198,17 +227,15 @@ public class AboutActivity extends
             }
         });
 
-        _ivScanLicenseKey = findViewById(R.id.ivScanLicenseKey);;
+        _ivScanLicenseKey = findViewById(R.id.ivScanLicenseKey);
         _ivScanActivationCode = findViewById(R.id.ivScanActivationCode);
         _ivWebFetchActivationCode = findViewById(R.id.ivWebFetchActivationCode);
 
         String s = _activeLd._ld._deviceId;
         if(Utils.isEmptyString(s))
         {
-            s = "unknown";
+            s = getString(R.string.unknown_device_id);
         }
-
-
 
         _etDeviceId.setText(s);
         _etLicenseKey.setText(_activeLd._ld._key);
@@ -216,7 +243,7 @@ public class AboutActivity extends
 
         String versionInfo;
 
-        versionInfo = BuildConfig.VERSION_NAME + " (Engage Engine " + Globals.getEngageApplication().getEngine().engageGetVersion() + ")";
+        versionInfo = BuildConfig.VERSION_NAME + " (Engage Engine " + Globals.getEngageApplication().getEngine().engageGetVersion() + ")"; //NON-NLS
 
         ((TextView)findViewById(R.id.tvVersion)).setText(versionInfo);
 
@@ -259,7 +286,7 @@ public class AboutActivity extends
             String key = Utils.emptyAs(_newLd._ld._key, "");
             String ac = Utils.emptyAs(_newLd._ld._activationCode, "");
 
-            Log.i(TAG, "saving licensing [" + getString(R.string.licensing_entitlement) + "] [" + key + "] [" + ac + "]");
+            Log.i(TAG, "saving licensing [" + getString(R.string.licensing_entitlement) + "] [" + key + "] [" + ac + "]"); //NON-NLS
 
             Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_KEY, key);
             Globals.getSharedPreferencesEditor().putString(PreferenceKeys.USER_LICENSING_ACTIVATION_CODE, ac);
@@ -302,9 +329,7 @@ public class AboutActivity extends
 
     private void updateUi()
     {
-        final String limitedTxMsg = "You can continue to use the application but won't be able to transmit for more than 3 seconds at a time.";
-
-        StringBuilder sb = new StringBuilder();
+        String msg;
 
         if(_activeLd.equals(_newLd))
         {
@@ -316,29 +341,29 @@ public class AboutActivity extends
                     Date dt = new Date();
                     if(_activeLd._ld._expires.after(dt))
                     {
-                        sb.append("Your existing license expires " + Utils.formattedTimespan(dt.getTime(), _activeLd._ld._expires.getTime()) + ".");
+                        msg = String.format(getString(R.string.your_license_expires_on), Utils.formattedTimespan(dt.getTime(), _activeLd._ld._expires.getTime()));
                     }
                     else
                     {
-                        sb.append("Your existing license expired on " + _activeLd._ld._expiresFormatted + ".  " + limitedTxMsg);
+                        msg = String.format(getString(R.string.this_license_expired_on), _activeLd._ld._expiresFormatted);
                     }
                 }
                 else
                 {
                     if(Utils.isEmptyString(_activeLd._ld._activationCode))
                     {
-                        sb.append("Your existing license never expires but requires an activation code. " + limitedTxMsg);
+                        msg = getString(R.string.existing_license_never_expires_but_requires_activation);
                     }
                     else
                     {
-                        sb.append("Your license is active.");
+                        msg = getString(R.string.your_license_is_active);
                     }
                     //tryAutoActivate = true;
                 }
             }
             else
             {
-                sb.append("You don't yet have a valid license.  " + limitedTxMsg);
+                msg = getString(R.string.you_dont_yet_have_a_valid_license);
             }
         }
         else
@@ -350,33 +375,33 @@ public class AboutActivity extends
                     Date dt = new Date();
                     if(_newLd._ld._expires.after(dt))
                     {
-                        sb.append("This license expires " + Utils.formattedTimespan(dt.getTime(), _newLd._ld._expires.getTime()) + ".");
+                        msg = String.format(getString(R.string.this_license_expires_on), Utils.formattedTimespan(dt.getTime(), _newLd._ld._expires.getTime()));
                     }
                     else
                     {
-                        sb.append("This license expired on " + _newLd._ld._expiresFormatted + ".  " + limitedTxMsg);
+                        msg = String.format(getString(R.string.this_license_expired_on), _newLd._ld._expiresFormatted);
                     }
                 }
                 else
                 {
                     if(Utils.isEmptyString(_newLd._ld._activationCode))
                     {
-                        sb.append("This license never expires but requires an activation code. " + limitedTxMsg);
+                        msg = getString(R.string.this_license_never_expires_but_requires_activation);
                     }
                     else
                     {
-                        sb.append("Your license is active.");
+                        msg = getString(R.string.your_license_is_active);
                     }
                     //tryAutoActivate = true;
                 }
             }
             else
             {
-                sb.append("This is not a valid license.  " + limitedTxMsg);
+                msg = getString(R.string.not_a_valid_license);
             }
         }
 
-        _tvLicensingMessage.setText(sb.toString());
+        _tvLicensingMessage.setText(msg);
 
         if(Utils.isEmptyString(_activeLd._ld._activationCode) || Utils.isEmptyString(_etActivationCode.getText().toString()))
         {
@@ -498,23 +523,23 @@ public class AboutActivity extends
 
         StringBuilder sb = new StringBuilder();
 
-        sb.append("\n\nSYSTEM:");
-        sb.append("\nID: " + Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID));
+        sb.append(getString(R.string.mi_hdr_system));
+        sb.append(String.format(getString(R.string.mi_sys_id), Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)));
 
-        sb.append("\n\nDEVICE:");
-        sb.append("\nMANUFACTURER: " + Build.MANUFACTURER);
-        sb.append("\nID: " + Build.ID);
-        sb.append("\nBRAND: " + Build.BRAND);
-        sb.append("\nMODEL: " + Build.MODEL);
-        sb.append("\nBOARD: " + Build.BOARD);
-        sb.append("\nHARDWARE: " + Build.HARDWARE);
-        sb.append("\nSERIAL: " + Build.SERIAL);
-        sb.append("\nBOOTLOADER: " + Build.BOOTLOADER);
-        sb.append("\nUSER: " + Build.USER);
-        sb.append("\nHOST: " + Build.HOST);
-        sb.append("\nBUILD.TIME: " + Build.TIME);
-        sb.append("\nVERSION.RELEASE: " + Build.VERSION.RELEASE);
-        sb.append("\nVERSION.SDK_INT: " + Build.VERSION.SDK_INT);
+        sb.append(getString(R.string.mi_hdr_device));
+        sb.append(String.format(getString(R.string.mi_device_manufacturer), Build.MANUFACTURER));
+        sb.append(String.format(getString(R.string.mi_device_id), Build.ID));
+        sb.append(String.format(getString(R.string.mi_device_brand), Build.BRAND));
+        sb.append(String.format(getString(R.string.mi_device_model), Build.MODEL));
+        sb.append(String.format(getString(R.string.mi_device_board), Build.BOARD));
+        sb.append(String.format(getString(R.string.mi_device_hardware), Build.HARDWARE));
+        sb.append(String.format(getString(R.string.mi_device_serial), Build.SERIAL));
+        sb.append(String.format(getString(R.string.mi_device_bootloader), Build.BOOTLOADER));
+        sb.append(String.format(getString(R.string.mi_device_user), Build.USER));
+        sb.append(String.format(getString(R.string.mi_device_host), Build.HOST));
+        sb.append(String.format(getString(R.string.mi_device_build_time), Long.toString(Build.TIME)));
+        sb.append(String.format(getString(R.string.mi_device_version_release), Build.VERSION.RELEASE));
+        sb.append(String.format(getString(R.string.mi_device_sdk_int), Build.VERSION.SDK_INT));
 
         return sb.toString();
     }
@@ -557,7 +582,7 @@ public class AboutActivity extends
         message.setPadding(32, 32, 32, 32);
 
         AlertDialog dlg = new AlertDialog.Builder(this)
-                .setTitle("System Information")
+                .setTitle(getString(R.string.system_information))
                 .setCancelable(true)
                 .setNegativeButton(R.string.button_close, null)
                 .setView(message).create();
@@ -612,7 +637,7 @@ public class AboutActivity extends
 
         alertDialogBuilder.setMessage(R.string.about_deactivate_really_sure);
         alertDialogBuilder.setCancelable(true);
-        alertDialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener()
+        alertDialogBuilder.setNegativeButton(R.string.button_no, new DialogInterface.OnClickListener()
         {
             @Override
             public void onClick(DialogInterface dialog, int which)
@@ -620,7 +645,7 @@ public class AboutActivity extends
                 dialog.cancel();
             }
         });
-        alertDialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener()
+        alertDialogBuilder.setPositiveButton(R.string.button_yes, new DialogInterface.OnClickListener()
         {
             @Override
             public void onClick(DialogInterface dialog, int which)
@@ -778,7 +803,7 @@ public class AboutActivity extends
 
                 alertDialogBuilder.setMessage(R.string.deactivation_failed_try_offline);
                 alertDialogBuilder.setCancelable(true);
-                alertDialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener()
+                alertDialogBuilder.setNegativeButton(R.string.button_no, new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which)
@@ -786,7 +811,7 @@ public class AboutActivity extends
                         dialog.cancel();
                     }
                 });
-                alertDialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener()
+                alertDialogBuilder.setPositiveButton(R.string.button_no, new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which)
@@ -825,7 +850,7 @@ public class AboutActivity extends
 
                 alertDialogBuilder.setMessage(R.string.activation_failed_try_offline);
                 alertDialogBuilder.setCancelable(true);
-                alertDialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener()
+                alertDialogBuilder.setNegativeButton(R.string.button_no, new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which)
@@ -833,7 +858,7 @@ public class AboutActivity extends
                         dialog.cancel();
                     }
                 });
-                alertDialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener()
+                alertDialogBuilder.setPositiveButton(R.string.button_yes, new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which)

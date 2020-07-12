@@ -1908,9 +1908,35 @@ public class EngageApplication
         return rc;
     }
 
+    public String getEnginePolicy()
+    {
+        String rc = null;
+
+        try
+        {
+            String tmp = Globals.getSharedPreferences().getString(PreferenceKeys.ENGINE_POLICY_JSON, "");
+            if(!Utils.isEmptyString(tmp))
+            {
+                JSONObject jo = new JSONObject(tmp);
+                rc = jo.toString();
+            }
+        }
+        catch (Exception e)
+        {
+            rc = null;
+        }
+
+        if(Utils.isEmptyString(rc))
+        {
+            rc = Utils.getStringResource(this, R.raw.default_engine_policy_template);
+        }
+
+        return rc;
+    }
+
     private void createSampleConfiguration()
     {
-        String enginePolicyJson = ActiveConfiguration.makeBaselineEnginePolicyObject(Utils.getStringResource(this, R.raw.sample_engine_policy)).toString();
+        String enginePolicyJson = ActiveConfiguration.makeBaselineEnginePolicyObject(getEnginePolicy()).toString();
         String identityJson = "{}";
         String tempDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
 
@@ -1997,7 +2023,7 @@ public class EngageApplication
             }
 
             setMissionChangedStatus(false);
-            JSONObject policyBaseline = ActiveConfiguration.makeBaselineEnginePolicyObject(Utils.getStringResource(this, R.raw.sample_engine_policy));
+            JSONObject policyBaseline = ActiveConfiguration.makeBaselineEnginePolicyObject(getEnginePolicy());
 
             String enginePolicyJson = getActiveConfiguration().makeEnginePolicyObjectFromBaseline(policyBaseline).toString();
             String identityJson = getActiveConfiguration().makeIdentityObject().toString();

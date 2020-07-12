@@ -575,7 +575,19 @@ public class Utils
                 // Multicast failover
                 ActiveConfiguration.MulticastFailoverConfiguration mc = new ActiveConfiguration.MulticastFailoverConfiguration();
 
-                mc.enabled = Globals.getSharedPreferences().getBoolean(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_ENABLED, Constants.DEF_MULTICAST_FAILOVER_ENABLED);
+                ActiveConfiguration.MulticastFailoverPolicy mcfo = rc.getMissionMulticastFailoverPolicy();
+                if(mcfo == ActiveConfiguration.MulticastFailoverPolicy.overrideAndAllow)
+                {
+                    mc.enabled = true;
+                }
+                else if(mcfo == ActiveConfiguration.MulticastFailoverPolicy.overrideAndPrevent)
+                {
+                    mc.enabled = false;
+                }
+                else
+                {
+                    mc.enabled = Globals.getSharedPreferences().getBoolean(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_ENABLED, Constants.DEF_MULTICAST_FAILOVER_ENABLED);
+                }
                 mc.thresholdSecs = Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_SECS, Integer.toString(Constants.DEF_MULTICAST_FAILOVER_THRESHOLD_SECS)));
                 rc.setMulticastFailoverConfiguration(mc);
 
@@ -634,7 +646,7 @@ public class Utils
         return bytesToHex(byteArray);
     }
 
-    private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    private final static char[] hexArray = "0123456789ABCDEF".toCharArray();//NON-NLS
 
     public static String bytesToHex(byte[] bytes)
     {
@@ -697,6 +709,27 @@ public class Utils
         catch(Exception e)
         {
             e.printStackTrace();
+            rc = null;
+        }
+
+        return rc;
+    }
+
+    public static Bitmap byteArrayToQrCodeBitmap(byte[] ba, int width, int height)
+    {
+        Bitmap rc;
+
+        try
+        {
+            String str = new String(ba);
+
+            MultiFormatWriter multiFormatWriter = new MultiFormatWriter();
+            BitMatrix bitMatrix = multiFormatWriter.encode(str, BarcodeFormat.QR_CODE, width, height);
+            BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
+            rc = barcodeEncoder.createBitmap(bitMatrix);
+        }
+        catch (Exception e)
+        {
             rc = null;
         }
 
@@ -819,7 +852,7 @@ public class Utils
         {
             intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
 
-            intent.setData(Uri.parse("package:" + ctx.getPackageName()));
+            intent.setData(Uri.parse("package:" + ctx.getPackageName()));//NON-NLS
 
             if(!isIntentCallable(ctx, intent))
             {
@@ -941,7 +974,7 @@ public class Utils
 
         try
         {
-            MessageDigest md = MessageDigest.getInstance("MD5");
+            MessageDigest md = MessageDigest.getInstance("MD5");//NON-NLS
             md.update(s.getBytes());
             byte[] digest = md.digest();
             rc = bytesToHex(digest);
@@ -974,8 +1007,8 @@ public class Utils
     {
         try
         {
-            SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
-            sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
+            SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");//NON-NLS
+            sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));//NON-NLS
             return sdf.format(dt);
         }
         catch (Exception e)

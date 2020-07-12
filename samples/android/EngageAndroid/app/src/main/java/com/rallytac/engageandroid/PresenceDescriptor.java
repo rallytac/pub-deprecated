@@ -130,7 +130,7 @@ public class PresenceDescriptor
                     // Let's make sure we're good here - if not, whack it!
                     if (!Utils.isLocationValid(location))
                     {
-                        Log.w(TAG, "received location object failed validation");
+                        Log.w(TAG, "received location object failed validation");//NON-NLS
                         location = null;
                     }
                 }

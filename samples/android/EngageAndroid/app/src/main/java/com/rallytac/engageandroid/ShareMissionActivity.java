@@ -41,6 +41,7 @@ public class ShareMissionActivity extends AppCompatActivity
     private boolean _qrCodeZoomed = false;
     private String _base91DataString = null;
     private JSONObject _jsonConfiguration = null;
+    private byte[] _compressedDataBytes = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -90,7 +91,7 @@ public class ShareMissionActivity extends AppCompatActivity
     @Override
     protected void onSaveInstanceState(Bundle outState)
     {
-        Log.d(TAG, "onSaveInstanceState");
+        Log.d(TAG, "onSaveInstanceState");//NON-NLS
         saveState(outState);
         super.onSaveInstanceState(outState);
     }
@@ -99,10 +100,11 @@ public class ShareMissionActivity extends AppCompatActivity
     {
         getElements();
 
-        bundle.putString("PWD", _pwd);
-        bundle.putString("DEFLECTION_URL", _deflectionUrl);
-        bundle.putString("DATASTRING", _base91DataString);
-        bundle.putBoolean("ZOOMED", _qrCodeZoomed);
+        bundle.putString("PWD", _pwd);//NON-NLS
+        bundle.putString("DEFLECTION_URL", _deflectionUrl);//NON-NLS
+        bundle.putString("DATASTRING", _base91DataString);//NON-NLS
+        bundle.putBoolean("ZOOMED", _qrCodeZoomed);//NON-NLS
+        bundle.putByteArray("COMPRESSED_DATA_BYTES", _compressedDataBytes);//NON-NLS
     }
 
     private void restoreSavedState(Bundle bundle)
@@ -112,10 +114,11 @@ public class ShareMissionActivity extends AppCompatActivity
             return;
         }
 
-        _pwd = bundle.getString("PWD");
-        _deflectionUrl = bundle.getString("DEFLECTION_URL", null);
-        _base91DataString = bundle.getString("DATASTRING", null);
-        _qrCodeZoomed = bundle.getBoolean("ZOOMED", false);
+        _pwd = bundle.getString("PWD");//NON-NLS
+        _deflectionUrl = bundle.getString("DEFLECTION_URL", null);//NON-NLS
+        _base91DataString = bundle.getString("DATASTRING", null);//NON-NLS
+        _qrCodeZoomed = bundle.getBoolean("ZOOMED", false);//NON-NLS
+        _compressedDataBytes = bundle.getByteArray("COMPRESSED_DATA_BYTES");//NON-NLS
 
         buildBitmap();
     }
@@ -169,6 +172,26 @@ public class ShareMissionActivity extends AppCompatActivity
 
     private void buildBitmap()
     {
+        //TODO: Binary QR code
+        /*
+        if(_compressedDataBytes != null)
+        {
+            byte[] hdr = Constants.QR_CODE_HEADER.getBytes(Utils.getEngageCharSet());
+            byte[] ver = Constants.QR_VERSION.getBytes(Utils.getEngageCharSet());
+            byte[] ba = new byte[hdr.length + ver.length + _compressedDataBytes.length];
+
+            System.arraycopy(hdr, 0, ba, 0, hdr.length);
+            System.arraycopy(ver, 0, ba, hdr.length, ver.length);
+            System.arraycopy(_compressedDataBytes, 0, ba, hdr.length + ver.length, _compressedDataBytes.length);
+
+            _bm = Utils.byteArrayToQrCodeBitmap(ba, Constants.QR_CODE_WIDTH, Constants.QR_CODE_HEIGHT);
+        }
+        else
+        {
+            _bm = null;
+        }
+        */
+
         if(!Utils.isEmptyString(_base91DataString))
         {
             _bm = Utils.stringToQrCodeBitmap(_base91DataString, Constants.QR_CODE_WIDTH, Constants.QR_CODE_HEIGHT);
@@ -202,14 +225,14 @@ public class ShareMissionActivity extends AppCompatActivity
 
             // Compress it
             byte[] dataBytes = textRecord.getBytes(Utils.getEngageCharSet());
-            byte[] compressedDataBytes = Utils.compress(dataBytes, 0, dataBytes.length);
+            _compressedDataBytes = Utils.compress(dataBytes, 0, dataBytes.length);
 
             // It gets encrypted if we got a password
             if(!Utils.isEmptyString(_pwd))
             {
                 String pwdHexString = Utils.toHexString(_pwd.getBytes(Utils.getEngageCharSet()));
-                compressedDataBytes = Globals.getEngageApplication().getEngine().encryptSimple(compressedDataBytes, pwdHexString);
-                if(compressedDataBytes == null)
+                _compressedDataBytes = Globals.getEngageApplication().getEngine().encryptSimple(_compressedDataBytes, pwdHexString);
+                if(_compressedDataBytes == null)
                 {
                     Utils.showPopupMsg(ShareMissionActivity.this,getString(R.string.share_failed_to_encrypt_configuration_package));
                     finish();
@@ -218,7 +241,7 @@ public class ShareMissionActivity extends AppCompatActivity
             }
 
             // Convert to a Base91-encoded string
-            _base91DataString = new String(Base91.encode(compressedDataBytes), Utils.getEngageCharSet());
+            _base91DataString = new String(Base91.encode(_compressedDataBytes), Utils.getEngageCharSet());
 
             // Precede with a deflection url if any (and save whatever was there anyway - even if it's nothing)
             Globals.getSharedPreferencesEditor().putString(PreferenceKeys.LAST_QRCODE_DEFLECTION_URL, _deflectionUrl);
@@ -273,7 +296,7 @@ public class ShareMissionActivity extends AppCompatActivity
             Globals.getEngageApplication().logEvent(Analytics.MISSION_UPLOAD_REQUESTED);
 
             String urlBase = getString(R.string.mission_hub_address);
-            String fn = ac.getMissionId() + ".json";
+            String fn = ac.getMissionId() + ".json";//NON-NLS
             String content = _jsonConfiguration.toString();
 
             umt.execute(urlBase, fn, content);
@@ -301,8 +324,7 @@ public class ShareMissionActivity extends AppCompatActivity
                     extraText = String.format(getString(R.string.fmt_load_this_json_file_to_join_the_mission_or_download_from), ac.getMissionName(), downloadUrl);
                 }
 
-                File fd = File.createTempFile("mission-" + ac.getMissionName().replace(" ", "-"), ".json",
-                        Environment.getExternalStorageDirectory());
+                File fd = File.createTempFile("mission-" + ac.getMissionName().replace(" ", "-"), ".json", Environment.getExternalStorageDirectory());//NON-NLS
 
                 FileOutputStream fos = new FileOutputStream(fd);
                 fos.write(_jsonConfiguration.toString().getBytes());
@@ -328,8 +350,7 @@ public class ShareMissionActivity extends AppCompatActivity
                     extraText = String.format(getString(R.string.fmt_scan_this_qr_code_to_join_the_mission_or_download_from), ac.getMissionName(), downloadUrl);
                 }
 
-                File fd = File.createTempFile("qr-" + ac.getMissionName().replace(" ", "-"), ".jpg",
-                        Environment.getExternalStorageDirectory());
+                File fd = File.createTempFile("qr-" + ac.getMissionName().replace(" ", "-"), ".jpg", Environment.getExternalStorageDirectory());//NON-NLS
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 _bm.compress(Bitmap.CompressFormat.JPEG, 100, bos);
                 byte[] bitmapdata = bos.toByteArray();

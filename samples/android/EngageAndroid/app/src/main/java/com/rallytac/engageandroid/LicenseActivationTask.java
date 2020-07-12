@@ -108,7 +108,7 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
         }
         catch (Exception e)
         {
-            Log.e(TAG, "exception: _result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);
+            Log.e(TAG, "exception: _result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);//NON-NLS
             return null;
         }
 
@@ -120,19 +120,19 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
         {
             deviceInfo = new JSONObject();
 
-            deviceInfo.put("manufacturer", Build.MANUFACTURER);
-            deviceInfo.put("device", Build.DEVICE);
-            deviceInfo.put("type", Build.TYPE);
-            deviceInfo.put("board", Build.BOARD);
-            deviceInfo.put("model", Build.MODEL);
-            deviceInfo.put("cpuAbi", Build.CPU_ABI);
-            deviceInfo.put("display", Build.DISPLAY);
-            deviceInfo.put("hardware", Build.HARDWARE);
-            deviceInfo.put("host", Build.HOST);
-            deviceInfo.put("id", Build.ID);
-            deviceInfo.put("user", Build.USER);
-            deviceInfo.put("product", Build.PRODUCT);
-            deviceInfo.put("tags", Build.TAGS);
+            deviceInfo.put("manufacturer", Build.MANUFACTURER);//NON-NLS
+            deviceInfo.put("device", Build.DEVICE);//NON-NLS
+            deviceInfo.put("type", Build.TYPE);//NON-NLS
+            deviceInfo.put("board", Build.BOARD);//NON-NLS
+            deviceInfo.put("model", Build.MODEL);//NON-NLS
+            deviceInfo.put("cpuAbi", Build.CPU_ABI);//NON-NLS
+            deviceInfo.put("display", Build.DISPLAY);//NON-NLS
+            deviceInfo.put("hardware", Build.HARDWARE);//NON-NLS
+            deviceInfo.put("host", Build.HOST);//NON-NLS
+            deviceInfo.put("id", Build.ID);//NON-NLS
+            deviceInfo.put("user", Build.USER);//NON-NLS
+            deviceInfo.put("product", Build.PRODUCT);//NON-NLS
+            deviceInfo.put("tags", Build.TAGS);//NON-NLS
         }
         catch (Exception e)
         {
@@ -143,24 +143,24 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
         {
             JSONObject obj = new JSONObject();
 
-            obj.put("deviceSerialNumber", _deviceId);
+            obj.put("deviceSerialNumber", _deviceId);//NON-NLS
 
-            obj.put("entitlementKey", _entitlement);
-            obj.put("licenseId", _key);
-            obj.put("h", _hValue);
+            obj.put("entitlementKey", _entitlement);//NON-NLS
+            obj.put("licenseId", _key);//NON-NLS
+            obj.put("h", _hValue);//NON-NLS
 
             if(!Utils.isEmptyString(_activationCode))
             {
-                obj.put("activationCode", _activationCode);
+                obj.put("activationCode", _activationCode);//NON-NLS
             }
 
             if(deviceInfo != null)
             {
-                obj.put("deviceInfo", deviceInfo);
+                obj.put("deviceInfo", deviceInfo);//NON-NLS
             }
 
-            obj.put("appVersion", BuildConfig.VERSION_NAME);
-            obj.put("appPackage", Globals.getContext().getPackageName());
+            obj.put("appVersion", BuildConfig.VERSION_NAME);//NON-NLS
+            obj.put("appPackage", Globals.getContext().getPackageName());//NON-NLS
 
             String dataToPost = obj.toString();
 
@@ -171,8 +171,8 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
             byte[] bytes = dataToPost.getBytes();
             int len = bytes.length;
 
-            httpConnection.setRequestMethod("POST");
-            httpConnection.setRequestProperty("Content-length", Integer.toString(len));
+            httpConnection.setRequestMethod("POST");//NON-NLS
+            httpConnection.setRequestProperty("Content-length", Integer.toString(len));//NON-NLS
             httpConnection.setUseCaches(false);
             httpConnection.setAllowUserInteraction(false);
             httpConnection.setConnectTimeout(CONNECT_TIMEOUT);
@@ -204,15 +204,15 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
                 JSONObject rc = new JSONObject(sb.toString());
                 Log.d(TAG, rc.toString());
 
-                _result = rc.getInt("returnCode");
-                _resultMessage = rc.optString("returnCodeDescr", null);
-                _resultActivationCode = rc.optString("activationCode", null);
+                _result = rc.getInt("returnCode");//NON-NLS
+                _resultMessage = rc.optString("returnCodeDescr", null);//NON-NLS
+                _resultActivationCode = rc.optString("activationCode", null);//NON-NLS
 
-                Log.d(TAG, "_result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);
+                Log.d(TAG, "_result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);//NON-NLS
             }
             else
             {
-                Log.e(TAG, "exception: HTTP failure " + httpResultCode);
+                Log.e(TAG, "exception: HTTP failure " + httpResultCode);//NON-NLS
                 throw new Exception("HTTP failure " + httpResultCode);
             }
         }
@@ -221,7 +221,7 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
             _result = -1;
             _activationCode = null;
             _resultMessage = ex.getLocalizedMessage();
-            Log.e(TAG, "exception: _result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);
+            Log.e(TAG, "exception: _result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);//NON-NLS
         }
         finally
         {
@@ -231,7 +231,7 @@ public class LicenseActivationTask extends AsyncTask<String, Void, String>
             }
         }
 
-        Log.d(TAG, "_result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);
+        Log.d(TAG, "_result=" + _result + ", _resultMessage=" + _resultMessage + ", _resultActivationCode=" + _resultActivationCode);//NON-NLS
 
         return null;
     }

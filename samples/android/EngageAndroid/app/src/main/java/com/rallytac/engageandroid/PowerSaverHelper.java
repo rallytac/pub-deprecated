@@ -89,7 +89,7 @@ public class PowerSaverHelper {
                     intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
                 break;
             case NOT_WHITE_LISTED:
-                intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).setData(Uri.parse("package:" + packageName));
+                intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).setData(Uri.parse("package:" + packageName));//NON-NLS
                 break;
             case ERROR_GETTING_STATE:
             case UNKNOWN_TOO_OLD_ANDROID_API_FOR_CHECKING:

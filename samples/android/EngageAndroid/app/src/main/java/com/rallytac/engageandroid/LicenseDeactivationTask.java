@@ -84,9 +84,9 @@ public class LicenseDeactivationTask extends AsyncTask<String, Void, String>
         {
             JSONObject obj = new JSONObject();
 
-            obj.put("deviceSerialNumber", _deviceId);
-            obj.put("licenseId", _key);
-            obj.put("h", _hValue);
+            obj.put("deviceSerialNumber", _deviceId);//NON-NLS
+            obj.put("licenseId", _key);//NON-NLS
+            obj.put("h", _hValue);//NON-NLS
 
             String dataToPost = obj.toString();
 
@@ -97,8 +97,8 @@ public class LicenseDeactivationTask extends AsyncTask<String, Void, String>
             byte[] bytes = dataToPost.getBytes();
             int len = bytes.length;
 
-            httpConnection.setRequestMethod("POST");
-            httpConnection.setRequestProperty("Content-length", Integer.toString(len));
+            httpConnection.setRequestMethod("POST");//NON-NLS
+            httpConnection.setRequestProperty("Content-length", Integer.toString(len));//NON-NLS
             httpConnection.setUseCaches(false);
             httpConnection.setAllowUserInteraction(false);
             httpConnection.setConnectTimeout(CONNECT_TIMEOUT);
@@ -130,8 +130,8 @@ public class LicenseDeactivationTask extends AsyncTask<String, Void, String>
                 JSONObject rc = new JSONObject(sb.toString());
                 Log.d(TAG, rc.toString());
 
-                _result = rc.getInt("returnCode");
-                _resultMessage = rc.optString("returnCodeDescr", null);
+                _result = rc.getInt("returnCode");//NON-NLS
+                _resultMessage = rc.optString("returnCodeDescr", null);//NON-NLS
             }
             else
             {

@@ -27,7 +27,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginTop="24dp"
         android:layout_marginEnd="8dp"
-        android:text="Group 1"
+        android:text="@string/placeholder"
         android:textColor="@android:color/white"
         android:textSize="30sp"
         android:textStyle="bold"
@@ -42,13 +42,27 @@
         android:layout_height="23dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="8dp"
-        android:text="[Talkers]"
+        android:text="@string/placeholder"
         android:textColor="@android:color/white"
         android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="@+id/ivCard"
         app:layout_constraintStart_toStartOf="@+id/tvGroupName"
         app:layout_constraintTop_toBottomOf="@+id/tvGroupName" />
+
+    <TextView
+        android:id="@+id/tvMemberCount"
+        android:layout_width="0dp"
+        android:layout_height="23dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        android:text="@string/placeholder"
+        android:textColor="@android:color/white"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="@+id/ivCard"
+        app:layout_constraintStart_toStartOf="@+id/tvGroupName"
+        app:layout_constraintTop_toBottomOf="@+id/tvTalkerList" />
 
     <ImageView
         android:id="@+id/ivSpeaker"

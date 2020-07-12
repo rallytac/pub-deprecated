@@ -73,7 +73,7 @@ public class LocationManager
                 public void onLocationResult(LocationResult locationResult) {
                     for (Location location : locationResult.getLocations())
                     {
-                        Log.d(TAG, "locationUpdate: " + location.toString());
+                        Log.d(TAG, "locationUpdate: " + location.toString());//NON-NLS
                         onLocationUpdated(location);
                     }
                 }
@@ -139,7 +139,7 @@ public class LocationManager
                      }
                      else
                      {
-                         Log.e(TAG, "onLicenseActivationTaskComplete failure");
+                         Log.e(TAG, "onLicenseActivationTaskComplete failure");//NON-NLS
                      }
                  }
              }

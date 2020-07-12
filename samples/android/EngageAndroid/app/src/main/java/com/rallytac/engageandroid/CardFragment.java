@@ -49,6 +49,12 @@ public abstract class CardFragment extends Fragment
     {
         View view = inflater.inflate(getLayoutId(), container, false);
 
+        TextView tv = view.findViewById(R.id.tvMemberCount);
+        if(tv != null)
+        {
+            tv.setVisibility(View.GONE);
+        }
+
         ImageView iv;
 
         // Speaker
@@ -166,6 +172,7 @@ public abstract class CardFragment extends Fragment
                         updateSpeakerStatus();
                         updateTxEnabledStatus();
                         updateRxTxUi();
+                        updateMembers();
                     }
                }
             }
@@ -317,10 +324,29 @@ public abstract class CardFragment extends Fragment
                 }
                 else
                 {
-                    Log.e("CardFragment", "========================no group descriptor in updateRxTxUi");
+                    Log.e("CardFragment", "========================no group descriptor in updateRxTxUi");//NON-NLS
                 }
             }
         });
+    }
+
+    private void updateMembers()
+    {
+        // TODO: updateMembers
+        /*
+        getActivity().runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if(_gd != null)
+                {
+                    int count = _gd.getMemberCount();
+                    ((TextView) getView().findViewById(R.id.tvMemberCount)).setText(Integer.toString(count));
+                }
+            }
+        });
+        */
     }
 
     private void updateSpeakerStatus()

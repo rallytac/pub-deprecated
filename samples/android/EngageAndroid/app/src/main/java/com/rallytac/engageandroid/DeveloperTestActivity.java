@@ -135,13 +135,13 @@ public class DeveloperTestActivity extends AppCompatActivity
     private void testSendRaw()
     {
         ActiveConfiguration ac = _app.getActiveConfiguration();
-        String blobString = "Hello world raw";
+        String blobString = "Hello world raw";//NON-NLS
         byte[] blob = blobString.getBytes();
         String jsonParams = "";
         GroupDescriptor gd = getFirstRawGroup();
         if(gd == null)
         {
-            Toast.makeText(this, "Cannot find a raw group in the current mission", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Cannot find a raw group in the current mission", Toast.LENGTH_SHORT).show();//NON-NLS
             return;
         }
 
@@ -176,7 +176,7 @@ public class DeveloperTestActivity extends AppCompatActivity
         try
         {
             ActiveConfiguration ac = _app.getActiveConfiguration();
-            String blobString = "Hello world blob";
+            String blobString = "Hello world blob";//NON-NLS
             byte[] blob = blobString.getBytes();
 
             JSONObject bi = new JSONObject();
@@ -186,7 +186,7 @@ public class DeveloperTestActivity extends AppCompatActivity
             GroupDescriptor gd = getFirstPresenceGroup();
             if(gd == null)
             {
-                Toast.makeText(this, "Cannot find a presence group in the current mission", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Cannot find a presence group in the current mission", Toast.LENGTH_SHORT).show();//NON-NLS
                 return;
             }
 
@@ -248,7 +248,7 @@ public class DeveloperTestActivity extends AppCompatActivity
             GroupDescriptor gd = getFirstPresenceGroup();
             if(gd == null)
             {
-                Toast.makeText(this, "Cannot find a presence group in the current mission", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Cannot find a presence group in the current mission", Toast.LENGTH_SHORT).show();//NON-NLS
                 return;
             }
 
@@ -282,7 +282,7 @@ public class DeveloperTestActivity extends AppCompatActivity
         GroupDescriptor gd = getFirstAudioGroup();
         if(gd == null)
         {
-            Toast.makeText(this, "Cannot find an audio group in the current mission", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Cannot find an audio group in the current mission", Toast.LENGTH_SHORT).show();//NON-NLS
             return;
         }
 
@@ -295,7 +295,7 @@ public class DeveloperTestActivity extends AppCompatActivity
         GroupDescriptor gd = getFirstAudioGroup();
         if(gd == null)
         {
-            Toast.makeText(this, "Cannot find an audio group in the current mission", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Cannot find an audio group in the current mission", Toast.LENGTH_SHORT).show();//NON-NLS
             return;
         }
 
@@ -308,7 +308,7 @@ public class DeveloperTestActivity extends AppCompatActivity
 
         if(gd == null)
         {
-            Toast.makeText(this, "Cannot find an audio group in the current mission", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Cannot find an audio group in the current mission", Toast.LENGTH_SHORT).show();//NON-NLS
             return;
         }
 
@@ -324,7 +324,7 @@ public class DeveloperTestActivity extends AppCompatActivity
 
             String jsonParams = rtpHeader.toString();
 
-            String rtpPayloadString = "Hello world RTP";
+            String rtpPayloadString = "Hello world RTP";//NON-NLS
             byte[] rtpPayload = rtpPayloadString.getBytes();
 
 

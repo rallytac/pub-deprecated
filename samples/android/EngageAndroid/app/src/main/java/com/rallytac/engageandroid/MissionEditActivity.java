@@ -70,7 +70,7 @@ public class MissionEditActivity extends AppCompatActivity
             }
             else
             {
-                ((TextView)convertView.findViewById(R.id.tvGroupName)).setText("(no name)");
+                ((TextView)convertView.findViewById(R.id.tvGroupName)).setText(R.string.no_group_name);
             }
 
             String summary = null;
@@ -96,7 +96,7 @@ public class MissionEditActivity extends AppCompatActivity
 
             if(Utils.isEmptyString(summary))
             {
-                summary = "(invalid)";
+                summary = getString(R.string.invalid_configuration);
             }
 
             if(encrypted)
@@ -143,7 +143,7 @@ public class MissionEditActivity extends AppCompatActivity
         }
         else
         {
-            Toast.makeText(this, "Maximum number of groups reached", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.max_num_groups_reached, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -184,8 +184,8 @@ public class MissionEditActivity extends AppCompatActivity
         final Switch swUnlimitedTx = view.findViewById(R.id.swUnlimitedTx);
 
         dialogBuilder.setCancelable(true)
-                .setTitle("Group")
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+                .setTitle(getString(R.string.title_group))
+                .setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which)
@@ -196,7 +196,7 @@ public class MissionEditActivity extends AppCompatActivity
 
         if(_allowEdit)
         {
-            dialogBuilder.setPositiveButton("Save", new DialogInterface.OnClickListener()
+            dialogBuilder.setPositiveButton(R.string.button_save, new DialogInterface.OnClickListener()
             {
                 @Override
                 public void onClick(DialogInterface dialog, int which)
@@ -335,7 +335,7 @@ public class MissionEditActivity extends AppCompatActivity
         DatabaseGroup group = _mission.getGroupById(id);
         String s;
 
-        s = "Are you sure you want to delete " + group._name + "?";
+        s = String.format(getString(R.string.are_you_sure_delete_group), group._name);
 
         final TextView message = new TextView(this);
         final SpannableString ss = new SpannableString(s);
@@ -345,16 +345,16 @@ public class MissionEditActivity extends AppCompatActivity
         message.setPadding(32, 32, 32, 32);
 
         AlertDialog dlg = new AlertDialog.Builder(this)
-                .setTitle("Delete Group")
+                .setTitle(getString(R.string.title_delete_group))
                 .setCancelable(false)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener()
+                .setPositiveButton(R.string.button_yes, new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i)
                     {
                         deleteGroup(id);
                     }
-                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+                }).setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i)
@@ -467,6 +467,9 @@ public class MissionEditActivity extends AppCompatActivity
             ((TextView)findViewById(R.id.etMcPort)).setText(Integer.toString(_mission._mcPort));
             findViewById(R.id.etMcPort).setEnabled(_allowEdit);
 
+            ((Spinner)findViewById(R.id.spnMcFailoverPolicy)).setSelection(_mission._multicastFailoverPolicy);
+            findViewById(R.id.spnMcFailoverPolicy).setEnabled(_allowEdit);
+
             findViewById(R.id.ivAddGroup).setEnabled(_allowEdit);
         }
     }
@@ -483,6 +486,7 @@ public class MissionEditActivity extends AppCompatActivity
             tmp._useRp = ((Switch) findViewById(R.id.swUseRallypoint)).isChecked();
             tmp._rpAddress = Utils.trimString(((TextView) findViewById(R.id.etRpAddress)).getText().toString());
             tmp._rpPort = Utils.parseIntSafe(Utils.trimString(((TextView) findViewById(R.id.etRpPort)).getText().toString()));
+            tmp._multicastFailoverPolicy = ((Spinner)findViewById(R.id.spnMcFailoverPolicy)).getSelectedItemPosition();
 
             tmp._mcAddress = Utils.trimString(((TextView) findViewById(R.id.etMcAddress)).getText().toString());
             tmp._mcPort = Utils.parseIntSafe(Utils.trimString(((TextView) findViewById(R.id.etMcPort)).getText().toString()));
@@ -522,7 +526,7 @@ public class MissionEditActivity extends AppCompatActivity
 
         if(!Utils.isEmptyString(_mission._modPin))
         {
-            alertDialogBuilder.setNeutralButton("Clear", new DialogInterface.OnClickListener()
+            alertDialogBuilder.setNeutralButton(getString(R.string.button_clear), new DialogInterface.OnClickListener()
             {
                 @Override
                 public void onClick(DialogInterface dialog, int which)
@@ -540,13 +544,13 @@ public class MissionEditActivity extends AppCompatActivity
                     }
                     else
                     {
-                        Toast.makeText(MissionEditActivity.this, "No PIN entered", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MissionEditActivity.this, R.string.no_pin_entered, Toast.LENGTH_SHORT).show();
                     }
                 }
             });
         }
 
-        alertDialogBuilder.setPositiveButton(locking ? "Lock" : "Unlock", new DialogInterface.OnClickListener()
+        alertDialogBuilder.setPositiveButton(locking ? getString(R.string.button_lock) : getString(R.string.button_unlock), new DialogInterface.OnClickListener()
                 {
                     public void onClick(DialogInterface dialog, int id)
                     {
@@ -567,7 +571,7 @@ public class MissionEditActivity extends AppCompatActivity
                                 }
                                 else
                                 {
-                                    Toast.makeText(MissionEditActivity.this, "Invalid PIN", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MissionEditActivity.this, R.string.invalid_pin, Toast.LENGTH_SHORT).show();
                                 }
                             }
 
@@ -576,7 +580,7 @@ public class MissionEditActivity extends AppCompatActivity
                         }
                         else
                         {
-                            Toast.makeText(MissionEditActivity.this, "No PIN entered", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MissionEditActivity.this, R.string.no_pin_entered, Toast.LENGTH_SHORT).show();
                         }
 
                     }

@@ -268,4 +268,9 @@ public class GroupDescriptor implements Parcelable
             this.lastTxStartTime = gd.lastTxStartTime;
         }
     }
+
+    public int getMemberCount()
+    {
+        return Globals.getEngageApplication().getActiveConfiguration().getMissionNodeCount(this.id);
+    }
 }

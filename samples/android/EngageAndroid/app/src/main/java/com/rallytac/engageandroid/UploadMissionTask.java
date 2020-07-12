@@ -18,7 +18,7 @@ import java.net.URL;
 
 public class UploadMissionTask extends AsyncTask<String, Void, String>
 {
-    public static String BUNDLE_RESULT_MSG = "BUNDLE_RESULT_MSG";
+    public static String BUNDLE_RESULT_MSG = "BUNDLE_RESULT_MSG";//NON-NLS
 
     private int _responseCode = -1;
     private String _resultMsg = null;
@@ -45,7 +45,7 @@ public class UploadMissionTask extends AsyncTask<String, Void, String>
             HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
             httpCon.setDoInput(true);
             httpCon.setDoOutput(true);
-            httpCon.setRequestMethod("PUT");
+            httpCon.setRequestMethod("PUT");//NON-NLS
             OutputStreamWriter out = new OutputStreamWriter(httpCon.getOutputStream());
             out.write(content);
             out.close();
@@ -75,7 +75,7 @@ public class UploadMissionTask extends AsyncTask<String, Void, String>
         catch(Exception e)
         {
             _responseCode = -1;
-            _resultMsg = "Exception: " + e.getMessage();
+            _resultMsg = "Exception: " + e.getMessage();//NON-NLS
         }
 
         return _resultMsg;

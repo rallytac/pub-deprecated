@@ -28,10 +28,10 @@ import java.util.Set;
 
 public class ShareHelper {
 
-    private static final String SHARE_TXT_HTML = "text/html";
-    private static final String SHARE_TXT_PLAIN = "text/plain";
+    private static final String SHARE_TXT_HTML = "text/html"; //NON-NLS
+    private static final String SHARE_TXT_PLAIN = "text/plain"; //NON-NLS
 
-    private static final String TWITTER_PACKAGE = "com.twitter.android";
+    private static final String TWITTER_PACKAGE = "com.twitter.android"; //NON-NLS
 
     private ShareHelper() { }
 

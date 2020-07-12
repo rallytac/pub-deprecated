@@ -28,7 +28,7 @@ public class AndroidIntentActionListenerActivity extends AppCompatActivity
 
         if (Intent.ACTION_SEND.equals(action) && type != null)
         {
-            if (type.startsWith("image/"))
+            if (type.startsWith("image/"))//NON-NLS
             {
                 processImageIntent(intent);
             }
@@ -47,19 +47,19 @@ public class AndroidIntentActionListenerActivity extends AppCompatActivity
 
                 if(Utils.isEmptyString(scannedString))
                 {
-                    Toast.makeText(this, "Cannot process QR code", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, R.string.cannot_process_qr_code, Toast.LENGTH_LONG).show();
                     finish();
                 }
 
                 ActiveConfiguration ac = Globals.getEngageApplication().processScannedQrCode(scannedString, null);
 
-                Toast.makeText(this, "Loaded " + ac.getMissionName(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, String.format(getString(R.string.loaded_mission_fmt), ac.getMissionName()), Toast.LENGTH_LONG).show();
                 finish();
             }
         }
         catch(Exception e)
         {
-            Toast.makeText(this, "Cannot process image", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.cannot_process_image, Toast.LENGTH_LONG).show();
         }
     }
 }

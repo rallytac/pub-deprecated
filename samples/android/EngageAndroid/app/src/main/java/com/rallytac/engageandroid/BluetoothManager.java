@@ -34,8 +34,8 @@ public class BluetoothManager
         void onBluetoothDeviceDisconnected();
     }
 
-    private static final UUID BT_UUID_SECURE = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    private static final UUID BT_UUID_NON_SECURE = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private static final UUID BT_UUID_SECURE = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");//NON-NLS
+    private static final UUID BT_UUID_NON_SECURE = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");//NON-NLS
 
     private Context _ctx;
     private String _desiredDeviceAddress = null;
@@ -71,23 +71,23 @@ public class BluetoothManager
                 {
                     if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action))
                     {
-                        Log.d(TAG, "BT connected for the device we desire");
+                        Log.d(TAG, "BT connected for the device we desire");//NON-NLS
                         connectToBluetoothDevice(device);
                     }
                     else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action))
                     {
-                        Log.d(TAG, "BT disconnected for the device we desire");
+                        Log.d(TAG, "BT disconnected for the device we desire");//NON-NLS
                         disconnectFromBluetoothDevice();
                     }
                 }
                 else
                 {
-                    Log.d(TAG, "BT connected but not the device we want");
+                    Log.d(TAG, "BT connected but not the device we want");//NON-NLS
                 }
             }
             else
             {
-                Log.d(TAG, "BT connected but no device provided");
+                Log.d(TAG, "BT connected but no device provided");//NON-NLS
             }
         }
     }
@@ -149,7 +149,7 @@ public class BluetoothManager
         _bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if(_bluetoothAdapter == null)
         {
-            Log.e(TAG, "---------------------------BT: device does not support bluetooth");
+            Log.e(TAG, "---------------------------BT: device does not support bluetooth");//NON-NLS
             return;
         }
 
@@ -169,12 +169,12 @@ public class BluetoothManager
             {
                 if (profile == BluetoothProfile.HEADSET)
                 {
-                    Log.d(TAG, "---------------------------BT: onServiceConnected : HEADSET");
+                    Log.d(TAG, "---------------------------BT: onServiceConnected : HEADSET");//NON-NLS
                     _bluetoothHeadset = (BluetoothHeadset) proxy;
                 }
                 else
                 {
-                    Log.e(TAG, "---------------------------BT: onServiceConnected : OTHER");
+                    Log.e(TAG, "---------------------------BT: onServiceConnected : OTHER");//NON-NLS
                 }
             }
 
@@ -182,12 +182,12 @@ public class BluetoothManager
             {
                 if (profile == BluetoothProfile.HEADSET)
                 {
-                    Log.d(TAG, "---------------------------BT: onServiceDisconnected : HEADSET");
+                    Log.d(TAG, "---------------------------BT: onServiceDisconnected : HEADSET");//NON-NLS
                     _bluetoothHeadset = null;
                 }
                 else
                 {
-                    Log.e(TAG, "---------------------------BT: onServiceDisconnected : OTHER");
+                    Log.e(TAG, "---------------------------BT: onServiceDisconnected : OTHER");//NON-NLS
                 }
             }
         };
@@ -234,7 +234,7 @@ public class BluetoothManager
         }
         else
         {
-            Log.e(TAG, "enableBluetoothRecording: failed to acquire audio manager");
+            Log.e(TAG, "enableBluetoothRecording: failed to acquire audio manager");//NON-NLS
         }
     }
 
@@ -250,7 +250,7 @@ public class BluetoothManager
         }
         else
         {
-            Log.e(TAG, "disableBluetoothRecording: failed to acquire audio manager");
+            Log.e(TAG, "disableBluetoothRecording: failed to acquire audio manager");//NON-NLS
         }
     }
 
@@ -351,7 +351,7 @@ public class BluetoothManager
             {
                 try
                 {
-                    Log.d(TAG, "connecting to " + mmDevice.toString());
+                    Log.d(TAG, "connecting to " + mmDevice.toString());//NON-NLS
                     mmSocket = mmDevice.createRfcommSocketToServiceRecord(BT_UUID_SECURE);
                     mmSocket.connect();
                     is = mmSocket.getInputStream();
@@ -367,7 +367,7 @@ public class BluetoothManager
                     }
                     catch (IOException closeException)
                     {
-                        Log.e(TAG, "could not close the client socket", closeException);
+                        Log.e(TAG, "could not close the client socket", closeException);//NON-NLS
                         closeException.printStackTrace();
                     }
 
@@ -387,7 +387,7 @@ public class BluetoothManager
                     break;
                 }
 
-                Log.d(TAG, "connected to " + mmDevice.toString());
+                Log.d(TAG, "connected to " + mmDevice.toString());//NON-NLS
                 enableBluetoothRecording(_ctx);
                 _notificationSink.onBluetoothDeviceConnected();
 
@@ -402,7 +402,7 @@ public class BluetoothManager
                             {
                                 buffer[bytesRead] = 0;
                                 String s = new String(buffer, 0, bytesRead, StandardCharsets.UTF_8);
-                                Log.d(TAG, "read " + bytesRead + " bytes [" + s + "]");
+                                Log.d(TAG, "read " + bytesRead + " bytes [" + s + "]");//NON-NLS//NON-NLS
 
                                 if(s.compareTo(_pttOnString) == 0)
                                 {
@@ -422,7 +422,7 @@ public class BluetoothManager
                     }
                 }
 
-                Log.d(TAG, "disconnected from " + mmDevice.toString());
+                Log.d(TAG, "disconnected from " + mmDevice.toString());//NON-NLS
                 _notificationSink.onBluetoothDeviceDisconnected();
                 disableBluetoothRecording(_ctx);
             }

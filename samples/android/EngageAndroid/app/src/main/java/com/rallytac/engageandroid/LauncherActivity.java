@@ -118,27 +118,27 @@ public class LauncherActivity extends AppCompatActivity
                     throw new Exception("Corrupted flavor default " + s);
                 }
 
-                if (type.compareToIgnoreCase("string") == 0)
+                if (type.compareToIgnoreCase("string") == 0)//NON-NLS
                 {
                     ed.putString(nm, elems[2].trim());
                 }
-                else if (type.compareToIgnoreCase("boolean") == 0)
+                else if (type.compareToIgnoreCase("boolean") == 0)//NON-NLS
                 {
                     ed.putBoolean(nm, Boolean.parseBoolean(elems[2].trim()));
                 }
-                else if (type.compareToIgnoreCase("integer") == 0)
+                else if (type.compareToIgnoreCase("integer") == 0)//NON-NLS
                 {
                     // TODO: This should be an INT!!!!!!
                     ed.putString(nm, elems[2].trim());
                 }
-                else if (type.compareToIgnoreCase("float") == 0)
+                else if (type.compareToIgnoreCase("float") == 0)//NON-NLS
                 {
                     // TODO: This should be a float!!!
                     ed.putString(nm, elems[2].trim());
                 }
                 else
                 {
-                    throw new Exception("Corrupted flavor default " + s);
+                    throw new Exception("Corrupted flavor default " + s);//NON-NLS
                 }
             }
 
@@ -253,7 +253,7 @@ public class LauncherActivity extends AppCompatActivity
         {
             if (!Settings.canDrawOverlays(this))
             {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));//NON-NLS
                 startActivityForResult(intent, ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE);
             }
             else
@@ -336,7 +336,7 @@ public class LauncherActivity extends AppCompatActivity
             // Only do this if we even have the permission in the manifest
             if (Utils.isManifestPermissionPresent(Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS))
             {
-                @SuppressLint("MissingPermission")
+                @SuppressLint("MissingPermission")//NON-NLS
                 Intent intent = prepareIntentForWhiteListingOfBatteryOptimization(getApplication(), getPackageName(), false);
                 if (intent != null)
                 {
@@ -371,7 +371,7 @@ public class LauncherActivity extends AppCompatActivity
             }
             else
             {
-                Log.e(TAG, "This device is not supported.");
+                Log.e(TAG, "This device is not supported.");//NON-NLS
                 showIssueAndFinish(getString(R.string.title_google_play_services_error), getString(R.string.google_play_services_not_installed_or_out_of_date));
             }
 
@@ -539,7 +539,7 @@ public class LauncherActivity extends AppCompatActivity
 
     private void launchUiActivity()
     {
-        String launchActivityName = Utils.getMetaData("Launcher.LAUNCH_ACTIVITY");
+        String launchActivityName = Utils.getMetaData("Launcher.LAUNCH_ACTIVITY");//NON-NLS
         if(!Utils.isEmptyString(launchActivityName))
         {
             try
@@ -550,12 +550,12 @@ public class LauncherActivity extends AppCompatActivity
             }
             catch (Exception e)
             {
-                showIssueAndFinish(getString(R.string.title_ui_launch_error), "Cannot launch the UI named : '" + launchActivityName + "'.\n\nPlease check your Android manifest.");
+                showIssueAndFinish(getString(R.string.title_ui_launch_error), "Cannot launch the UI named : '" + launchActivityName + "'.\n\nPlease check your Android manifest.");//NON-NLS
             }
         }
         else
         {
-            showIssueAndFinish(getString(R.string.title_ui_launch_error), "No launch UI named.\n\nPlease check your Android manifest.");
+            showIssueAndFinish(getString(R.string.title_ui_launch_error), "No launch UI named.\n\nPlease check your Android manifest.");//NON-NLS
         }
     }
 
@@ -563,12 +563,12 @@ public class LauncherActivity extends AppCompatActivity
     {
         if(Globals.getEngageApplication().isEngineRunning())
         {
-            Log.i(TAG, "engine is already running - ui was likely relaunched");
+            Log.i(TAG, "engine is already running - ui was likely relaunched");//NON-NLS
             launchUiActivity();
             return;
         }
 
-        Log.i(TAG, "engaging ...");
+        Log.i(TAG, "engaging ...");//NON-NLS
 
         long tmrDelay;
         long tmrPeriod;
@@ -605,7 +605,7 @@ public class LauncherActivity extends AppCompatActivity
                         showIssueAndFinish(getString(R.string.title_startup_error), getString(R.string.startup_cannot_connect_to_engine));
                     }
 
-                    Log.i(TAG, "waiting for engage service to come online");
+                    Log.i(TAG, "waiting for engage service to come online");//NON-NLS
                 }
             }
         }, tmrDelay, tmrPeriod);

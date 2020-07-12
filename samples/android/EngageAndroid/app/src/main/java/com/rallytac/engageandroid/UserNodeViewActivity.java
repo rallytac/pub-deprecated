@@ -26,7 +26,7 @@ public class UserNodeViewActivity extends
 {
     private static String TAG = UserNodeViewActivity.class.getSimpleName();
 
-    public static String EXTRA_NODE_ID = "$NODEID";
+    public static String EXTRA_NODE_ID = "$NODEID";//NON-NLS
 
     private EngageApplication _app;
     private String _nodeId = null;
@@ -54,7 +54,7 @@ public class UserNodeViewActivity extends
 
         if(Utils.isEmptyString(_nodeId))
         {
-            Toast.makeText(this, "No node ID provided for this activity", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "No node ID provided for this activity", Toast.LENGTH_LONG).show();//NON-NLS
             finish();
         }
 
@@ -135,7 +135,7 @@ public class UserNodeViewActivity extends
         PresenceDescriptor pd = _app.getActiveConfiguration().getPresenceDescriptor(_nodeId);
         if(pd == null)
         {
-            Toast.makeText(this, "Could not find the node!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Could not find the node!", Toast.LENGTH_LONG).show();//NON-NLS
             finish();
         }
 
@@ -158,7 +158,7 @@ public class UserNodeViewActivity extends
                 }
                 else
                 {
-                    ((TextView)findViewById(R.id.tvDisplayName)).setText("(do display name)");
+                    ((TextView)findViewById(R.id.tvDisplayName)).setText(R.string.placeholder);
                 }
 
                 if(!Utils.isEmptyString(pd.userId))
@@ -167,7 +167,7 @@ public class UserNodeViewActivity extends
                 }
                 else
                 {
-                    ((TextView)findViewById(R.id.tvUserId)).setText("(do user ID)");
+                    ((TextView)findViewById(R.id.tvUserId)).setText(R.string.placeholder);
                 }
 
                 iv = findViewById(R.id.ivConnectivity);

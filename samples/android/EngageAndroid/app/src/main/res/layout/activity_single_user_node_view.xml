@@ -23,7 +23,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="8dp"
-                android:text="tvDisplayName"
+                android:text="@string/placeholder"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -38,7 +38,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="8dp"
-                android:text="tvUserId"
+                android:text="@string/placeholder"
                 app:layout_constraintEnd_toStartOf="@+id/ivConnectivity"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvDisplayName" />
@@ -85,70 +85,56 @@
                 android:layout_width="match_parent"
                 android:layout_height="160dp"
                 android:layout_marginStart="0dp"
-                android:layout_marginLeft="0dp"
                 android:layout_marginTop="0dp"
-                android:layout_marginEnd="0dp"
-                android:layout_marginRight="0dp" />
+                android:layout_marginEnd="0dp" />
 
             <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/chartSkinTemp"
                 android:layout_width="match_parent"
                 android:layout_height="160dp"
                 android:layout_marginStart="0dp"
-                android:layout_marginLeft="0dp"
                 android:layout_marginTop="0dp"
-                android:layout_marginEnd="0dp"
-                android:layout_marginRight="0dp" />
+                android:layout_marginEnd="0dp" />
 
             <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/chartCoreTemp"
                 android:layout_width="match_parent"
                 android:layout_height="160dp"
                 android:layout_marginStart="0dp"
-                android:layout_marginLeft="0dp"
                 android:layout_marginTop="0dp"
-                android:layout_marginEnd="0dp"
-                android:layout_marginRight="0dp" />
+                android:layout_marginEnd="0dp" />
 
             <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/chartBloodOxygenation"
                 android:layout_width="match_parent"
                 android:layout_height="160dp"
                 android:layout_marginStart="0dp"
-                android:layout_marginLeft="0dp"
                 android:layout_marginTop="0dp"
-                android:layout_marginEnd="0dp"
-                android:layout_marginRight="0dp" />
+                android:layout_marginEnd="0dp" />
 
             <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/chartHydration"
                 android:layout_width="match_parent"
                 android:layout_height="160dp"
                 android:layout_marginStart="0dp"
-                android:layout_marginLeft="0dp"
                 android:layout_marginTop="0dp"
-                android:layout_marginEnd="0dp"
-                android:layout_marginRight="0dp" />
+                android:layout_marginEnd="0dp" />
 
             <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/chartFatigueLevel"
                 android:layout_width="match_parent"
                 android:layout_height="160dp"
                 android:layout_marginStart="0dp"
-                android:layout_marginLeft="0dp"
                 android:layout_marginTop="0dp"
-                android:layout_marginEnd="0dp"
-                android:layout_marginRight="0dp" />
+                android:layout_marginEnd="0dp" />
 
             <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/chartTaskEffectiveness"
                 android:layout_width="match_parent"
                 android:layout_height="160dp"
                 android:layout_marginStart="0dp"
-                android:layout_marginLeft="0dp"
                 android:layout_marginTop="0dp"
-                android:layout_marginEnd="0dp"
-                android:layout_marginRight="0dp" />
+                android:layout_marginEnd="0dp" />
         </LinearLayout>
 
     </ScrollView>

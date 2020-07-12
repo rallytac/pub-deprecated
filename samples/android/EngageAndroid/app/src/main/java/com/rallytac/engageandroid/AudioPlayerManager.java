@@ -83,7 +83,7 @@ public class AudioPlayerManager
 
     private void playResource(final int id, float leftVolume, float rightVolume, final IPlayCompleteListener pcl, final Object tag, final Runnable onPlayComplete) throws Exception
     {
-        Log.d(TAG, "play starting id=" + id + ", left=" + leftVolume + ", right=" + rightVolume);
+        Log.d(TAG, "play starting id=" + id + ", left=" + leftVolume + ", right=" + rightVolume);//NON-NLS
 
         final MediaPlayer p = getPlayer(id);
         if(p != null)
@@ -95,7 +95,7 @@ public class AudioPlayerManager
                 @Override
                 public void onCompletion(MediaPlayer mp)
                 {
-                    Log.d(TAG, "play complete id=" + id);
+                    Log.d(TAG, "play complete id=" + id);//NON-NLS
                     p.reset();
                     p.release();
 
@@ -115,7 +115,7 @@ public class AudioPlayerManager
         }
         else
         {
-            Log.e(TAG, "cannot obtain a media player for resource " + id);
+            Log.e(TAG, "cannot obtain a media player for resource " + id);//NON-NLS
             throw new Exception("cannot obtain a media player for resource " + id);
         }
     }

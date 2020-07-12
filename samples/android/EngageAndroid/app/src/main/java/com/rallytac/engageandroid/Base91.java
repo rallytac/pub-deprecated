@@ -41,7 +41,7 @@ class Base91
     private static final float AVERAGE_ENCODING_RATIO = 1.2297f;
 
     static {
-        String ts = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~\"";
+        String ts = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~\""; //NON-NLS
         ENCODING_TABLE = ts.getBytes();
         BASE = ENCODING_TABLE.length;
 

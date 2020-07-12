@@ -76,7 +76,7 @@ public class CertStoreListActivity extends AppCompatActivity
                 }
                 else
                 {
-                    _cachedDisplayName = "(no name)";
+                    _cachedDisplayName = Globals.getEngageApplication().getString(R.string.no_certstore_name);
                 }
             }
 
@@ -89,20 +89,20 @@ public class CertStoreListActivity extends AppCompatActivity
             {
                 StringBuilder sb = new StringBuilder();
 
-                sb.append("V");
+                sb.append("V");//NON-NLS
                 sb.append(_descriptor.optInt(Engine.JsonFields.CertStoreDescriptor.version, 0));
-                sb.append(", ");
+                sb.append(", ");//NON-NLS
 
                 JSONArray certificates = _descriptor.optJSONArray(Engine.JsonFields.CertStoreDescriptor.certificates);
                 sb.append(certificates.length());
-                sb.append(" certificates");
+                sb.append(" certificates");//NON-NLS
 
-                sb.append("\nhash [");
+                sb.append("\nhash [");//NON-NLS
                 StringBuilder hashInput = new StringBuilder();
                 hashInput.append(_descriptor.optInt(Engine.JsonFields.CertStoreDescriptor.version, 0));
                 hashInput.append(certificates.toString());
                 sb.append(Utils.md5HashOfString(hashInput.toString()));
-                sb.append("]");
+                sb.append("]");//NON-NLS
 
                 _cachedDescription = sb.toString();
             }
@@ -230,7 +230,7 @@ public class CertStoreListActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent)
     {
-        Log.d(TAG, "onActivityResult");
+        Log.d(TAG, "onActivityResult");//NON-NLS
 
         if(resultCode == RESULT_OK)
         {
@@ -274,7 +274,7 @@ public class CertStoreListActivity extends AppCompatActivity
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             intent.setType("*/*");
             intent.addCategory(Intent.CATEGORY_OPENABLE);
-            startActivityForResult(Intent.createChooser(intent, "Select a File"), PICK_CERTSTORE_FILE_REQUEST_CODE);
+            startActivityForResult(Intent.createChooser(intent, getString(R.string.select_a_file)), PICK_CERTSTORE_FILE_REQUEST_CODE);
         }
         catch (Exception e)
         {
@@ -299,7 +299,7 @@ public class CertStoreListActivity extends AppCompatActivity
 
             importedFileName = "{" + UUID.randomUUID().toString() + "}-" + displayName;
 
-            File fo = File.createTempFile("import-", "-import", getCacheDir());
+            File fo = File.createTempFile("import-", "-import", getCacheDir());//NON-NLS
             String fn = fo.getAbsolutePath();
             fo.deleteOnExit();
             BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(fo));
@@ -338,7 +338,7 @@ public class CertStoreListActivity extends AppCompatActivity
             String descriptorText = Globals.getEngageApplication().getEngine().engageQueryCertStoreContents(fn, "");
             if(Utils.isEmptyString(descriptorText))
             {
-                Utils.showLongPopupMsg(this, "Invalid certificate store - cannot obtain the descriptor");
+                Utils.showLongPopupMsg(this, getString(R.string.invalid_cert_store_cannot_obtain_descriptor));
                 throw new Exception("");
             }
 
@@ -354,14 +354,14 @@ public class CertStoreListActivity extends AppCompatActivity
             }
             catch (Exception e)
             {
-                Utils.showLongPopupMsg(this, "Invalid certificate store - cannot decode the descriptor");
+                Utils.showLongPopupMsg(this, getString(R.string.invalid_cert_store_cannot_decode_descriptor));
                 throw e;
             }
 
             int version = descriptor.optInt(Engine.JsonFields.CertStoreDescriptor.version, 0);
             if(version <= 0)
             {
-                Utils.showLongPopupMsg(this, "Invalid certificate store - unknown version " + version);
+                Utils.showLongPopupMsg(this, getString(R.string.invalid_cert_store_cannot_invalid_version) + version);
                 throw new Exception("");
             }
 
@@ -381,14 +381,14 @@ public class CertStoreListActivity extends AppCompatActivity
             }
             catch (Exception e)
             {
-                Utils.showLongPopupMsg(this, "Invalid certificate store - no certificates found");
+                Utils.showLongPopupMsg(this, getString(R.string.invalid_cert_store_cannot_no_certificates_found));
                 throw e;
             }
 
             try
             {
                 // Copy the file into our cache
-                String path = Globals.getEngageApplication().getCertStoreCacheDir() + "/" + importedFileName;
+                String path = Globals.getEngageApplication().getCertStoreCacheDir() + "/" + importedFileName;//NON-NLS
                 File fo = new File(path);
                 fo.createNewFile();
                 BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(fo));
@@ -413,7 +413,7 @@ public class CertStoreListActivity extends AppCompatActivity
             }
             catch (Exception e)
             {
-                Utils.showLongPopupMsg(this, "I/O error encountered while importing");
+                Utils.showLongPopupMsg(this, getString(R.string.io_error_while_importing));
                 throw e;
             }
         }
@@ -433,7 +433,7 @@ public class CertStoreListActivity extends AppCompatActivity
             rc._descriptor = Globals.getEngageApplication().getCertificateStoreDescriptorForFile(fn);
             if(rc._descriptor == null)
             {
-                throw new Exception("Cannot get certificate store descriptor");
+                throw new Exception("Cannot get certificate store descriptor");//NON-NLS
             }
         }
         catch (Exception e)
@@ -470,11 +470,11 @@ public class CertStoreListActivity extends AppCompatActivity
 
         if(isActive)
         {
-            s = "This certificate store is currently in use.  If you delete it, the application will use the default certificate store until you select another.\n\nProceed?";
+            s = getString(R.string.cert_store_in_use_proceed_with_delete_will_use_default);
         }
         else
         {
-            s = "Are you sure you want to delete this certificate store?";
+            s = getString(R.string.are_you_sure_delete_cert_store);
         }
 
         final TextView message = new TextView(this);
@@ -485,9 +485,9 @@ public class CertStoreListActivity extends AppCompatActivity
         message.setPadding(32, 32, 32, 32);
 
         AlertDialog dlg = new AlertDialog.Builder(this)
-                .setTitle("Delete Certificate Store")
+                .setTitle(getString(R.string.delete_cert_store))
                 .setCancelable(false)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener()
+                .setPositiveButton(R.string.button_yes, new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i)
@@ -517,7 +517,7 @@ public class CertStoreListActivity extends AppCompatActivity
                             }
                         }
                     }
-                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+                }).setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i)

@@ -53,7 +53,7 @@ public class MapActivity extends
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
-            String googleMapsApiKey = Utils.getMetaData("com.google.android.geo.API_KEY");
+            String googleMapsApiKey = Utils.getMetaData("com.google.android.geo.API_KEY");//NON-NLS
             if(!Utils.isEmptyString(googleMapsApiKey))
             {
                 try
@@ -258,7 +258,7 @@ public class MapActivity extends
             return;
         }
 
-        ArrayList<PresenceDescriptor> nodes = _app.getActiveConfiguration().getMissionNodes();
+        ArrayList<PresenceDescriptor> nodes = _app.getActiveConfiguration().getMissionNodes(null);
 
         if(nodes != null)
         {

@@ -17,8 +17,8 @@ import java.net.URL;
 
 public class DownloadMissionTask extends AsyncTask<String, Void, String>
 {
-    public static String BUNDLE_RESULT_MSG = "BUNDLE_RESULT_MSG";
-    public static String BUNDLE_RESULT_DATA = "BUNDLE_RESULT_DATA";
+    public static String BUNDLE_RESULT_MSG = "BUNDLE_RESULT_MSG";//NON-NLS
+    public static String BUNDLE_RESULT_DATA = "BUNDLE_RESULT_DATA";//NON-NLS
 
     private int _responseCode = -1;
     private String _resultMsg = null;
@@ -42,7 +42,7 @@ public class DownloadMissionTask extends AsyncTask<String, Void, String>
 
             HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
             httpCon.setDoInput(true);
-            httpCon.setRequestMethod("GET");
+            httpCon.setRequestMethod("GET");//NON-NLS
             httpCon.connect();
 
             _responseCode = httpCon.getResponseCode();
@@ -66,13 +66,13 @@ public class DownloadMissionTask extends AsyncTask<String, Void, String>
             catch (Exception e)
             {
                 _responseCode = -1;
-                _resultMsg = "Exception: " + e.getMessage();
+                _resultMsg = "Exception: " + e.getMessage();//NON-NLS
             }
         }
         catch(Exception e)
         {
             _responseCode = -1;
-            _resultMsg = "Exception: " + e.getMessage();
+            _resultMsg = "Exception: " + e.getMessage();//NON-NLS
         }
 
         return _resultMsg;

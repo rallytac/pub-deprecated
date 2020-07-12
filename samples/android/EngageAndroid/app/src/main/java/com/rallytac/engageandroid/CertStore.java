@@ -31,7 +31,7 @@ public class CertStore
             }
             else
             {
-                _cachedDisplayName = "(no name)";
+                _cachedDisplayName = Globals.getEngageApplication().getString(R.string.no_certstore_name);
             }
         }
 
@@ -44,20 +44,20 @@ public class CertStore
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("V");
+            sb.append("V");//NON-NLS
             sb.append(_descriptor.optInt(Engine.JsonFields.CertStoreDescriptor.version, 0));
-            sb.append(", ");
+            sb.append(", ");//NON-NLS
 
             JSONArray certificates = _descriptor.optJSONArray(Engine.JsonFields.CertStoreDescriptor.certificates);
             sb.append(certificates.length());
-            sb.append(" certificates");
+            sb.append(" certificates");//NON-NLS
 
-            sb.append("\nhash [");
+            sb.append("\nhash [");//NON-NLS
             StringBuilder hashInput = new StringBuilder();
             hashInput.append(_descriptor.optInt(Engine.JsonFields.CertStoreDescriptor.version, 0));
             hashInput.append(certificates.toString());
             sb.append(Utils.md5HashOfString(hashInput.toString()));
-            sb.append("]");
+            sb.append("]");//NON-NLS
 
             _cachedDescription = sb.toString();
         }

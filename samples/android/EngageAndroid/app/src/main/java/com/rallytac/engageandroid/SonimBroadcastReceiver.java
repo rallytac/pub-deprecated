@@ -15,8 +15,8 @@ public class SonimBroadcastReceiver extends BroadcastReceiver
 {
     private static String TAG = SonimBroadcastReceiver.class.getSimpleName();
 
-    private String ACTION_PTT_DOWN_SONIM = "com.sonim.intent.action.PTT_KEY_DOWN";
-    private String ACTION_PTT_UP_SONIM = "com.sonim.intent.action.PTT_KEY_UP";
+    private String ACTION_PTT_DOWN_SONIM = "com.sonim.intent.action.PTT_KEY_DOWN";//NON-NLS
+    private String ACTION_PTT_UP_SONIM = "com.sonim.intent.action.PTT_KEY_UP";//NON-NLS
 
     private Context _ctx;
     private IPushToTalkRequestHandler _pttRequestHandler;
@@ -54,7 +54,7 @@ public class SonimBroadcastReceiver extends BroadcastReceiver
             return;
         }
 
-        Log.d(TAG, "onReceive: (" + action + "): " + intent.toString());
+        Log.d(TAG, "onReceive: (" + action + "): " + intent.toString());//NON-NLS
 
         if(action.equals(ACTION_PTT_DOWN_SONIM))
         {
@@ -67,7 +67,7 @@ public class SonimBroadcastReceiver extends BroadcastReceiver
         }
         else
         {
-            Log.e(TAG, "Unhandled notification: (" + action + "): " + intent.toString());
+            Log.e(TAG, "Unhandled notification: (" + action + "): " + intent.toString());//NON-NLS
         }
     }
 }

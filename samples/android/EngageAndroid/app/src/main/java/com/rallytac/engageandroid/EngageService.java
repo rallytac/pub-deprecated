@@ -59,18 +59,18 @@ public class EngageService extends Service
             // Ignore any intents if we're not initialized
             if(!_initialized)
             {
-                Log.w(TAG, "ignoring intent - not initialized");
+                Log.w(TAG, "ignoring intent - not initialized");//NON-NLS
                 return;
             }
 
             String action = intent.getAction();
             if(action == null || action.isEmpty())
             {
-                Log.e(TAG, "received empty action!");
+                Log.e(TAG, "received empty action!");//NON-NLS
                 return;
             }
 
-            Log.d(TAG, "received intent [" + action + "]");
+            Log.d(TAG, "received intent [" + action + "]");//NON-NLS
 
             // TODO: handle intent actions
 
@@ -123,7 +123,7 @@ public class EngageService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
     {
-        Log.i(TAG, "=====================onStartCommand: intent=" + ((intent != null) ? intent.toString() : "null") + ", flags=" + flags + ", startId=" + startId);
+        Log.i(TAG, "=====================onStartCommand: intent=" + ((intent != null) ? intent.toString() : "null") + ", flags=" + flags + ", startId=" + startId);//NON-NLS
         super.onStartCommand(intent, flags, startId);
 
         showOsNotification(getString(R.string.app_name), String.format(getString(R.string.android_notification_service_is_running),getString(R.string.app_name)), R.drawable.ic_app_logo);
@@ -134,7 +134,7 @@ public class EngageService extends Service
     @Override
     public void onCreate()
     {
-        Log.d(TAG, "onCreate");
+        Log.d(TAG, "onCreate");//NON-NLS
         super.onCreate();
 
         initializeOsNotifications();
@@ -144,7 +144,7 @@ public class EngageService extends Service
     @Override
     public void onDestroy()
     {
-        Log.d(TAG, "onDestroy");
+        Log.d(TAG, "onDestroy");//NON-NLS
         super.onDestroy();
 
         deinitializeService();
@@ -155,7 +155,7 @@ public class EngageService extends Service
     {
         if(_initialized)
         {
-            Log.w(TAG, "attempt to initialize when already initialized");
+            Log.w(TAG, "attempt to initialize when already initialized");//NON-NLS
             return;
         }
 

@@ -31,8 +31,8 @@ public class ContactActivity extends AppCompatActivity
         }
 
         convertViewToLink(R.id.tvWebsite, null);
-        convertViewToLink(R.id.tvSupport, "mailto:");
-        convertViewToLink(R.id.tvSales, "mailto:");
+        convertViewToLink(R.id.tvSupport, "mailto:");//NON-NLS
+        convertViewToLink(R.id.tvSales, "mailto:");//NON-NLS
     }
 
     private void convertViewToLink(int id, String hrefAction)
@@ -54,7 +54,7 @@ public class ContactActivity extends AppCompatActivity
             url = s;
         }
 
-        spanned = Html.fromHtml("<a href='" + url + "'>" + s + "</a>");
+        spanned = Html.fromHtml("<a href='" + url + "'>" + s + "</a>");//NON-NLS
         tv.setText(spanned);
         tv.setMovementMethod(LinkMovementMethod.getInstance());
     }

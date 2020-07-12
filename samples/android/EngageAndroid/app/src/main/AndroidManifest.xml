@@ -21,10 +21,9 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-
-    <uses-permission android:name="android.permission.BATTERY_STATS"
+    <uses-permission
+        android:name="android.permission.BATTERY_STATS"
         tools:ignore="ProtectedPermissions" />
-
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
@@ -36,6 +35,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning">
+        <activity android:name=".JsonEditorActivity"></activity>
 
         <meta-data
             android:name="Launcher.LAUNCH_ACTIVITY"
@@ -51,9 +51,7 @@
         <activity android:name=".ContactActivity" />
         <activity android:name=".OfflineActivationActivity" />
         <activity android:name=".OfflineDeactivationActivity" />
-        <activity android:name=".CertificateManagerActivity"/>
-
-        <!-- Sharing out -->
+        <activity android:name=".CertificateManagerActivity" /> <!-- Sharing out -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="@string/file_content_provider"
@@ -62,21 +60,17 @@
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
-        </provider>
-
-        <!-- Sharing in -->
+        </provider> <!-- Sharing in -->
         <activity android:name=".AndroidIntentActionListenerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="image/*" />
             </intent-filter>
-        </activity>
-
-        <!-- NOTE: An empty stub - check the note in the meta-data above! -->
-        <activity android:name=".MainActivity" />
-
-        <!-- Sonim buttons -->
+        </activity> <!-- NOTE: An empty stub - check the note in the meta-data above! -->
+        <activity android:name=".MainActivity" /> <!-- Sonim buttons -->
         <meta-data
             android:name="app_key_ptt_data"
             android:value="62b393bf90ef462f39c0edf9fadb4e9348ccbdf888e9e0ab295fc07c99920e0f85048b899931e644cbfe74654151a6f7" />
@@ -86,14 +80,13 @@
         <service
             android:name=".EngageService"
             android:enabled="true"
-            android:exported="false" />
-
-        <!-- The first activity that is run upon startup -->
+            android:exported="false" /> <!-- The first activity that is run upon startup -->
         <activity
             android:name=".LauncherActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -106,10 +99,9 @@
         <activity
             android:name=".MissionListActivity"
             android:label="@string/title_activity_missions" />
-
-        <activity android:name=".CertStoreListActivity"
-                  android:label="@string/title_activity_certstores"/>
-
+        <activity
+            android:name=".CertStoreListActivity"
+            android:label="@string/title_activity_certstores" />
         <activity
             android:name=".OrientationIndependentQrCodeScanActivity"
             android:screenOrientation="fullSensor"
@@ -122,12 +114,12 @@
         <activity android:name=".ShareMissionActivity">
             <intent-filter>
                 <action android:name="@string/share_mission_activity_action" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
         <activity android:name=".AboutActivity" />
         <activity android:name=".DeveloperTestActivity" />
-
         <activity
             android:name=".SimpleUiMainActivity"
             android:launchMode="singleInstance"

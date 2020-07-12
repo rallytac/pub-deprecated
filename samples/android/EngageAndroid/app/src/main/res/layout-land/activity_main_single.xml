@@ -38,15 +38,16 @@
         android:id="@+id/card1"
         android:name="com.rallytac.engageandroid.LargeCardFragment"
         android:layout_width="0dp"
-        android:layout_height="200dp"
+        android:layout_height="0dp"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/tvLicensingBar"
+        app:layout_constraintEnd_toStartOf="@+id/ivPtt"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/ivTeam"
         app:layout_constraintVertical_bias="0.0" />
 
-    <!--
     <fragment
         android:id="@+id/textMessaging"
         android:name="com.rallytac.engageandroid.TextMessagingFragment"
@@ -59,7 +60,6 @@
         app:layout_constraintTop_toBottomOf="@+id/card1"
         app:layout_constraintBottom_toTopOf="@+id/tvLicensingBar"
         app:layout_constraintVertical_bias="0.0" />
-    -->
 
     <!--
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
@@ -165,11 +165,10 @@
         android:layout_width="160dp"
         android:layout_height="100dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
         android:scaleType="fitXY"
-        app:layout_constraintBottom_toTopOf="@+id/tvLicensingBar"
+        app:layout_constraintBottom_toBottomOf="@+id/card1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/card1"
         app:srcCompat="@drawable/ic_ptt_idle" />
 
     <ImageView

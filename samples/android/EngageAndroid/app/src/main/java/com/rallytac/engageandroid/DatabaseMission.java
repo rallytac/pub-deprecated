@@ -20,11 +20,13 @@ public class DatabaseMission
     public boolean _useRp;
     public String _rpAddress;
     public int _rpPort;
+    public int _multicastFailoverPolicy;
 
     public String _mcId;
     public String _mcAddress;
     public int _mcPort;
     public String _mcCryptoPassword;
+
 
     public ArrayList<DatabaseGroup> _groups = new ArrayList<>();
 
@@ -88,18 +90,20 @@ public class DatabaseMission
         try
         {
             root = new JSONObject();
-            root.put("_id", Utils.trimString(_id));
-            root.put("_modPin", Utils.trimString(_modPin));
-            root.put("_name", Utils.trimString(_name));
-            root.put("_description", Utils.trimString(_description));
-            root.put("_useRp", _useRp);
-            root.put("_rpAddress", Utils.trimString(_rpAddress));
-            root.put("_rpPort", _rpPort);
+            root.put("_id", Utils.trimString(_id));//NON-NLS
+            root.put("_modPin", Utils.trimString(_modPin));//NON-NLS
+            root.put("_name", Utils.trimString(_name));//NON-NLS
+            root.put("_description", Utils.trimString(_description));//NON-NLS
+            root.put("_useRp", _useRp);//NON-NLS
+            root.put("_rpAddress", Utils.trimString(_rpAddress));//NON-NLS
+            root.put("_rpPort", _rpPort);//NON-NLS
 
-            root.put("_mcId", Utils.trimString(_mcId));
-            root.put("_mcAddress", Utils.trimString(_mcAddress));
-            root.put("_mcPort", _mcPort);
-            root.put("_mcCryptoPassword", Utils.trimString(_mcCryptoPassword));
+            root.put("multicastFailoverPolicy", _multicastFailoverPolicy);//NON-NLS
+
+            root.put("_mcId", Utils.trimString(_mcId));//NON-NLS
+            root.put("_mcAddress", Utils.trimString(_mcAddress));//NON-NLS
+            root.put("_mcPort", _mcPort);//NON-NLS
+            root.put("_mcCryptoPassword", Utils.trimString(_mcCryptoPassword));//NON-NLS
 
             JSONArray groups = new JSONArray();
             for(DatabaseGroup group : _groups)
@@ -107,7 +111,7 @@ public class DatabaseMission
                 groups.put(group.toJson());
             }
 
-            root.put("groups", groups);
+            root.put("groups", groups);//NON-NLS
         }
         catch (Exception e)
         {
@@ -124,19 +128,20 @@ public class DatabaseMission
         try
         {
             JSONObject root = new JSONObject(json);
-            mission._id = Utils.trimString(root.getString("_id"));
-            mission._modPin = Utils.trimString(root.optString("_modPin"));
-            mission._name = Utils.trimString(root.optString("_name"));
-            mission._description = Utils.trimString(root.optString("_description"));
-            mission._useRp = root.optBoolean("_useRp");
-            mission._rpAddress = Utils.trimString(root.optString("_rpAddress"));
-            mission._rpPort = root.optInt("_rpPort");
-            mission._mcId = Utils.trimString(root.getString("_mcId"));
-            mission._mcAddress = Utils.trimString(root.getString("_mcAddress"));
-            mission._mcPort = root.getInt("_mcPort");
-            mission._mcCryptoPassword = Utils.trimString(root.getString("_mcCryptoPassword"));
+            mission._id = Utils.trimString(root.getString("_id"));//NON-NLS
+            mission._modPin = Utils.trimString(root.optString("_modPin"));//NON-NLS
+            mission._name = Utils.trimString(root.optString("_name"));//NON-NLS
+            mission._description = Utils.trimString(root.optString("_description"));//NON-NLS
+            mission._useRp = root.optBoolean("_useRp");//NON-NLS
+            mission._rpAddress = Utils.trimString(root.optString("_rpAddress"));//NON-NLS
+            mission._rpPort = root.optInt("_rpPort");//NON-NLS
+            mission._multicastFailoverPolicy = root.optInt("multicastFailoverPolicy");//NON-NLS
+            mission._mcId = Utils.trimString(root.getString("_mcId"));//NON-NLS
+            mission._mcAddress = Utils.trimString(root.getString("_mcAddress"));//NON-NLS
+            mission._mcPort = root.getInt("_mcPort");//NON-NLS
+            mission._mcCryptoPassword = Utils.trimString(root.getString("_mcCryptoPassword"));//NON-NLS
 
-            JSONArray groups = root.optJSONArray("groups");
+            JSONArray groups = root.optJSONArray("groups");//NON-NLS
             if(groups != null)
             {
                 for(int x = 0; x < groups.length(); x++)

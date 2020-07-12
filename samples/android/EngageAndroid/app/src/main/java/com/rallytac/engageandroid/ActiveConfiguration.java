@@ -15,14 +15,52 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.journeyapps.barcodescanner.Util;
 import com.rallytac.engage.engine.Engine;
 
 public class ActiveConfiguration
 {
     private static String TAG = ActiveConfiguration.class.getSimpleName();
 
-    private static String JSON_FIELD_FOR_RP_USE = "use";
+    private static String JSON_FIELD_FOR_RP_USE = "use";//NON-NLS
+
+    public enum MulticastFailoverPolicy
+    {
+        followAppSetting,       // 0
+        overrideAndAllow,       // 1
+        overrideAndPrevent      // 2
+    }
+
+    public static MulticastFailoverPolicy MulticastFailoverPolicyFromInt(int i)
+    {
+        if(i == 2)
+        {
+            return MulticastFailoverPolicy.overrideAndPrevent;
+        }
+        else if(i == 1)
+        {
+            return MulticastFailoverPolicy.overrideAndAllow;
+        }
+        else
+        {
+            return MulticastFailoverPolicy.followAppSetting;
+        }
+    }
+
+    public static int IntFromMulticastFailoverPolicy(MulticastFailoverPolicy p)
+    {
+        if(p == MulticastFailoverPolicy.overrideAndPrevent)
+        {
+            return 2;
+        }
+        else if(p == MulticastFailoverPolicy.overrideAndAllow)
+        {
+            return 1;
+        }
+        else
+        {
+            return 0;
+        }
+    }
 
     public static class LocationConfiguration
     {
@@ -68,6 +106,7 @@ public class ActiveConfiguration
     private String _missionName;
     private String _missionDescription;
     private String _missionModPin;
+    private MulticastFailoverPolicy _missionMcFailoverPolicy;
     private ArrayList<GroupDescriptor>   _missionGroups = new ArrayList<>();
     private HashMap<String, PresenceDescriptor> _nodes = new HashMap<String, PresenceDescriptor>();
 
@@ -76,6 +115,7 @@ public class ActiveConfiguration
     private boolean _useRP;
     private String _rpAddress;
     private int _rpPort;
+    private int _multicastFailoverPolicy;
 
     private String _nodeId;
     private String _userId;
@@ -334,14 +374,9 @@ public class ActiveConfiguration
         Globals.getSharedPreferencesEditor().apply();
     }
 
-
     public void setMulticastFailoverConfiguration(MulticastFailoverConfiguration mc)
     {
         _multicastFailoverConfiguration = mc;
-
-        Globals.getSharedPreferencesEditor().putBoolean(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_ENABLED, _multicastFailoverConfiguration.enabled);
-        Globals.getSharedPreferencesEditor().putString(PreferenceKeys.NETWORK_MULTICAST_FAILOVER_SECS, Integer.toString(_multicastFailoverConfiguration.thresholdSecs));
-        Globals.getSharedPreferencesEditor().apply();
     }
 
     public MulticastFailoverConfiguration getMulticastFailoverConfiguration()
@@ -390,6 +425,10 @@ public class ActiveConfiguration
         return _missionModPin;
     }
 
+    public MulticastFailoverPolicy getMissionMulticastFailoverPolicy()
+    {
+        return _missionMcFailoverPolicy;
+    }
 
     public boolean addDynamicGroup(GroupDescriptor gd)
     {
@@ -419,7 +458,7 @@ public class ActiveConfiguration
         }
         catch (Exception e)
         {
-            Log.e(TAG, "addDynamicGroup: " + e.getMessage());
+            Log.e(TAG, "addDynamicGroup: " + e.getMessage());//NON-NLS
             rc = false;
         }
 
@@ -435,7 +474,7 @@ public class ActiveConfiguration
         }
         catch (Exception e)
         {
-            Log.e(TAG, "updateDynamicGroup: " + e.getMessage());
+            Log.e(TAG, "updateDynamicGroup: " + e.getMessage());//NON-NLS
             rc = false;
         }
 
@@ -451,7 +490,7 @@ public class ActiveConfiguration
         }
         catch (Exception e)
         {
-            Log.e(TAG, "removeDynamicGroup: " + e.getMessage());
+            Log.e(TAG, "removeDynamicGroup: " + e.getMessage());//NON-NLS
             rc = false;
         }
 
@@ -463,19 +502,32 @@ public class ActiveConfiguration
         return _missionGroups;
     }
 
-    public int getMissionNodeCount()
+    public int getMissionNodeCount(String forGroupId)
     {
-        int rc;
+        int rc = 0;
 
         synchronized (_nodes)
         {
-            rc = _nodes.size();
+            if(Utils.isEmptyString(forGroupId))
+            {
+                rc = _nodes.size();
+            }
+            else
+            {
+                for (PresenceDescriptor pd : _nodes.values())
+                {
+                    if(pd.groupAliases.keySet().contains(forGroupId))
+                    {
+                        rc++;
+                    }
+                }
+            }
         }
 
         return rc;
     }
 
-    public ArrayList<PresenceDescriptor> getMissionNodes()
+    public ArrayList<PresenceDescriptor> getMissionNodes(String forGroupId)
     {
         ArrayList<PresenceDescriptor> rc = new ArrayList<>();
 
@@ -483,7 +535,17 @@ public class ActiveConfiguration
         {
             for (PresenceDescriptor pd : _nodes.values())
             {
-                rc.add(pd);
+                if(Utils.isEmptyString(forGroupId))
+                {
+                    rc.add(pd);
+                }
+                else
+                {
+                    if(pd.groupAliases.keySet().contains(forGroupId))
+                    {
+                        rc.add(pd);
+                    }
+                }
             }
         }
 
@@ -610,12 +672,14 @@ public class ActiveConfiguration
         _missionName = "";
         _missionDescription = "";
         _missionModPin = "";
+        _missionMcFailoverPolicy = MulticastFailoverPolicy.followAppSetting;
         _missionGroups.clear();
         _nodes.clear();
 
         _useRP = false;
         _rpAddress = "";
         _rpPort = 0;
+        _multicastFailoverPolicy = IntFromMulticastFailoverPolicy(MulticastFailoverPolicy.followAppSetting);
         _locationConfiguration.clear();
         _multicastFailoverConfiguration.clear();
 
@@ -649,6 +713,8 @@ public class ActiveConfiguration
             {
                 rc.put(Engine.JsonFields.Mission.modPin, _missionModPin);
             }
+
+            rc.put("multicastFailoverPolicy", _multicastFailoverPolicy);
 
             if(!Utils.isEmptyString(_rpAddress) && _rpPort > 0)
             {
@@ -702,6 +768,8 @@ public class ActiveConfiguration
             _missionName = root.optString(Engine.JsonFields.Mission.name);
             _missionDescription = root.optString(Engine.JsonFields.Mission.description);
             _missionModPin = root.optString(Engine.JsonFields.Mission.modPin);
+
+            _missionMcFailoverPolicy = MulticastFailoverPolicyFromInt(root.optInt("multicastFailoverPolicy", IntFromMulticastFailoverPolicy(MulticastFailoverPolicy.followAppSetting)));
 
             // Rallypoint (using default certificate)
             {
@@ -871,8 +939,8 @@ public class ActiveConfiguration
                     certificate = new JSONObject();
                 }
 
-                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.certificate, "@certstore://" + Globals.getContext().getString(R.string.certstore_default_certificate_id));
-                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.key, "@certstore://" + Globals.getContext().getString(R.string.certstore_default_certificate_id));
+                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.certificate, "@certstore://" + Globals.getContext().getString(R.string.certstore_default_certificate_id));//NON-NLS
+                certificate.put(Engine.JsonFields.EnginePolicy.Certificate.key, "@certstore://" + Globals.getContext().getString(R.string.certstore_default_certificate_id));//NON-NLS
 
                 security.put(Engine.JsonFields.EnginePolicy.Certificate.objectName, certificate);
                 rc.put(Engine.JsonFields.EnginePolicy.Security.objectName, security);
@@ -965,6 +1033,15 @@ public class ActiveConfiguration
                 }
 
                 networking.put(Engine.JsonFields.EnginePolicy.Networking.defaultNic, _networkInterfaceName);
+
+                if(Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_AUDIO_JITTER_LOW_LATENCY_ENABLED, Constants.DEF_USER_AUDIO_JITTER_LOW_LATENCY_ENABLED))
+                {
+                    networking.put(Engine.JsonFields.EnginePolicy.Networking.rtpJtterLatencyMode, Engine.JitterBufferLatency.toInt(Engine.JitterBufferLatency.lowLatency));
+                }
+                else
+                {
+                    networking.put(Engine.JsonFields.EnginePolicy.Networking.rtpJtterLatencyMode, Engine.JitterBufferLatency.toInt(Engine.JitterBufferLatency.standard));
+                }
 
                 rc.put(Engine.JsonFields.EnginePolicy.Networking.objectName, networking);
             }
@@ -1078,7 +1155,7 @@ public class ActiveConfiguration
 
     public PresenceDescriptor processNodeDiscovered(String nodeJson)
     {
-        Log.d(TAG, "processNodeDiscovered > nodeJson=" + nodeJson);
+        Log.d(TAG, "processNodeDiscovered > nodeJson=" + nodeJson);//NON-NLS
 
         PresenceDescriptor pd;
 
@@ -1101,12 +1178,12 @@ public class ActiveConfiguration
                         pd = discoveredPd;
                     }
 
-                    Log.d(TAG, "processNodeDiscovered > nid=" + discoveredPd.nodeId + ", u=" + discoveredPd.userId + ", d=" + discoveredPd.displayName);
+                    Log.d(TAG, "processNodeDiscovered > nid=" + discoveredPd.nodeId + ", u=" + discoveredPd.userId + ", d=" + discoveredPd.displayName);//NON-NLS
                 }
             }
             else
             {
-                Log.w(TAG, "failed to parse node information");
+                Log.w(TAG, "failed to parse node information");//NON-NLS
                 pd = null;
             }
         }
@@ -1132,12 +1209,12 @@ public class ActiveConfiguration
                 {
                     _nodes.remove(pd.nodeId);
 
-                    Log.d(TAG, "processNodeUndiscovered < nid=" + pd.nodeId + ", u=" + pd.userId + ", d=" + pd.displayName);
+                    Log.d(TAG, "processNodeUndiscovered < nid=" + pd.nodeId + ", u=" + pd.userId + ", d=" + pd.displayName);//NON-NLS
                 }
             }
             else
             {
-                Log.w(TAG, "failed to parse node information");
+                Log.w(TAG, "failed to parse node information");//NON-NLS
                 pd = null;
             }
         }
@@ -1197,14 +1274,14 @@ public class ActiveConfiguration
                         database.save(Globals.getSharedPreferences(), Constants.MISSION_DATABASE_NAME);
                         if(ctx != null)
                         {
-                            Toast.makeText(ctx, "Installed the mission", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ctx, R.string.installed_the_mission, Toast.LENGTH_SHORT).show();
                         }
                     }
                     else
                     {
                         if(ctx != null)
                         {
-                            Toast.makeText(ctx, "Failed to install the mission", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ctx, R.string.failed_to_install_the_mission, Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
@@ -1213,7 +1290,7 @@ public class ActiveConfiguration
             {
                 if(ctx != null)
                 {
-                    Toast.makeText(ctx, "Cannot open the mission database", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ctx, R.string.cannot_open_mission_database, Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -1222,12 +1299,12 @@ public class ActiveConfiguration
         {
             if(ctx != null)
             {
-                Toast.makeText(ctx, "Cannot parse the mission template", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ctx, R.string.cannot_parse_mission_template, Toast.LENGTH_SHORT).show();
             }
         }
     }
 
-    public static ActiveConfiguration parseEncryptedQrCodeString(String str, String pwd) throws Exception
+    private static ActiveConfiguration parseLegacyQrCode(String str, String pwd) throws Exception
     {
         String encryptedString = str;
 
@@ -1299,6 +1376,99 @@ public class ActiveConfiguration
         return ac;
     }
 
+    private static ActiveConfiguration parseNewQrCode(String str, String pwd) throws Exception
+    {
+        return null;
+        /* TODO: parseNewQrCode
+        String workingStr = str;
+
+        // Strip off the header
+        workingStr = workingStr.substring(Constants.QR_CODE_HEADER.length() + Constants.QR_VERSION.length());
+
+        // The rest is a byte array, put our chars into it
+        byte[] ba = workingStr.get
+
+        // Look for the "/??" to see if there's a deflection URL
+        int endOfDeflection = encryptedString.indexOf("/??");
+
+        // If it's there, strip it off
+        if (endOfDeflection > 0)
+        {
+            encryptedString = encryptedString.substring(endOfDeflection + 3);
+        }
+
+        // Now we have a string with is Base91 encoded, we need to decode that
+        byte[] base91DecodedBytes = Base91.decode(encryptedString.getBytes(Utils.getEngageCharSet()));
+        if (base91DecodedBytes == null)
+        {
+            throw new SimpleMessageException(Globals.getEngageApplication().getString(R.string.qr_scan_decode_failed));
+        }
+
+        // It may be encrypted, so decrypt if we have a password
+        if (!Utils.isEmptyString(pwd))
+        {
+            String pwdHexString = Utils.toHexString(pwd.getBytes(Utils.getEngageCharSet()));
+
+            base91DecodedBytes = Globals.getEngageApplication().getEngine().decryptSimple(base91DecodedBytes, pwdHexString);
+            if (base91DecodedBytes == null)
+            {
+                throw new SimpleMessageException(Globals.getEngageApplication().getString(R.string.qr_scan_decrypt_failed));
+            }
+        }
+
+        // Next, we decompress the data
+        byte[] decompressed = Utils.inflate(base91DecodedBytes);
+        if (decompressed == null)
+        {
+            throw new SimpleMessageException(Globals.getEngageApplication().getString(R.string.qr_scan_decompress_failed));
+        }
+
+        // Now we have a string which should have a valid header
+        String qrCodeDataString = new String(decompressed, Utils.getEngageCharSet());
+
+        // Make sure it has our header
+        if (!qrCodeDataString.startsWith(Constants.QR_CODE_HEADER))
+        {
+            throw new SimpleMessageException(Globals.getEngageApplication().getString(R.string.qr_scan_invalid));
+        }
+
+        // Strip the first part of the header
+        qrCodeDataString = qrCodeDataString.substring(Constants.QR_CODE_HEADER.length());
+
+        // Now, check the version - its "nnn"
+        int checkVersion = Integer.parseInt(Constants.QR_VERSION);
+        int qrVersion = Integer.parseInt(qrCodeDataString.substring(0, 3));
+        if (qrVersion != checkVersion)
+        {
+            throw new SimpleMessageException(Globals.getEngageApplication().getString(R.string.qr_scn_invalid_version));
+        }
+
+        // Strip the version
+        qrCodeDataString = qrCodeDataString.substring(3);
+
+        // Finally, we have our JSON data as a string, create that object and handle it
+        ActiveConfiguration ac = new ActiveConfiguration();
+        if (!ac.parseTemplate(qrCodeDataString))
+        {
+            throw new SimpleMessageException(Globals.getEngageApplication().getString(R.string.qr_cannot_parse));
+        }
+
+        return ac;
+        */
+    }
+
+    public static ActiveConfiguration parseEncryptedQrCodeString(String str, String pwd) throws Exception
+    {
+        if(str.startsWith(Constants.QR_CODE_HEADER))
+        {
+            return parseNewQrCode(str, pwd);
+        }
+        else
+        {
+            return parseLegacyQrCode(str, pwd);
+        }
+    }
+
     public static ActiveConfiguration loadFromDatabaseMission(DatabaseMission mission)
     {
         ActiveConfiguration rc;
@@ -1316,18 +1486,20 @@ public class ActiveConfiguration
             rc._useRP = mission._useRp;
             rc._rpAddress = mission._rpAddress;
             rc._rpPort = mission._rpPort;
+            rc._multicastFailoverPolicy = mission._multicastFailoverPolicy;
 
             GroupDescriptor gd;
             JSONObject groupObject;
             JSONObject rxTx;
             JSONObject txAudio;
 
-            // Presence group
+            // Presence group if we have one
+            if(!Utils.isEmptyString(mission._mcId))
             {
                 gd = new GroupDescriptor();
                 gd.id = mission._mcId;
                 gd.type = GroupDescriptor.Type.gtPresence;
-                gd.name = "$MISSIONCONTROL$." + mission._id;
+                gd.name = "$MISSIONCONTROL$." + mission._id;//NON-NLS
 
                 groupObject = new JSONObject();
                 groupObject.put(Engine.JsonFields.Group.id, gd.id);
@@ -1353,40 +1525,43 @@ public class ActiveConfiguration
             {
                 for(DatabaseGroup dbg : mission._groups)
                 {
-                    gd = new GroupDescriptor();
-                    gd.id = dbg._id;
-                    gd.type = GroupDescriptor.Type.gtAudio;
-                    gd.name = dbg._name;
-
-                    groupObject = new JSONObject();
-                    groupObject.put(Engine.JsonFields.Group.id, gd.id);
-                    groupObject.put(Engine.JsonFields.Group.name, gd.name);
-                    groupObject.put(Engine.JsonFields.Group.type, GroupDescriptor.Type.gtAudio.ordinal());
-                    if(dbg._useCrypto && !Utils.isEmptyString(dbg._cryptoPassword))
+                    if(!Utils.isEmptyString(dbg._id))
                     {
-                        groupObject.put(Engine.JsonFields.Group.cryptoPassword, dbg._cryptoPassword);
+                        gd = new GroupDescriptor();
+                        gd.id = dbg._id;
+                        gd.type = GroupDescriptor.Type.gtAudio;
+                        gd.name = dbg._name;
+
+                        groupObject = new JSONObject();
+                        groupObject.put(Engine.JsonFields.Group.id, gd.id);
+                        groupObject.put(Engine.JsonFields.Group.name, gd.name);
+                        groupObject.put(Engine.JsonFields.Group.type, GroupDescriptor.Type.gtAudio.ordinal());
+                        if (dbg._useCrypto && !Utils.isEmptyString(dbg._cryptoPassword))
+                        {
+                            groupObject.put(Engine.JsonFields.Group.cryptoPassword, dbg._cryptoPassword);
+                        }
+
+                        rxTx = new JSONObject();
+                        rxTx.put(Engine.JsonFields.Rx.address, dbg._rxAddress);
+                        rxTx.put(Engine.JsonFields.Rx.port, dbg._rxPort);
+                        groupObject.put(Engine.JsonFields.Rx.objectName, rxTx);
+
+                        rxTx = new JSONObject();
+                        rxTx.put(Engine.JsonFields.Tx.address, dbg._txAddress);
+                        rxTx.put(Engine.JsonFields.Tx.port, dbg._txPort);
+                        groupObject.put(Engine.JsonFields.Tx.objectName, rxTx);
+
+                        txAudio = new JSONObject();
+                        txAudio.put(Engine.JsonFields.TxAudio.encoder, dbg._txCodecId);
+                        txAudio.put(Engine.JsonFields.TxAudio.framingMs, dbg._txFramingMs);
+                        txAudio.put(Engine.JsonFields.TxAudio.noHdrExt, dbg._noHdrExt);
+                        txAudio.put(Engine.JsonFields.TxAudio.fdx, dbg._fdx);
+                        txAudio.put(Engine.JsonFields.TxAudio.maxTxSecs, dbg._maxTxSecs);
+                        groupObject.put(Engine.JsonFields.TxAudio.objectName, txAudio);
+
+                        gd.jsonConfiguration = groupObject.toString();
+                        rc._missionGroups.add(gd);
                     }
-
-                    rxTx = new JSONObject();
-                    rxTx.put(Engine.JsonFields.Rx.address, dbg._rxAddress);
-                    rxTx.put(Engine.JsonFields.Rx.port, dbg._rxPort);
-                    groupObject.put(Engine.JsonFields.Rx.objectName, rxTx);
-
-                    rxTx = new JSONObject();
-                    rxTx.put(Engine.JsonFields.Tx.address, dbg._txAddress);
-                    rxTx.put(Engine.JsonFields.Tx.port, dbg._txPort);
-                    groupObject.put(Engine.JsonFields.Tx.objectName, rxTx);
-
-                    txAudio = new JSONObject();
-                    txAudio.put(Engine.JsonFields.TxAudio.encoder, dbg._txCodecId);
-                    txAudio.put(Engine.JsonFields.TxAudio.framingMs, dbg._txFramingMs);
-                    txAudio.put(Engine.JsonFields.TxAudio.noHdrExt, dbg._noHdrExt);
-                    txAudio.put(Engine.JsonFields.TxAudio.fdx, dbg._fdx);
-                    txAudio.put(Engine.JsonFields.TxAudio.maxTxSecs, dbg._maxTxSecs);
-                    groupObject.put(Engine.JsonFields.TxAudio.objectName, txAudio);
-
-                    gd.jsonConfiguration = groupObject.toString();
-                    rc._missionGroups.add(gd);
                 }
             }
         }
