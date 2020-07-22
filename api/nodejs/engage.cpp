@@ -480,6 +480,9 @@ ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(groupTimelineGroomed);
 ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(groupHealthReport);
 ENGAGE_CB_ID_PARAM(groupHealthReportFailed);
 
+ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(groupStatsReport);
+ENGAGE_CB_ID_PARAM(groupStatsReportFailed);
+
 //--------------------------------------------------------
 // Registers an event name and the JS callback function
 NAN_METHOD(on)
@@ -602,6 +605,8 @@ NAN_METHOD(initialize)
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_GROOMED, groupTimelineGroomed);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_HEALTH_REPORT, groupHealthReport);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_HEALTH_REPORT_FAILED, groupHealthReportFailed);
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_STATS_REPORT, groupStatsReport);
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_STATS_REPORT_FAILED, groupStatsReportFailed);
 
     engageRegisterEventCallbacks(&g_eventCallbacks);
 
@@ -790,6 +795,19 @@ NAN_METHOD(getVersion)
 }
 
 //--------------------------------------------------------
+NAN_METHOD(getHardwareReport)
+{
+    const char *rc = engageGetHardwareReport();
+
+    if(rc == nullptr)
+    {
+        rc = "";
+    }
+
+    info.GetReturnValue().Set(New(rc).ToLocalChecked());
+}
+
+//--------------------------------------------------------
 NAN_METHOD(getActiveLicenseDescriptor)
 {
     const char *rc = engageGetActiveLicenseDescriptor();
@@ -840,6 +858,12 @@ NAN_METHOD(queryGroupTimeline)
 NAN_METHOD(queryGroupHealth)
 {
     engageQueryGroupHealth(STRVAL(0));
+}
+
+//--------------------------------------------------------
+NAN_METHOD(queryGroupStats)
+{
+    engageQueryGroupStats(STRVAL(0));
 }
 
 // TODO: engageLogMsg
@@ -952,6 +976,7 @@ NAN_MODULE_INIT(Init)
 
     ENGAGE_BINDING(updateLicense);
     ENGAGE_BINDING(getVersion);
+    ENGAGE_BINDING(getHardwareReport);
     ENGAGE_BINDING(getNetworkInterfaceDevices);
     ENGAGE_BINDING(getAudioDevices);
 
