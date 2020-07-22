@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -94,6 +95,9 @@ public class Engage
 
         void onGroupHealthReport(string id, string healthReportJson, string eventExtraJson);
         void onGroupHealthReportFailed(string id, string eventExtraJson);        
+
+        void onGroupStatsReport(string id, string statsReportJson, string eventExtraJson);
+        void onGroupStatsReportFailed(string id, string eventExtraJson);        
     }
 
     public interface IHumanBiometricsNotifications
@@ -116,6 +120,13 @@ public class Engage
     public const int ENGAGE_RESULT_NOT_INITIALIZED = -2;
     public const int ENGAGE_RESULT_ALREADY_INITIALIZED = -3;
     public const int ENGAGE_RESULT_GENERAL_FAILURE = -4;
+
+    // Jitter Buffer Latency types
+    public enum JitterBufferLatency : int
+    {
+        STANDARD = 0,
+        LOW_LATENCY = 1
+    }
 
     // Connection Types
     public enum ConnectionType : int
@@ -261,6 +272,7 @@ public class Engage
             public static String deviceId = "deviceId";
             public static String samplingRate = "samplingRate";
             public static String msPerBuffer = "msPerBuffer";
+            public static String bufferCount = "bufferCount";
             public static String channels = "channels";
             public static String direction = "direction";
             public static String boostPercentage = "boostPercentage";
@@ -390,8 +402,13 @@ public class Engage
                 public static String defaultNic = "defaultNic";
                 public static String maxOutputQueuePackets = "maxOutputQueuePackets";
                 public static String rtpJitterMinMs = "rtpJitterMinMs";
+                public static String rtpJitterMaxFactor = "rtpJitterMaxFactor";
                 public static String rtpJitterMaxMs = "rtpJitterMaxMs";
                 public static String rtpLatePacketSequenceRange = "rtpLatePacketSequenceRange";
+                public static String rtpJitterTrimPercentage = "rtpJitterTrimPercentage";
+                public static String rtpJitterUnderrunReductionThresholdMs = "rtpJitterUnderrunReductionThresholdMs";
+                public static String rtpJitterUnderrunReductionAger = "rtpJitterUnderrunReductionAger";
+                public static String rtpJitterForceTrimAtMs = "rtpJitterForceTrimAtMs";
                 public static String rtpLatePacketTimestampRangeMs = "rtpLatePacketTimestampRangeMs";
                 public static String rtpInboundProcessorInactivityMs = "rtpInboundProcessorInactivityMs";
                 public static String multicastRejoinSecs = "multicastRejoinSecs";
@@ -401,6 +418,9 @@ public class Engage
                 public static String sendFailurePauseMs = "sendFailurePauseMs";
                 public static String rallypointRtTestIntervalMs = "rallypointRtTestIntervalMs";
                 public static String logRtpJitterBufferStats = "logRtpJitterBufferStats";
+                public static String preventMulticastFailover = "preventMulticastFailover";
+                public static String rtcpPresenceTimeoutMs = "rtcpPresenceTimeoutMs";
+                public static String rtpJtterLatencyMode = "rtpJtterLatencyMode"; 
             }
 
             public class Audio
@@ -411,9 +431,11 @@ public class Engage
                 public static String inputRate = "inputRate";
                 public static String inputChannels = "inputChannels";
                 public static String inputBufferMs = "inputBufferMs";
+                public static String inputBufferCount = "inputBufferCount";
                 public static String outputRate = "outputRate";
                 public static String outputChannels = "outputChannels";
                 public static String outputBufferMs = "outputBufferMs";
+                public static String outputBufferCount = "outputBufferCount";
                 public static String outputGainPercentage = "outputGainPercentage";
                 public static String allowOutputOnTransmit = "allowOutputOnTransmit";
                 public static String muteTxOnTx = "muteTxOnTx";
@@ -760,6 +782,13 @@ public class Engage
 
         public EngageString2Callback PFN_ENGAGE_GROUP_HEALTH_REPORT;
         public EngageStringCallback PFN_ENGAGE_GROUP_HEALTH_REPORT_FAILED;
+
+        public EngageStringCallback PFN_ENGAGE_BRIDGE_CREATED;
+        public EngageStringCallback PFN_ENGAGE_BRIDGE_CREATE_FAILED;
+        public EngageStringCallback PFN_ENGAGE_BRIDGE_DELETED;
+
+        public EngageString2Callback PFN_ENGAGE_GROUP_STATS_REPORT;
+        public EngageStringCallback PFN_ENGAGE_GROUP_STATS_REPORT_FAILED;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]     // 9 bytes
@@ -884,6 +913,9 @@ public class Engage
     private static extern IntPtr engageGetVersion();
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr engageGetHardwareReport();
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr engageGetActiveLicenseDescriptor();
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
@@ -951,6 +983,15 @@ public class Engage
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageQueryGroupHealth(string id);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageQueryGroupStats(string id);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageCreateBridge(string jsonConfiguration);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageDeleteBridge(string id);
     #endregion
 
     #region Internal functions
@@ -1080,6 +1121,10 @@ public class Engage
 
         cb.PFN_ENGAGE_GROUP_HEALTH_REPORT = on_ENGAGE_GROUP_HEALTH_REPORT;
         cb.PFN_ENGAGE_GROUP_HEALTH_REPORT_FAILED = on_ENGAGE_GROUP_HEALTH_REPORT_FAILED;
+
+        cb.PFN_ENGAGE_BRIDGE_CREATED = on_ENGAGE_BRIDGE_CREATED;
+        cb.PFN_ENGAGE_BRIDGE_CREATE_FAILED = on_ENGAGE_BRIDGE_CREATE_FAILED;
+        cb.PFN_ENGAGE_BRIDGE_DELETED = on_ENGAGE_BRIDGE_DELETED;
 
         return engageRegisterEventCallbacks(ref cb);
     }
@@ -1776,6 +1821,61 @@ public class Engage
             }
         }
     };
+
+    private EngageString2Callback on_ENGAGE_GROUP_STATS_REPORT = (string id, string statsReportJson, string eventExtraJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupStatsReport(id, statsReportJson, eventExtraJson);
+            }
+        }
+    };   
+
+    private EngageStringCallback on_ENGAGE_GROUP_STATS_REPORT_FAILED = (string id, string eventExtraJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupStatsReportFailed(id, eventExtraJson);
+            }
+        }
+    };
+
+    private EngageStringCallback on_ENGAGE_BRIDGE_CREATED = (string id, string eventExtraJson) =>
+    {
+        lock (_bridgeNotificationSubscribers)
+        {
+            foreach (IBridgeNotifications n in _bridgeNotificationSubscribers)
+            {
+                n.onBridgeCreated(id, eventExtraJson);
+            }
+        }
+    };
+
+    private EngageStringCallback on_ENGAGE_BRIDGE_CREATE_FAILED = (string id, string eventExtraJson) =>
+    {
+        lock (_bridgeNotificationSubscribers)
+        {
+            foreach (IBridgeNotifications n in _bridgeNotificationSubscribers)
+            {
+                n.onBridgeCreateFailed(id, eventExtraJson);
+            }
+        }
+    };
+
+    private EngageStringCallback on_ENGAGE_BRIDGE_DELETED = (string id, string eventExtraJson) =>
+    {
+        lock (_bridgeNotificationSubscribers)
+        {
+            foreach (IBridgeNotifications n in _bridgeNotificationSubscribers)
+            {
+                n.onBridgeDeleted(id, eventExtraJson);
+            }
+        }
+    };
     #endregion
 
     #region Public functions
@@ -1962,6 +2062,11 @@ public class Engage
         return engageQueryGroupHealth(id);
     }
 
+    public int queryGroupStats(string id)
+    {
+        return engageQueryGroupStats(id);
+    }
+
     public int logMsg(int level, string tag, string msg)
     {
         return engageLogMsg(level, tag, msg);
@@ -1981,6 +2086,20 @@ public class Engage
         }
     }
 
+    public String getHardwareReport()
+    {
+        IntPtr ptr = engageGetHardwareReport();
+
+        if (ptr == IntPtr.Zero)
+        {
+            return null;
+        }
+        else
+        {
+            return Marshal.PtrToStringAnsi(ptr);
+        }
+    }
+    
     public String getActiveLicenseDescriptor()
     {
         IntPtr ptr = engageGetActiveLicenseDescriptor();
@@ -2233,7 +2352,7 @@ public class Engage
         catch(Exception e)
         {
             dataSeriesArray = null;
-            Console.WriteLine(e.StackTrace);
+            Trace.WriteLine(e.StackTrace);
         }
 
         string rc = null;
