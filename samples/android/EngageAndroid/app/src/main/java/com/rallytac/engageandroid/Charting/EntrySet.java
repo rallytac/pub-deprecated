@@ -69,18 +69,18 @@ public class EntrySet
 
         if( (measurePoint >= (_baseLevel - _okRange)) && (measurePoint <= (_baseLevel + _okRange)) )
         {
-            _lineColor = Color.parseColor("#65991c");
-            _fillColor = Color.parseColor("#b6e376");
+            _lineColor = Color.parseColor("#65991c");//NON-NLS
+            _fillColor = Color.parseColor("#b6e376");//NON-NLS
         }
         else if( (measurePoint >= (_baseLevel - _warningRange)) && (measurePoint <= (_baseLevel + _warningRange)) )
         {
-            _lineColor = Color.parseColor("#e06900");
-            _fillColor = Color.parseColor("#ff9d47");
+            _lineColor = Color.parseColor("#e06900");//NON-NLS
+            _fillColor = Color.parseColor("#ff9d47");//NON-NLS
         }
         else
         {
-            _lineColor = Color.parseColor("#c21b00");
-            _fillColor = Color.parseColor("#f57864");
+            _lineColor = Color.parseColor("#c21b00");//NON-NLS
+            _fillColor = Color.parseColor("#f57864");//NON-NLS
         }
     }
 

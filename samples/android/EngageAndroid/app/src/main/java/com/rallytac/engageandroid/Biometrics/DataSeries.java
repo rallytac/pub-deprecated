@@ -63,25 +63,25 @@ public class DataSeries
     {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("n=");
+        sb.append("n=");//NON-NLS
             sb.append(_name);
-        sb.append("ts=");
+        sb.append("ts=");//NON-NLS
             sb.append(_timestamp);
-        sb.append("it=");
+        sb.append("it=");//NON-NLS
             sb.append(_incrementType);
-        sb.append("im=");
+        sb.append("im=");//NON-NLS
             sb.append(_incrementMultiplier);
-        sb.append("vt=");
+        sb.append("vt=");//NON-NLS
             sb.append(_valueType);
 
-        sb.append(" s=[");
+        sb.append(" s=[");//NON-NLS
         for(SeriesElement se : _series)
         {
             sb.append(se.getTimeoffset());
-            sb.append(",");
+            sb.append(",");//NON-NLS
             sb.append(se.getValue());
         }
-        sb.append("]");
+        sb.append("]");//NON-NLS
 
         return sb.toString();
     }
@@ -93,12 +93,12 @@ public class DataSeries
         try
         {
             rc = new JSONObject();
-            rc.put("bi", _binaryId);
-            rc.put("n", _name);
-            rc.put("ts", _timestamp);
-            rc.put("it", _incrementType);
-            rc.put("im", _incrementMultiplier);
-            rc.put("vt", _valueType);
+            rc.put("bi", _binaryId);//NON-NLS
+            rc.put("n", _name);//NON-NLS
+            rc.put("ts", _timestamp);//NON-NLS
+            rc.put("it", _incrementType);//NON-NLS
+            rc.put("im", _incrementMultiplier);//NON-NLS
+            rc.put("vt", _valueType);//NON-NLS
 
             if(!_series.isEmpty())
             {
@@ -110,7 +110,7 @@ public class DataSeries
                     s.put(se.getValue());
                 }
 
-                rc.put("s", s);
+                rc.put("s", s);//NON-NLS
             }
         }
         catch (Exception e)
@@ -131,19 +131,19 @@ public class DataSeries
         {
             JSONObject root = new JSONObject(j);
 
-            _binaryId = root.optInt("bi", _binaryId);
-            _name = root.optString("n", _name);
-            _timestamp = root.optInt("ts", _timestamp);
-            _incrementType = root.optInt("it", _incrementType);
-            _incrementMultiplier = root.optInt("im", _incrementMultiplier);
-            _valueType = root.optInt("vt", _valueType);
+            _binaryId = root.optInt("bi", _binaryId);//NON-NLS
+            _name = root.optString("n", _name);//NON-NLS
+            _timestamp = root.optInt("ts", _timestamp);//NON-NLS
+            _incrementType = root.optInt("it", _incrementType);//NON-NLS
+            _incrementMultiplier = root.optInt("im", _incrementMultiplier);//NON-NLS
+            _valueType = root.optInt("vt", _valueType);//NON-NLS
 
-            JSONArray s = root.optJSONArray("s");
+            JSONArray s = root.optJSONArray("s");//NON-NLS
             if(s != null)
             {
                 if(s.length() % 2 != 0)
                 {
-                    throw new Exception("Element count not divisible by 2");
+                    throw new Exception("Element count not divisible by 2");//NON-NLS
                 }
 
                 for(int idx = 0; idx < s.length(); idx += 2)

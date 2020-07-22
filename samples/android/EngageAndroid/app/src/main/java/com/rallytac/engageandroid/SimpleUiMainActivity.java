@@ -1713,13 +1713,25 @@ public class SimpleUiMainActivity
     @Override
     public void onGroupHealthReport(final GroupDescriptor gd, final String reportJson)
     {
-
+        // TODO: Handle group health report
     }
 
     @Override
     public void onGroupHealthReportFailed(final GroupDescriptor gd)
     {
         // TODO: Nothing to do for now in the UI when we're notified that a health report failed
+    }
+
+    @Override
+    public void onGroupStatsReport(final GroupDescriptor gd, final String reportJson)
+    {
+        // TODO: Handle group stats report
+    }
+
+    @Override
+    public void onGroupStatsReportFailed(final GroupDescriptor gd)
+    {
+        // TODO: Nothing to do for now in the UI when we're notified that a stats report failed
     }
 
     private class TeamListAdapter extends ArrayAdapter<PresenceDescriptor>

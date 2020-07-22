@@ -28,6 +28,89 @@ import java.util.Enumeration;
 
 public final class Engine
 {
+    public enum JitterBufferLatency
+    {
+        standard(0),
+        lowLatency(1)
+        ;
+
+        private final int _val;
+
+        private JitterBufferLatency(int val)
+        {
+            this._val = val;
+        }
+
+        public static JitterBufferLatency fromInt(int i)
+        {
+            for (JitterBufferLatency e : values())
+            {
+                if (e._val == i)
+                {
+                    return e;
+                }
+            }
+
+            return null;
+        }
+
+        public static int toInt(JitterBufferLatency e)
+        {
+            return e.toInt();
+        }
+
+        public int toInt()
+        {
+            return _val;
+        }
+    }
+
+    public enum CreationStatus
+    {
+        csUndefined(0),
+        csOk(1),
+        csNoJson(-1),
+        csConflictingRpListAndCluster(-2),
+        csAlreadyExists(-3),
+        csInvalidConfiguration(-4),
+        csInvalidJson(-5),
+        csCryptoFailure(-6),
+        csAudioInputFailure(-7),
+        csAudioOutputFailure(-8),
+        csUnsupporttedAudioEncoder(-9),
+        ;
+
+        private final int _val;
+
+        private CreationStatus(int val)
+        {
+            this._val = val;
+        }
+
+        public static CreationStatus fromInt(int i)
+        {
+            for (CreationStatus e : values())
+            {
+                if (e._val == i)
+                {
+                    return e;
+                }
+            }
+
+            return null;
+        }
+
+        public static int toInt(CreationStatus e)
+        {
+            return e.toInt();
+        }
+
+        public int toInt()
+        {
+            return _val;
+        }
+    }
+
     public enum TxStatus
     {
         undefined(0),
@@ -374,9 +457,17 @@ public final class Engine
 
     public final class JsonFields
     {
+        public final class GroupCreationDetail
+        {
+            public static final String objectName = "groupCreationDetail";
+            public static final String id = "id";
+            public static final String status = "status";
+        }
+
         public final class GroupTxDetail
         {
             public static final String objectName = "groupTxDetail";
+            public static final String id = "id";
             public static final String status = "status";
             public static final String localPriority = "localPriority";
             public static final String remotePriority = "remotePriority";
@@ -430,6 +521,7 @@ public final class Engine
             public static final String deviceId = "deviceId";
             public static final String samplingRate = "samplingRate";
             public static final String msPerBuffer = "msPerBuffer";
+            public static final String bufferCount = "bufferCount";
             public static final String channels = "channels";
             public static final String direction = "direction";
             public static final String boostPercentage = "boostPercentage";
@@ -565,8 +657,13 @@ public final class Engine
                 public static final String defaultNic = "defaultNic";
                 public static final String maxOutputQueuePackets = "maxOutputQueuePackets";
                 public static final String rtpJitterMinMs = "rtpJitterMinMs";
+                public static final String rtpJitterMaxFactor = "rtpJitterMaxFactor";
                 public static final String rtpJitterMaxMs = "rtpJitterMaxMs";
                 public static final String rtpLatePacketSequenceRange = "rtpLatePacketSequenceRange";
+                public static final String rtpJitterTrimPercentage = "rtpJitterTrimPercentage";
+                public static final String rtpJitterUnderrunReductionThresholdMs = "rtpJitterUnderrunReductionThresholdMs";
+                public static final String rtpJitterUnderrunReductionAger = "rtpJitterUnderrunReductionAger";
+                public static final String rtpJitterForceTrimAtMs = "rtpJitterForceTrimAtMs";
                 public static final String rtpLatePacketTimestampRangeMs = "rtpLatePacketTimestampRangeMs";
                 public static final String rtpInboundProcessorInactivityMs = "rtpInboundProcessorInactivityMs";
                 public static final String multicastRejoinSecs = "multicastRejoinSecs";
@@ -576,7 +673,10 @@ public final class Engine
                 public static final String sendFailurePauseMs = "sendFailurePauseMs";
                 public static final String rallypointRtTestIntervalMs = "rallypointRtTestIntervalMs";
                 public static final String logRtpJitterBufferStats = "logRtpJitterBufferStats";
-            }
+                public static final String preventMulticastFailover = "preventMulticastFailover";
+                public static final String rtcpPresenceTimeoutMs = "rtcpPresenceTimeoutMs";
+                public static final String rtpJtterLatencyMode = "rtpJtterLatencyMode";
+        }
 
             public final class Audio
             {
@@ -586,12 +686,30 @@ public final class Engine
                 public static final String inputRate = "inputRate";
                 public static final String inputChannels = "inputChannels";
                 public static final String inputBufferMs = "inputBufferMs";
+                public static final String inputBufferCount = "inputBufferCount";
                 public static final String outputRate = "outputRate";
                 public static final String outputChannels = "outputChannels";
                 public static final String outputBufferMs = "outputBufferMs";
+                public static final String outputBufferCount = "outputBufferCount";
                 public static final String outputGainPercentage = "outputGainPercentage";
                 public static final String allowOutputOnTransmit = "allowOutputOnTransmit";
                 public static final String muteTxOnTx = "muteTxOnTx";
+
+                public final class Aec
+                {
+                    public static final String objectName = "aec";
+                    public static final String enabled = "enabled";
+                    public static final String mode = "mode";
+                    public static final String speakerTailMs = "speakerTailMs";
+                    public static final String cng = "cng";
+                }
+
+                public final class Vad
+                {
+                    public static final String objectName = "vad";
+                    public static final String enabled = "enabled";
+                    public static final String mode = "mode";
+                }
             }
 
             public final class Discovery
@@ -941,7 +1059,13 @@ public final class Engine
         void onGroupTimelineEventEnded(String id, String eventJson, String eventExtraJson);
         void onGroupTimelineReport(String id, String reportJson, String eventExtraJson);
         void onGroupTimelineReportFailed(String id, String eventExtraJson);
-        void onGroupTimelineGroomed(String id, String eventJson, String eventExtraJson);        
+        void onGroupTimelineGroomed(String id, String eventJson, String eventExtraJson);       
+
+        void onGroupHealthReport(String id, String healthReportJson, String eventExtraJson);
+        void onGroupHealthReportFailed(String id, String eventExtraJson);
+
+        void onGroupStatsReport(String id, String statsReportJson, String eventExtraJson);
+        void onGroupStatsReportFailed(String id, String eventExtraJson);
     }
 
     @Keep
@@ -1493,6 +1617,9 @@ public final class Engine
     public native String engageGetVersion();
 
     @Keep
+    public native String engageGetHardwareReport();    
+
+    @Keep
     public native String engageGetNetworkInterfaceDevices();
 
     @Keep
@@ -1649,6 +1776,12 @@ public final class Engine
     public native void engageQueryGroupTimeline(String id, String jsonParams);
 
     @Keep
+    public native void engageQueryGroupHealth(String id);
+
+    @Keep
+    public native void engageQueryGroupStats(String id);
+
+    @Keep
     public native int engageLogMsg(int level, String msg);
 
     @Keep
@@ -1683,6 +1816,9 @@ public final class Engine
 
     @Keep
     public native int engageImportCertStoreElementFromCertStore(String id, String srcId, String srcFileName, String srcPasswordHexByteString);
+
+    @Keep
+    public native String engageQueryCertStoreContents(String fileName, String passwordHexByteString);
 
     // Platform services requests ("upcalls" from the Engine)
     @Keep
@@ -2785,6 +2921,70 @@ public final class Engine
                 for (IGroupListener listener : _groupListeners)
                 {
                     listener.onGroupTimelineGroomed(id, eventListJson, eventExtraJson);
+                }
+            }
+        });
+    }
+
+    @Keep
+    private void onGroupHealthReport(final String id, final String healthReportJson, final String eventExtraJson)
+    {
+        _handler.post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                for (IGroupListener listener : _groupListeners)
+                {
+                    listener.onGroupHealthReport(id, healthReportJson, eventExtraJson);
+                }
+            }
+        });
+    }
+
+    @Keep
+    private void onGroupHealthReportFailed(final String id, final String eventExtraJson)
+    {
+        _handler.post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                for (IGroupListener listener : _groupListeners)
+                {
+                    listener.onGroupHealthReportFailed(id, eventExtraJson);
+                }
+            }
+        });
+    }
+
+    @Keep
+    private void onGroupStatsReport(final String id, final String statsReportJson, final String eventExtraJson)
+    {
+        _handler.post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                for (IGroupListener listener : _groupListeners)
+                {
+                    listener.onGroupStatsReport(id, statsReportJson, eventExtraJson);
+                }
+            }
+        });
+    }
+
+    @Keep
+    private void onGroupStatsReportFailed(final String id, final String eventExtraJson)
+    {
+        _handler.post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                for (IGroupListener listener : _groupListeners)
+                {
+                    listener.onGroupStatsReportFailed(id, eventExtraJson);
                 }
             }
         });

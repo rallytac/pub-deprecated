@@ -133,6 +133,8 @@ public class EngageApplication
         void onGroupTimelineGroomed(GroupDescriptor gd, String eventListJson);
         void onGroupHealthReport(GroupDescriptor gd, String reportJson);
         void onGroupHealthReportFailed(GroupDescriptor gd);
+        void onGroupStatsReport(GroupDescriptor gd, String reportJson);
+        void onGroupStatsReportFailed(GroupDescriptor gd);
     }
 
     private EngageService _svc = null;
@@ -4797,6 +4799,68 @@ public class EngageApplication
             }
         });
     }
+
+    @Override
+    public void onGroupStatsReport(final String id, final String reportJson, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_STATS_REPORT);
+
+                Log.d(TAG, "onGroupStatsReport: " + id);
+
+                final GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupStatsReport: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                synchronized (_groupTimelineListeners)
+                {
+                    for (IGroupTimelineListener listener : _groupTimelineListeners)
+                    {
+                        listener.onGroupStatsReport(gd, reportJson);
+                    }
+                }
+            }
+        });
+
+    }
+
+    @Override
+    public void onGroupStatsReportFailed(final String id, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                logEvent(Analytics.GROUP_STATS_REPORT_FAILED);
+
+                Log.d(TAG, "onGroupStatsReportFailed: " + id);
+
+                final GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupStatsReportFailed: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                synchronized (_groupTimelineListeners)
+                {
+                    for (IGroupTimelineListener listener : _groupTimelineListeners)
+                    {
+                        listener.onGroupStatsReportFailed(gd);
+                    }
+                }
+            }
+        });
+    }
+
 
     @Override
     public void onGroupHealthReport(final String id, final String reportJson, final String eventExtraJson)

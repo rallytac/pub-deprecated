@@ -75,6 +75,9 @@ public class Analytics
     public static final String GROUP_HEALTH_REPORT = "GRP_HEALTH_REPORT";//NON-NLS
     public static final String GROUP_HEALTH_REPORT_FAILED = "GRP_HEALTH_REPORT_FAILED";//NON-NLS
 
+    public static final String GROUP_STATS_REPORT = "GRP_STATS_REPORT";//NON-NLS
+    public static final String GROUP_STATS_REPORT_FAILED = "GRP_STATS_REPORT_FAILED";//NON-NLS
+
     public static final String GROUP_RP_CONNECTED = "GRP_RP_CONN";//NON-NLS
     public static final String GROUP_RP_DISCONNECTED = "GRP_RP_DISCONN";//NON-NLS
 

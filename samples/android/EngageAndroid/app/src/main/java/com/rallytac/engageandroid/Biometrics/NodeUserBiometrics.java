@@ -12,13 +12,13 @@ public class NodeUserBiometrics
 {
     private final int MAX_SAMPLES_TO_TRACK = 100;
 
-    private EntrySet _entriesHeartRate = new EntrySet("Heart Rate", 40, 200, MAX_SAMPLES_TO_TRACK, 75, 25, 50, 75);
-    private EntrySet _entriesSkinTemp = new EntrySet("Skin Temperature", 30, 40, MAX_SAMPLES_TO_TRACK, 36, 3, 5, 6);
-    private EntrySet _entriesCoreTemp = new EntrySet("Core Temperature", 30, 40, MAX_SAMPLES_TO_TRACK, 36, 2, 3, 5);
-    private EntrySet _entriesHydration = new EntrySet("Hydration %", 50, 100, MAX_SAMPLES_TO_TRACK, 80, 10, 15, 20);
-    private EntrySet _entriesBloodOxygenation = new EntrySet("Blood Oxygenation %", 50, 100, MAX_SAMPLES_TO_TRACK, 90, 5, 8, 100);
-    private EntrySet _entriesFatigueLevel = new EntrySet("Fatigue Level", 0, 10, MAX_SAMPLES_TO_TRACK, 4, 2, 3, 5);
-    private EntrySet _entriesTaskEffectivenessLevel = new EntrySet("Task Effectiveness Level", 0, 10, MAX_SAMPLES_TO_TRACK, 3, 2, 4, 6);
+    private EntrySet _entriesHeartRate = new EntrySet("Heart Rate", 40, 200, MAX_SAMPLES_TO_TRACK, 75, 25, 50, 75);//NON-NLS
+    private EntrySet _entriesSkinTemp = new EntrySet("Skin Temperature", 30, 40, MAX_SAMPLES_TO_TRACK, 36, 3, 5, 6);//NON-NLS
+    private EntrySet _entriesCoreTemp = new EntrySet("Core Temperature", 30, 40, MAX_SAMPLES_TO_TRACK, 36, 2, 3, 5);//NON-NLS
+    private EntrySet _entriesHydration = new EntrySet("Hydration %", 50, 100, MAX_SAMPLES_TO_TRACK, 80, 10, 15, 20);//NON-NLS
+    private EntrySet _entriesBloodOxygenation = new EntrySet("Blood Oxygenation %", 50, 100, MAX_SAMPLES_TO_TRACK, 90, 5, 8, 100);//NON-NLS
+    private EntrySet _entriesFatigueLevel = new EntrySet("Fatigue Level", 0, 10, MAX_SAMPLES_TO_TRACK, 4, 2, 3, 5);//NON-NLS
+    private EntrySet _entriesTaskEffectivenessLevel = new EntrySet("Task Effectiveness Level", 0, 10, MAX_SAMPLES_TO_TRACK, 3, 2, 4, 6);//NON-NLS
 
     public NodeUserBiometrics()
     {

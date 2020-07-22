@@ -1,5 +1,11 @@
 # Change List
 
+## July 22, 2020 - 1.176.9013
+- Adds preliminary group bridging capabilities.
+- Adds semaphore-based signalling of configuration changes for rallypointd.
+- Corrects the Opus CODEC to prevent use of AVX instructions on older/crippled X86/X64 CPUs.
+- Improves the RTP jitter buffer to further reduce latency.
+
 ## June 5, 2020 - 1.162.8938
 - Adds Rallypoint clustering.
 - Adds Acoustic Echo Cancellation.

@@ -21,9 +21,9 @@ public class SeriesElement
     {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("_timeOffset=");
+        sb.append("_timeOffset=");//NON-NLS
             sb.append(_timeOffset);
-        sb.append("_value=");
+        sb.append("_value=");//NON-NLS
             sb.append(_value);
 
         return sb.toString();
