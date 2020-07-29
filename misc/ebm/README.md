@@ -25,7 +25,7 @@ Last check at 2020/07/29 08:44:06, uptime 11 seconds
                              Bridge ID      State                               Group ID      State
 -------------------------------------- ---------- -------------------------------------- ----------
                                    1+2         OK {ac197b82-0f45-86e8-bf53-02ceea2e977c}         OK
-                                                  {f38a3c6f-201c-648e-4dbe-1e8565afe0c5}     ****    OK
+                                                  {f38a3c6f-201c-648e-4dbe-1e8565afe0c5}         OK
 
                                    2+3         OK {f38a3c6f-201c-648e-4dbe-1e8565afe0c5}         OK
                                                   {d54e51d0-1cc1-e130-f955-35b8f763cf9b}         OK
