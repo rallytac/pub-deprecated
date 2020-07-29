@@ -10,7 +10,7 @@ $ sudo pip install colorama
 ## Running ebm
 To run ebm, simply fire it up using Python and pass the name of the status file to be monitored.  For example:
 ```shell
-python ebm.py /tmp/bridgeserver01_status.json
+$ python ebm.py /tmp/bridgeserver01_status.json
 ```
 
 You should see output like this:
