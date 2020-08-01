@@ -86,4 +86,6 @@ static const uint64_t GROUP_HEALTH_ERROR_ERROR_NOTIFICATION_INTERVAL_MS = (1000 
 static const uint64_t GROUP_HEALTH_ERROR_ERROR_NOTIFICATION_INTERVAL_MS = (1000 * 30);
 #endif
 
+static const size_t MAX_GROUPS_PER_BRIDGE = 128;
+
 #endif // Constants_h

@@ -3196,7 +3196,7 @@ namespace AppConfigurationObjects
         p.clear();
         FROMJSON_IMPL(defaultNic, std::string, EMPTY_STRING);
         FROMJSON_IMPL(maxOutputQueuePackets, int, 100);
-        FROMJSON_IMPL(rtpJitterMinMs, int, 8);
+        FROMJSON_IMPL(rtpJitterMinMs, int, 20);
         FROMJSON_IMPL(rtpJitterMaxFactor, int, 8);
         FROMJSON_IMPL(rtpJitterTrimPercentage, int, 10);
         FROMJSON_IMPL(rtpJitterUnderrunReductionThresholdMs, int, 1500);
@@ -3393,6 +3393,9 @@ namespace AppConfigurationObjects
         /** @brief ID */
         std::string                 id;
 
+        /** @brief Name */
+        std::string                 name;
+
         /** @brief List of group IDs to be included in the session */
         std::vector<std::string>    groups;
 
@@ -3404,6 +3407,7 @@ namespace AppConfigurationObjects
         void clear()
         {
             id.clear();
+            name.clear();
             groups.clear();
         }
     };
@@ -3412,6 +3416,7 @@ namespace AppConfigurationObjects
     {
         j = nlohmann::json{
             TOJSON_IMPL(id),
+            TOJSON_IMPL(name),
             TOJSON_IMPL(groups)
         };
     }
@@ -3419,6 +3424,7 @@ namespace AppConfigurationObjects
     {
         p.clear();
         FROMJSON_IMPL(id, std::string, EMPTY_STRING);
+        FROMJSON_IMPL(name, std::string, EMPTY_STRING);
         getOptional<std::vector<std::string>>("groups", p.groups, j);
     }
     
@@ -4178,16 +4184,16 @@ namespace AppConfigurationObjects
 
     public:
 
-        /** @brief [Optional, Default: false] The watchdog will monitor internal message queues and if it detects an issue, it will abort the process. TODO: Shaun, is this correct*/
+        /** @brief [Optional, Default: false] The watchdog will monitor internal message queues and if it detects an issue, it will abort the process.*/
         bool                disableWatchdog;
 
-        /** @brief [Optional, Default: 5000] The interval that the watchdog will periodically run at. TODO: Shaun, is this correct? */
+        /** @brief [Optional, Default: 5000] The interval that the watchdog will periodically run at.*/
         int                 watchdogIntervalMs;
 
-        /** @brief [Optional, Default: 2000] The duration the watchdog thread will wait for a message to be processed before it declares that the process has hung. TODO: Shaun, is this correct? */
+        /** @brief [Optional, Default: 2000] The duration the watchdog thread will wait for a message to be processed before it declares that the process has hung.*/
         int                 watchdogHangDetectionMs;
 
-        /** @brief [Optional, Default: 1000] TODO: Shaun, no idea what this is */
+        /** @brief [Optional, Default: 1000] Interval at which to run the housekeeper thread. */
         int                 housekeeperIntervalMs;
 
         /** @brief [Optional, Default: 30] The default duration the @ref engageBeginGroupTx and @ref engageBeginGroupTxAdvanced function will transmit for. */
@@ -4250,7 +4256,6 @@ namespace AppConfigurationObjects
         getOptional<bool>("enableLazySpeakerClosure", p.enableLazySpeakerClosure, j, false);
         getOptional<RallypointCluster::ConnectionStrategy_t>("rpClusterStrategy", p.rpClusterStrategy, j, RallypointCluster::ConnectionStrategy_t::csRoundRobin);
         getOptional<int>("rpClusterRolloverSecs", p.rpClusterRolloverSecs, j, 10);
-
     }
 
     //-----------------------------------------------------------
@@ -5957,6 +5962,18 @@ namespace AppConfigurationObjects
 
             /** @brief Invalid JSON */
             csInvalidJson                       = -5,
+
+            /** @brief Insufficient groups in bridge */
+            csInsufficientGroups                = -6,
+
+            /** @brief Too many groups in bridge */
+            csTooManyGroups                     = -7,
+
+            /** @brief Duplicate group in the same bridge */
+            csDuplicateGroup                    = -8,
+
+            /** @brief Duplicate group in the same bridge */
+            csLocalLoopDetected                 = -9,
         } CreationStatus_t;
 
         /** @brief ID of the bridge */
@@ -6634,6 +6651,9 @@ namespace AppConfigurationObjects
         /** [Optional, Default: false] Indicates whether to include details of each bridge. */
         bool                            includeBridgeDetail;
 
+        /** [Optional, Default: false] Indicates whether to include details of each group in each bridge. */
+        bool                            includeBridgeGroupDetail;
+
         BridgingServerStatusReportConfiguration()
         {
             clear();
@@ -6646,6 +6666,7 @@ namespace AppConfigurationObjects
             enabled = false;
             includeGroupDetail = false;
             includeBridgeDetail = false;
+            includeBridgeGroupDetail = false;
             runCmd.clear();
         }
     };
@@ -6658,6 +6679,7 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(enabled),
             TOJSON_IMPL(includeGroupDetail),
             TOJSON_IMPL(includeBridgeDetail),
+            TOJSON_IMPL(includeBridgeGroupDetail),
             TOJSON_IMPL(runCmd)
         };
     }
@@ -6670,6 +6692,71 @@ namespace AppConfigurationObjects
         getOptional<std::string>("runCmd", p.runCmd, j);
         getOptional<bool>("includeGroupDetail", p.includeGroupDetail, j, false);
         getOptional<bool>("includeBridgeDetail", p.includeBridgeDetail, j, false);
+        getOptional<bool>("includeBridgeGroupDetail", p.includeBridgeGroupDetail, j, false);
+    }
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(BridgingServerInternals)
+    /**
+    * @brief Internal bridging server settings
+    *
+    * These settings are used to configure internal parameters.
+    *
+    * Helper C++ class to serialize and de-serialize BridgingServerInternals JSON
+    *
+    * Example: @include[doc] examples/BridgingServerInternals.json
+    *
+    * @see engageInitialize, ConfigurationObjects::BridgingServerConfiguration
+    */
+    class BridgingServerInternals : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(BridgingServerInternals)
+
+    public:
+
+        /** @brief [Optional, Default: false] The watchdog will monitor internal message queues and if it detects an issue, it will abort the process.*/
+        bool                disableWatchdog;
+
+        /** @brief [Optional, Default: 5000] The interval that the watchdog will periodically run at. */
+        int                 watchdogIntervalMs;
+
+        /** @brief [Optional, Default: 2000] The duration the watchdog thread will wait for a message to be processed before it declares that the process has hung.*/
+        int                 watchdogHangDetectionMs;
+
+        /** @brief [Optional, Default: 1000] Interval at which to run the housekeeper thread. */
+        int                 housekeeperIntervalMs;
+
+        BridgingServerInternals()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            disableWatchdog = false;
+            watchdogIntervalMs = 5000;
+            watchdogHangDetectionMs = 2000;
+            housekeeperIntervalMs = 1000;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const BridgingServerInternals& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(disableWatchdog),
+            TOJSON_IMPL(watchdogIntervalMs),
+            TOJSON_IMPL(watchdogHangDetectionMs),
+            TOJSON_IMPL(housekeeperIntervalMs)
+        };
+    }
+    static void from_json(const nlohmann::json& j, BridgingServerInternals& p)
+    {
+        p.clear();
+        getOptional<bool>("disableWatchdog", p.disableWatchdog, j, false);
+        getOptional<int>("watchdogIntervalMs", p.watchdogIntervalMs, j, 5000);
+        getOptional<int>("watchdogHangDetectionMs", p.watchdogHangDetectionMs, j, 2000);
+        getOptional<int>("housekeeperIntervalMs", p.housekeeperIntervalMs, j, 1000);
     }
 
     //-----------------------------------------------------------
@@ -6694,6 +6781,9 @@ namespace AppConfigurationObjects
         /** @brief A unqiue identifier for the bridge server */
         std::string                                 id;
 
+        /** @brief [DEFAULT: blank] Identifier of the OEM manufacturer. */
+        std::string                                 manufacturerId;
+
         /** @brief Name of a file containing the bridging configuration. */
         std::string                                 bridgingConfigurationFileName;
 
@@ -6709,14 +6799,8 @@ namespace AppConfigurationObjects
         /** @brief Details concerning the server's interaction with an external health-checker such as a load-balancer.  @see ExternalHealthCheckResponder */
         ExternalHealthCheckResponder                 externalHealthCheckResponder;
 
-        /** @brief Disables the watchdog logic that protects against a hung process becoming non-functional.  Only use for troubleshooting purposes. */
-        bool                                        disableWatchdog;
-
-        /** @brief The watchdog's check interval in milliseconds.  Only use for troubleshooting purposes. */
-        int                                         watchdogIntervalMs;
-
-        /** @brief The watchdog's hung process timeout in milliseconds.  Only use for troubleshooting purposes. */
-        int                                         watchdogHangDetectionMs;
+        /** @brief Internal settings */
+        BridgingServerInternals                     internals;
 
         /** @brief Tx options. */
         NetworkTxOptions                            txOptions;
@@ -6744,14 +6828,13 @@ namespace AppConfigurationObjects
         void clear()
         {
             id.clear();
+            manufacturerId.clear();
             bridgingConfigurationFileName.clear();
             bridgingConfigurationFileCommand.clear();
             bridgingConfigurationFileCheckSecs = 60;
             statusReport.clear();
             externalHealthCheckResponder.clear();
-            disableWatchdog = false;
-            watchdogIntervalMs = 5000;
-            watchdogHangDetectionMs = 2000;
+            internals.clear();
             txOptions.clear();
             multicastTxOptions.clear();
             certStoreFileName.clear();
@@ -6765,14 +6848,13 @@ namespace AppConfigurationObjects
     {
         j = nlohmann::json{
             TOJSON_IMPL(id),
+            TOJSON_IMPL(manufacturerId),
             TOJSON_IMPL(bridgingConfigurationFileName),
             TOJSON_IMPL(bridgingConfigurationFileCommand),
             TOJSON_IMPL(bridgingConfigurationFileCheckSecs),
             TOJSON_IMPL(statusReport),
             TOJSON_IMPL(externalHealthCheckResponder),
-            TOJSON_IMPL(disableWatchdog),
-            TOJSON_IMPL(watchdogIntervalMs),
-            TOJSON_IMPL(watchdogHangDetectionMs),
+            TOJSON_IMPL(internals),
             TOJSON_IMPL(txOptions),
             TOJSON_IMPL(multicastTxOptions),
             TOJSON_IMPL(certStoreFileName),
@@ -6785,14 +6867,13 @@ namespace AppConfigurationObjects
     {
         p.clear();
         getOptional<std::string>("id", p.id, j);
+        getOptional<std::string>("manufacturerId", p.manufacturerId, j);        
         getOptional<std::string>("bridgingConfigurationFileName", p.bridgingConfigurationFileName, j);
         getOptional<std::string>("bridgingConfigurationFileCommand", p.bridgingConfigurationFileCommand, j);
         getOptional<int>("bridgingConfigurationFileCheckSecs", p.bridgingConfigurationFileCheckSecs, j, 60);
         getOptional<BridgingServerStatusReportConfiguration>("statusReport", p.statusReport, j);
         getOptional<ExternalHealthCheckResponder>("externalHealthCheckResponder", p.externalHealthCheckResponder, j);
-        getOptional<bool>("disableWatchdog", p.disableWatchdog, j, false);
-        getOptional<int>("watchdogIntervalMs", p.watchdogIntervalMs, j, 5000);
-        getOptional<int>("watchdogHangDetectionMs", p.watchdogHangDetectionMs, j, 2000);
+        getOptional<BridgingServerInternals>("internals", p.internals, j);
         getOptional<NetworkTxOptions>("txOptions", p.txOptions, j);
         getOptional<std::string>("certStoreFileName", p.certStoreFileName, j);
         getOptional<std::string>("certStorePasswordHex", p.certStorePasswordHex, j);
