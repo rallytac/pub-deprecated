@@ -104,6 +104,13 @@ public class Engage
     {
         void onHumanBiometricsReceived(string groupId, string nodeId, string hbmJson, string eventExtraJson);
 	}
+
+    public interface IBridgeNotifications
+    {
+        void onBridgeCreated(string id, string eventExtraJson);
+        void onBridgeCreateFailed(string id, string eventExtraJson);
+        void onBridgeDeleted(string id, string eventExtraJson);
+    }
     #endregion
 
 
@@ -1176,6 +1183,7 @@ public class Engage
     private static List<IGroupNotifications> _groupNotificationSubscribers = new List<IGroupNotifications>();
     private static List<ILicenseNotifications> _licenseNotificationSubscribers = new List<ILicenseNotifications>();
     private static List<IHumanBiometricsNotifications> _humanBiometricsNotifications = new List<IHumanBiometricsNotifications>();
+    private static List<IBridgeNotifications> _bridgeNotificationSubscribers = new List<IBridgeNotifications>();
     #endregion
 
     #region Callback delegates
@@ -1956,6 +1964,22 @@ public class Engage
         lock (_humanBiometricsNotifications)
         {
             _humanBiometricsNotifications.Remove(n);
+        }
+    }
+
+    public void subscribe(IBridgeNotifications n)
+    {
+        lock (_bridgeNotificationSubscribers)
+        {
+            _bridgeNotificationSubscribers.Add(n);
+        }
+    }
+
+    public void unsubscribe(IBridgeNotifications n)
+    {
+        lock (_bridgeNotificationSubscribers)
+        {
+            _bridgeNotificationSubscribers.Remove(n);
         }
     }
 
