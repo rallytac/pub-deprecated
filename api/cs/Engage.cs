@@ -999,6 +999,12 @@ public class Engage
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageDeleteBridge(string id);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageEncrypt(IntPtr src, int size, IntPtr dst, string passwordHexByteString);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageDecrypt(IntPtr src, int size, IntPtr dst, string passwordHexByteString);
     #endregion
 
     #region Internal functions
@@ -2275,6 +2281,62 @@ public class Engage
         {
             return Marshal.PtrToStringAnsi(ptr);
         }
+    }
+
+    public int encrypt(byte[] src, int size, out byte[] dst, string passwordHexByteString)
+    {
+        // Make a copy of the source
+        IntPtr pinned_src = Marshal.AllocHGlobal(size);
+        Marshal.Copy(src, 0, pinned_src, size);
+
+        // Allocate a destination - at least the size of the source + 16 for AES sizing + 16 for IV
+        IntPtr pinned_dst = Marshal.AllocHGlobal(size + 16 + 16);
+       
+        int bytesEncrypted = engageEncrypt(pinned_src, size, pinned_dst, passwordHexByteString);
+
+        if(bytesEncrypted > 0)
+        {
+            dst = new byte[bytesEncrypted];
+            Marshal.Copy(pinned_dst, dst, 0, bytesEncrypted);
+        }
+        else
+        {
+            dst = null;
+        }        
+
+        // Cleanup
+        Marshal.FreeHGlobal(pinned_src);
+        Marshal.FreeHGlobal(pinned_dst);
+
+        return bytesEncrypted;
+    }
+
+    public int decrypt(byte[] src, int size, out byte[] dst, string passwordHexByteString)
+    {
+        // Make a copy of the source
+        IntPtr pinned_src = Marshal.AllocHGlobal(size);
+        Marshal.Copy(src, 0, pinned_src, size);
+
+        // Allocate a destination - at least the size of the source + 16 for AES sizing
+        IntPtr pinned_dst = Marshal.AllocHGlobal(size + 16);
+
+        int bytesDecrypted = engageDecrypt(pinned_src, size, pinned_dst, passwordHexByteString);
+
+        if (bytesDecrypted > 0)
+        {
+            dst = new byte[bytesDecrypted];
+            Marshal.Copy(pinned_dst, dst, 0, bytesDecrypted);
+        }
+        else
+        {
+            dst = null;
+        }
+
+        // Cleanup
+        Marshal.FreeHGlobal(pinned_src);
+        Marshal.FreeHGlobal(pinned_dst);
+
+        return bytesDecrypted;
     }
     #endregion
 

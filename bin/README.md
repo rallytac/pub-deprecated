@@ -1,5 +1,9 @@
 # Change List
 
+## August 1, 2020 - 1.178.9015
+- Adds the initial release of the Engage Bridging Service.
+- Adds symbolic information to binaries to aid in troubelshooting.
+
 ## July 22, 2020 - 1.176.9013
 - Adds preliminary group bridging capabilities.
 - Adds semaphore-based signalling of configuration changes for rallypointd.
