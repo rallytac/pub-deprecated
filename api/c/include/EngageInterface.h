@@ -127,7 +127,7 @@ static const uint8_t ENGAGE_TXFLAG_AUTOMATED_SYSTEM    = 0x0004;
  * @{
  */
 /** @brief Event Handlers Struct */
-typedef struct
+typedef struct _EngageEvents_t
 {
     /** @brief Fired when the Engine has started */
     void (* _Nullable PFN_ENGAGE_ENGINE_STARTED)(const char * _Nullable eventExtraJson);

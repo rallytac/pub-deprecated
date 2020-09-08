@@ -53,7 +53,7 @@ namespace AppConfigurationObjects
 {
     //-----------------------------------------------------------
     #pragma pack(push, 1)
-        typedef struct
+        typedef struct _DataSeriesHeader_t
         {
             /** @brief DataSeries Type.
              * Currently supported types
@@ -111,25 +111,25 @@ namespace AppConfigurationObjects
             uint8_t     ss;
         } DataSeriesHeader_t;
 
-        typedef struct
+        typedef struct _DataElementUint8_t
         {
             uint8_t     ofs;
             uint8_t     val;
         } DataElementUint8_t;
 
-        typedef struct
+        typedef struct _DataElementUnint16_t
         {
             uint8_t     ofs;
             uint16_t    val;
         } DataElementUnint16_t;
 
-        typedef struct
+        typedef struct _DataElementUnint32_t
         {
             uint8_t     ofs;
             uint32_t    val;
         } DataElementUnint32_t;
 
-        typedef struct
+        typedef struct _DataElementUnint64_t
         {
             uint8_t     ofs;
             uint64_t    val;
@@ -2087,8 +2087,6 @@ namespace AppConfigurationObjects
          * TODO: Shaun help
          */
         int             boostPercentage;
-        int             msPerBuffer;
-        int             bufferCount;
 
         bool            isAdad;
         std::string     name;
@@ -2114,8 +2112,6 @@ namespace AppConfigurationObjects
             boostPercentage = 0;
             isAdad = false;
             isDefault = false;
-            msPerBuffer = 60;
-            bufferCount = 3;
 
             name.clear();
             manufacturer.clear();
@@ -2132,8 +2128,6 @@ namespace AppConfigurationObjects
         j = nlohmann::json{
             TOJSON_IMPL(deviceId),
             TOJSON_IMPL(samplingRate),
-            TOJSON_IMPL(msPerBuffer),
-            TOJSON_IMPL(bufferCount),
             TOJSON_IMPL(channels),
             TOJSON_IMPL(direction),
             TOJSON_IMPL(boostPercentage),
@@ -2153,8 +2147,6 @@ namespace AppConfigurationObjects
         p.clear();
         getOptional<int>("deviceId", p.deviceId, j, 0);
         getOptional<int>("samplingRate", p.samplingRate, j, 0);
-        getOptional<int>("msPerBuffer", p.msPerBuffer, j, 60);
-        getOptional<int>("bufferCount", p.bufferCount, j, 3);        
         getOptional<int>("channels", p.channels, j, 0);
         getOptional<AudioDeviceDescriptor::Direction_t>("direction", p.direction, j,
                         AudioDeviceDescriptor::Direction_t::dirUnknown);
@@ -3125,7 +3117,7 @@ namespace AppConfigurationObjects
         int                 rallypointRtTestIntervalMs;
         bool                logRtpJitterBufferStats;
 
-        /** @brief [Optional, Default: true] Overrides/cancels group-level multicast failover if set to true */
+        /** @brief [Optional, Default: false] Overrides/cancels group-level multicast failover if set to true */
         bool                preventMulticastFailover;
 
         /** @brief [Optional, Default: 45000] Timeout for RTCP presence. */
@@ -3133,6 +3125,12 @@ namespace AppConfigurationObjects
 
         /** @brief [Optional, Default: jblStandard] Operation mode of the jitter buffer */
         JitterBufferLatency_t   rtpJtterLatencyMode;
+
+        /** @brief [Optional, Default: 10] Percentage by which maximum number of samples in the queue exceeded computed max before large-scale clipping . */
+        int                     rtpJitterMaxExceededClipPerc;
+
+        /** @brief [Optional, Default: 1500] Number of milliseconds for which the jitter buffer may exceed max before clipping is actually applied. */
+        int                     rtpJitterMaxExceededClipHangMs;
 
         EnginePolicyNetworking()
         {
@@ -3162,6 +3160,8 @@ namespace AppConfigurationObjects
             preventMulticastFailover = false;
             rtcpPresenceTimeoutMs = 45000;
             rtpJtterLatencyMode = JitterBufferLatency_t::jblStandard;
+            rtpJitterMaxExceededClipPerc = 10;
+            rtpJitterMaxExceededClipHangMs = 1500;
         }
     };
 
@@ -3188,7 +3188,9 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(logRtpJitterBufferStats),
             TOJSON_IMPL(preventMulticastFailover),
             TOJSON_IMPL(rtcpPresenceTimeoutMs),
-            TOJSON_IMPL(rtpJtterLatencyMode)
+            TOJSON_IMPL(rtpJtterLatencyMode),
+            TOJSON_IMPL(rtpJitterMaxExceededClipPerc),
+            TOJSON_IMPL(rtpJitterMaxExceededClipHangMs)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyNetworking& p)
@@ -3215,6 +3217,8 @@ namespace AppConfigurationObjects
         FROMJSON_IMPL(preventMulticastFailover, bool, false);
         FROMJSON_IMPL(rtcpPresenceTimeoutMs, int, 45000);
         FROMJSON_IMPL(rtpJtterLatencyMode, EnginePolicyNetworking::JitterBufferLatency_t, EnginePolicyNetworking::JitterBufferLatency_t::jblStandard);        
+        FROMJSON_IMPL(rtpJitterMaxExceededClipPerc, int, 10);
+        FROMJSON_IMPL(rtpJitterMaxExceededClipHangMs, int, 1500);
     }
 
     //-----------------------------------------------------------
@@ -3427,6 +3431,49 @@ namespace AppConfigurationObjects
         FROMJSON_IMPL(name, std::string, EMPTY_STRING);
         getOptional<std::vector<std::string>>("groups", p.groups, j);
     }
+
+    //-----------------------------------------------------------
+    JSON_SERIALIZED_CLASS(AndroidAudio)
+    /**
+    * @brief Default audio settings for AndroidAudio.
+    *
+    * Helper C++ class to serialize and de-serialize AndroidAudio JSON
+    *
+    * Example: @include[doc] examples/AndroidAudio.json
+    *
+    * @see TODO: ConfigurationObjects::AndroidAudio
+    */
+    class AndroidAudio : public ConfigurationObjectBase
+    {
+        IMPLEMENT_JSON_SERIALIZATION()
+        IMPLEMENT_JSON_DOCUMENTATION(AndroidAudio)
+
+    public:
+        /** @brief [Optional, Default 0] Android audio API version: 1=AAudio, 2=OpenGLES */
+        int                 api;
+
+        AndroidAudio()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            api = 0;
+        }
+    };
+
+    static void to_json(nlohmann::json& j, const AndroidAudio& p)
+    {
+        j = nlohmann::json{
+            TOJSON_IMPL(api)
+        };
+    }
+    static void from_json(const nlohmann::json& j, AndroidAudio& p)
+    {
+        p.clear();
+        FROMJSON_IMPL(api, int, 0);
+    }    
     
     //-----------------------------------------------------------
     JSON_SERIALIZED_CLASS(EnginePolicyAudio)
@@ -3448,23 +3495,6 @@ namespace AppConfigurationObjects
         int                 internalRate;
         int                 internalChannels;
 
-        int                 inputBufferCount;
-        int                 inputBufferMs;
-        int                 inputChannels;
-        int                 inputRate;
-
-        int                 outputBufferMs;
-        int                 outputBufferCount;
-
-        /** @brief [Optional, Default: 2] TODO: Shaun. */
-        int                 outputChannels;
-
-        /** @brief [Optional, Default: ?] TODO: Shaun. */
-        int                 outputRate;
-
-        /** @brief [Optional, Default: 0] TODO: Shaun. */
-        int                 outputGainPercentage;
-
         /** @brief [Optional, Default: false] TODO: Shaun. */
         bool                allowOutputOnTransmit;
 
@@ -3477,6 +3507,9 @@ namespace AppConfigurationObjects
         /** @brief [Optional] Voice activity detection settings */
         Vad                 vad;
 
+        /** @brief [Optional] Android-specific audio settings */
+        AndroidAudio        android;
+
         EnginePolicyAudio()
         {
             clear();
@@ -3485,23 +3518,12 @@ namespace AppConfigurationObjects
         void clear()
         {
             internalRate = 16000;
-            internalChannels = 1;
-
-            inputBufferMs = 60;
-            inputBufferCount = 3;
-            inputChannels = 1;
-            inputRate = 16000;
-
-            outputBufferMs = 60;
-            outputBufferCount = 3;
-            outputChannels = 2;
-            outputRate = 16000;
-
-            outputGainPercentage = 0;
+            internalChannels = 2;
             allowOutputOnTransmit = false;
             muteTxOnTx = false;
             aec.clear();
             vad.clear();
+            android.clear();
         }
     };
 
@@ -3510,43 +3532,24 @@ namespace AppConfigurationObjects
         j = nlohmann::json{
             TOJSON_IMPL(internalRate),
             TOJSON_IMPL(internalChannels),
-            TOJSON_IMPL(inputBufferMs),
-            TOJSON_IMPL(inputBufferCount),
-            TOJSON_IMPL(inputChannels),
-            TOJSON_IMPL(inputRate),
-            TOJSON_IMPL(outputBufferMs),
-            TOJSON_IMPL(outputBufferCount),
-            TOJSON_IMPL(outputChannels),
-            TOJSON_IMPL(outputRate),
-            TOJSON_IMPL(outputChannels),
-            TOJSON_IMPL(outputGainPercentage),
             TOJSON_IMPL(allowOutputOnTransmit),
             TOJSON_IMPL(muteTxOnTx),
             TOJSON_IMPL(aec),
-            TOJSON_IMPL(vad)
+            TOJSON_IMPL(vad),
+            TOJSON_IMPL(android)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyAudio& p)
     {
         p.clear();
         FROMJSON_IMPL(internalRate, int, 16000);
-        FROMJSON_IMPL(internalChannels, int, 1);
+        FROMJSON_IMPL(internalChannels, int, 2);
 
-        FROMJSON_IMPL(inputBufferMs, int, 60);
-        FROMJSON_IMPL(inputBufferCount, int, 3);
-        FROMJSON_IMPL(inputChannels, int, 1);
-        FROMJSON_IMPL(inputRate, int, 16000);
-
-        FROMJSON_IMPL(outputBufferMs, int, 60);
-        FROMJSON_IMPL(outputBufferCount, int, 3);
-        FROMJSON_IMPL(outputChannels, int, 2);
-        FROMJSON_IMPL(outputRate, int, 16000);
-
-        FROMJSON_IMPL(outputGainPercentage, int, 0);
         FROMJSON_IMPL(allowOutputOnTransmit, bool, false);
         FROMJSON_IMPL(muteTxOnTx, bool, false);
         getOptional<Aec>("aec", p.aec, j);
         getOptional<Vad>("vad", p.vad, j);
+        getOptional<AndroidAudio>("android", p.android, j);
     }
 
     //-----------------------------------------------------------
@@ -4208,6 +4211,9 @@ namespace AppConfigurationObjects
         /** @brief Seconds between switching to a new target in a RP cluster */
         int                                     rpClusterRolloverSecs;
 
+        /** @brief [Optional, Default: 250] Interval at which to check for RTP expiration. */
+        int                                     rtpExpirationCheckIntervalMs;
+
         EnginePolicyInternals()
         {
             clear();
@@ -4225,6 +4231,7 @@ namespace AppConfigurationObjects
             enableLazySpeakerClosure = false;
             rpClusterStrategy = RallypointCluster::ConnectionStrategy_t::csRoundRobin;
             rpClusterRolloverSecs = 10;
+            rtpExpirationCheckIntervalMs = 250;
         }
     };
 
@@ -4240,7 +4247,8 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(maxRxSecs),
             TOJSON_IMPL(enableLazySpeakerClosure),
             TOJSON_IMPL(rpClusterStrategy),
-            TOJSON_IMPL(rpClusterRolloverSecs)
+            TOJSON_IMPL(rpClusterRolloverSecs),
+            TOJSON_IMPL(rtpExpirationCheckIntervalMs)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyInternals& p)
@@ -4256,6 +4264,7 @@ namespace AppConfigurationObjects
         getOptional<bool>("enableLazySpeakerClosure", p.enableLazySpeakerClosure, j, false);
         getOptional<RallypointCluster::ConnectionStrategy_t>("rpClusterStrategy", p.rpClusterStrategy, j, RallypointCluster::ConnectionStrategy_t::csRoundRobin);
         getOptional<int>("rpClusterRolloverSecs", p.rpClusterRolloverSecs, j, 10);
+        getOptional<int>("rtpExpirationCheckIntervalMs", p.rtpExpirationCheckIntervalMs, j, 250);
     }
 
     //-----------------------------------------------------------

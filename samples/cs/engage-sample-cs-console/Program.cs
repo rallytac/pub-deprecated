@@ -829,6 +829,16 @@ namespace engage_sample_cs_console
         {
             Console.WriteLine("C#: onGroupHealthReportFailed: " + id);
         }
+
+        public void onGroupStatsReport(string id, string statsReportJson, string eventExtraJson)
+        {
+            Console.WriteLine("C#: onGroupStatsReport: " + id);
+        }
+
+        public void onGroupStatsReportFailed(string id, string eventExtraJson)
+        {
+            Console.WriteLine("C#: onGroupStatsReportFailed: " + id);
+        }
         #endregion
     }
 }
