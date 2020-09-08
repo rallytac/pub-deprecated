@@ -1,5 +1,11 @@
 # Change List
 
+## September 8, 2020 - 1.182.9019
+- Corrects issues reported with audio RX
+- Corrects stereo panning issues
+- Corrects a bug in the RX-side jitter buffer
+- Optimizes audio processing to reduce CPU and battery utilization
+
 ## August 1, 2020 - 1.178.9015
 - Adds the initial release of the Engage Bridging Service.
 - Adds symbolic information to binaries to aid in troubelshooting.
