@@ -366,6 +366,7 @@ public class Engage
                 public static String maxTxSecs = "maxTxSecs";
                 public static String maxRxSecs = "maxRxSecs";
                 public static String enableLazySpeakerClosure = "enableLazySpeakerClosure";
+                public static String rtpExpirationCheckIntervalMs = "rtpExpirationCheckIntervalMs";                
             }
 
             public class Timelines
@@ -435,15 +436,6 @@ public class Engage
                 public static String objectName = "audio";
                 public static String internalRate = "internalRate";
                 public static String internalChannels = "internalChannels";
-                public static String inputRate = "inputRate";
-                public static String inputChannels = "inputChannels";
-                public static String inputBufferMs = "inputBufferMs";
-                public static String inputBufferCount = "inputBufferCount";
-                public static String outputRate = "outputRate";
-                public static String outputChannels = "outputChannels";
-                public static String outputBufferMs = "outputBufferMs";
-                public static String outputBufferCount = "outputBufferCount";
-                public static String outputGainPercentage = "outputGainPercentage";
                 public static String allowOutputOnTransmit = "allowOutputOnTransmit";
                 public static String muteTxOnTx = "muteTxOnTx";
 
@@ -932,6 +924,9 @@ public class Engage
     private static extern int engageUpdateLicense(string entitlement, string key, string activationCode, string manufacturerId);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageUpdatePresenceDescriptor(string id, string jsonDescriptor, int forceBeacon);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageSendGroupBlob(string id, byte[] blob, int blobSize, string jsonBlobParams);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
@@ -942,6 +937,9 @@ public class Engage
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageQueryGroupTimeline(string id, string jsonParams);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageSetLogLevel(int level);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageLogMsg(int level, string tag, string msg);
@@ -2102,6 +2100,11 @@ public class Engage
         return engageLogMsg(level, tag, msg);
     }
 
+    public int setLogLevel(int level)
+    {
+        return engageSetLogLevel(level);
+    }    
+
     public String getVersion()
     {
         IntPtr ptr = engageGetVersion();
@@ -2337,6 +2340,25 @@ public class Engage
         Marshal.FreeHGlobal(pinned_dst);
 
         return bytesDecrypted;
+    }
+
+    public String generateMission(string keyPhrase, int audioGroupCount, string rallypointHost, string missionName)
+    {
+        IntPtr ptr = engageGenerateMission(keyPhrase, audioGroupCount, rallypointHost, missionName);
+
+        if (ptr == IntPtr.Zero)
+        {
+            return null;
+        }
+        else
+        {
+            return Marshal.PtrToStringAnsi(ptr);
+        }
+    }
+
+    public int updatePresenceDescriptor(string id, string jsonDescriptor, bool forceBeacon)
+    {
+        return engageUpdatePresenceDescriptor(id, jsonDescriptor, (forceBeacon ? 1 : 0));
     }
     #endregion
 
