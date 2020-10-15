@@ -16,6 +16,8 @@ ARCH := $(shell uname -p | tr A-Z a-z)
 
 ifeq ($(UNAME_S), darwin)
 	LIBSRC = ../../../bin/latest/darwin_x64
+else ifeq ($(ARCH), x86_64)
+        LIBSRC := ../../../bin/latest/linux_x64
 else ifeq ($(ARCH), aarch64)
         LIBSRC := ../../../bin/latest/linux_arm64
 endif
