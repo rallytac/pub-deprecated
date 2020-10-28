@@ -10,7 +10,7 @@
         android:id="@+id/ivSendTextMessage"
         android:layout_width="42dp"
         android:layout_height="42dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="4dp"
         android:layout_marginBottom="16dp"
         android:contentDescription="@string/text_message_send_message"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -22,12 +22,11 @@
         android:id="@+id/etTextMessage"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="8dp"
         android:gravity="center_vertical"
-        android:textColor="#FFFFFF"
-        android:textSize="18sp"
         android:hint="@string/text_message_hint_enter_text_message"
+        android:textColor="#FFFFFF"
+        android:textSize="14dp"
         app:layout_constraintBottom_toBottomOf="@+id/ivSendTextMessage"
         app:layout_constraintEnd_toStartOf="@+id/ivSendTextMessage"
         app:layout_constraintHorizontal_bias="1.0"
@@ -38,10 +37,11 @@
         android:id="@+id/lvTextMessages"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toTopOf="@+id/etTextMessage"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:divider="@null"
+        android:dividerHeight="0dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

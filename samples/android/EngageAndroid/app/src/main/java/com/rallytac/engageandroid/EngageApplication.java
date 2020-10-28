@@ -201,6 +201,45 @@ public class EngageApplication
     private boolean _terminateOnEngineStopped = false;
     private Activity _terminatingActivity = null;
 
+    private int[] _audioDeviceIds = null;
+    private String[] _audioDeviceNames = null;
+
+    public int getMaxGroupsAllowed()
+    {
+        int rc;
+
+        try
+        {
+            String s = getString(R.string.opt_max_groups_allowed);
+            if (Utils.isEmptyString(s))
+            {
+                s = Integer.toString(Constants.DEF_MAX_GROUPS_ALLOWED);
+            }
+
+            rc = Integer.parseInt(s);
+        }
+        catch (Exception e)
+        {
+            rc = Constants.DEF_MAX_GROUPS_ALLOWED;
+        }
+
+        return rc;
+    }
+
+    public String androidAudioDeviceName(int type)
+    {
+        for(int x = 0; x < _audioDeviceIds.length; x++)
+        {
+            if(_audioDeviceIds[x] == type)
+            {
+                return _audioDeviceNames[x];
+            }
+        }
+
+        return "?";
+    }
+
+
     public class GroupConnectionTrackerInfo
     {
         public GroupConnectionTrackerInfo(boolean mc, boolean mcfo, boolean rp)
@@ -224,7 +263,19 @@ public class EngageApplication
 
 	private void setGroupConnectionState(String id, boolean mc, boolean mcfo, boolean rp)
     {
-        setGroupConnectionState(id, new GroupConnectionTrackerInfo(mc, mcfo, rp));
+        GroupConnectionTrackerInfo gi = getGroupConnectionState(id);
+        if(gi == null)
+        {
+            gi = new GroupConnectionTrackerInfo(mc, mcfo, rp);
+        }
+        else
+        {
+            gi.hasMulticastConnection = mc;
+            gi.operatingInMulticastFailover = mcfo;
+            gi.hasRpConnection = rp;
+        }
+
+        setGroupConnectionState(id, gi);
     }
 
     private void setGroupConnectionState(String id, GroupConnectionTrackerInfo gts)
@@ -616,12 +667,20 @@ public class EngageApplication
         }
     }
 
+    private void loadAndroidAudioDeviceCache()
+    {
+        _audioDeviceIds = getResources().getIntArray(R.array.android_audio_device_types_ids);
+        _audioDeviceNames = getResources().getStringArray(R.array.android_audio_device_types_names);
+    }
+
     @Override
     public void onCreate()
     {
         Log.d(TAG, "onCreate");
 
         super.onCreate();
+
+        loadAndroidAudioDeviceCache();
 
         // Its important to set this as soon as possible!
         Engine.setApplicationContext(this.getApplicationContext());
@@ -972,6 +1031,9 @@ public class EngageApplication
         {
             _enableDevicePowerMonitor = Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_EXPERIMENT_ENABLE_DEVICE_REPORT_POWER, false);
             _enableDeviceConnectivityMonitor = Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_EXPERIMENT_ENABLE_DEVICE_REPORT_CONNECTIVITY, false);
+
+            //_enableDevicePowerMonitor = true;
+            //_enableDeviceConnectivityMonitor = true;
 
             if(_enableDevicePowerMonitor || _enableDeviceConnectivityMonitor)
             {
@@ -1389,8 +1451,20 @@ public class EngageApplication
             {
                 JSONObject audio = new JSONObject();
 
-                //audio.put("inputId", 1);
-                //audio.put("outputId", 4);
+                int deviceId;
+
+                deviceId = _activeConfiguration.getAudioInputDeviceId();
+                if(deviceId != Constants.INVALID_AUDIO_DEVICE_ID)
+                {
+                    audio.put("inputId", deviceId);
+                }
+
+                deviceId = _activeConfiguration.getAudioOutputDeviceId();
+                if(deviceId != Constants.INVALID_AUDIO_DEVICE_ID)
+                {
+                    audio.put("outputId", deviceId);
+                }
+
                 audio.put("outputGain", (_activeConfiguration.getSpeakerOutputBoostFactor() * 100));
 
                 group.put("audio", audio);
@@ -1416,6 +1490,15 @@ public class EngageApplication
                 // Multicast failover only applies when rallypoints are present
                 group.put("enableMulticastFailover", _activeConfiguration.getMulticastFailoverConfiguration().enabled);
                 group.put("multicastFailoverSecs", _activeConfiguration.getMulticastFailoverConfiguration().thresholdSecs);
+            }
+            else
+            {
+                JSONObject txOptions = new JSONObject();
+
+                txOptions.put("ttl", Constants.DEFAULT_NETWORK_TX_TTL);
+                txOptions.put("priority", Constants.DEFAULT_NETWORK_QOS_PRIORITY);
+
+                group.put("txOptions", txOptions);
             }
 
             {
@@ -1510,6 +1593,7 @@ public class EngageApplication
                     }
 
                     getEngine().engageJoinGroup(gd.id);
+                    getEngine().engageUnmuteGroupRx(gd.id);
                 }
             }
 
@@ -1946,7 +2030,13 @@ public class EngageApplication
                 identityJson,
                 tempDirectory);
 
-        String passphrase = BuildConfig.APPLICATION_ID + getString(R.string.manufacturer_id);
+        String appId = getString(R.string.sample_mission_gen_passphrase);
+        if(Utils.isEmptyString(appId))
+        {
+            appId = BuildConfig.APPLICATION_ID + getString(R.string.manufacturer_id);
+        }
+
+        String passphrase = appId;
         String mn = String.format(getString(R.string.sample_mission_gen_mission_name_fmt), getString(R.string.app_name));
         String missionJson = getEngine().engageGenerateMission(passphrase, Integer.parseInt(getString(R.string.sample_mission_gen_group_count)), "", mn);
 
@@ -2468,12 +2558,10 @@ public class EngageApplication
                     {
                         if (!_groupsSelectedForTx.contains(testGroup))
                         {
-                            /*
                             if (testGroup.tx || testGroup.txPending)
                             {
-                                Log.wtf(TAG, "data model says group is tx or txPending but the group is not in the tx set!!");
+                                //Log.wtf(TAG, "#SB# data model says group is tx or txPending but the group is not in the tx set!!, tx=" + testGroup.tx + ", txPending=" + testGroup.txPending);
                             }
-                            */
 
                             testGroup.tx = false;
                             testGroup.txPending = false;
@@ -2536,13 +2624,21 @@ public class EngageApplication
             {
                 try
                 {
-                    int responseCode = msg.arg1;
                     String resultMsg = msg.getData().getString(DownloadMissionTask.BUNDLE_RESULT_MSG);
-                    String resultData = msg.getData().getString(DownloadMissionTask.BUNDLE_RESULT_DATA);
+                    int responseCode = msg.arg1;
 
                     if(responseCode >= 200 && responseCode <= 299)
                     {
-                        processDownloadedMissionAndSwitchIfOk(resultData, password);
+                        if(Utils.isEmptyString(password))
+                        {
+                            byte[] resultByteArray = msg.getData().getByteArray(DownloadMissionTask.BUNDLE_RESULT_DATA);
+                            processDownloadedMissionAndSwitchIfOk(resultByteArray, password);
+                        }
+                        else
+                        {
+                            String resultString = msg.getData().getString(DownloadMissionTask.BUNDLE_RESULT_DATA);
+                            processDownloadedMissionAndSwitchIfOk(resultString.getBytes(Utils.getEngageCharSet()), password);
+                        }
                     }
                     else
                     {
@@ -2560,7 +2656,7 @@ public class EngageApplication
         dmt.execute(url);
     }
 
-    public void processDownloadedMissionAndSwitchIfOk(final String missionData, final String password)
+    public void processDownloadedMissionAndSwitchIfOk(final byte[] missionData, final String password)
     {
         runOnUiThread(new Runnable()
         {
@@ -2569,22 +2665,17 @@ public class EngageApplication
             {
                 try
                 {
-                    ActiveConfiguration ac = new ActiveConfiguration();
-                    if (!ac.parseTemplate(missionData))
+                    if (!Utils.isEmptyString(password))
                     {
-                        throw new Exception("Invalid mission data");
+                        String pwdHexString = Utils.toHexString(password.getBytes(Utils.getEngageCharSet()));
+                        byte[] decryptedBytes = Globals.getEngageApplication().getEngine().decryptSimple(missionData, pwdHexString);
+                        String decryptedString = new String(decryptedBytes, Utils.getEngageCharSet());
+
+                        internal_processDownloadedMissionAndSwitchIfOk(decryptedString);
                     }
-
-                    saveAndActivateConfiguration(ac);
-
-                    Toast.makeText(EngageApplication.this, ac.getMissionName() + " processed", Toast.LENGTH_LONG).show();
-
-                    synchronized (_configurationChangeListeners)
+                    else
                     {
-                        for (IConfigurationChangeListener listener : _configurationChangeListeners)
-                        {
-                            listener.onMissionChanged();
-                        }
+                        internal_processDownloadedMissionAndSwitchIfOk(new String(missionData, Utils.getEngageCharSet()));
                     }
                 }
                 catch (Exception e)
@@ -2593,6 +2684,27 @@ public class EngageApplication
                 }
             }
         });
+    }
+
+    public void internal_processDownloadedMissionAndSwitchIfOk(final String missionData) throws Exception
+    {
+        ActiveConfiguration ac = new ActiveConfiguration();
+        if (!ac.parseTemplate(missionData))
+        {
+            throw new Exception("Invalid mission data");
+        }
+
+        saveAndActivateConfiguration(ac);
+
+        Toast.makeText(EngageApplication.this, ac.getMissionName() + " processed", Toast.LENGTH_LONG).show();
+
+        synchronized (_configurationChangeListeners)
+        {
+            for (IConfigurationChangeListener listener : _configurationChangeListeners)
+            {
+                listener.onMissionChanged();
+            }
+        }
     }
 
     public int getQrCodeScannerRequestCode()
@@ -3391,6 +3503,8 @@ public class EngageApplication
                                 TalkerDescriptor td = new TalkerDescriptor();
                                 td.alias = obj.optString(Engine.JsonFields.TalkerInformation.alias);
                                 td.nodeId = obj.optString(Engine.JsonFields.TalkerInformation.nodeId);
+                                td.rxFlags = obj.optLong(Engine.JsonFields.TalkerInformation.rxFlags, 0);
+                                td.txPriority = obj.optInt(Engine.JsonFields.TalkerInformation.txPriority, 0);
 
                                 if (talkers == null)
                                 {
@@ -3498,40 +3612,55 @@ public class EngageApplication
                     @Override
                     public void run()
                     {
-                        gd.tx = true;
-                        gd.txPending = false;
-                        gd.txError = false;
-                        gd.txUsurped = false;
-                        gd.lastTxStartTime = Utils.nowMs();
-
-                        // Our TX is always starting in mute, so unmute it here if we're not (still) playing a sound
-                        if (_delayTxUnmuteToCaterForSoundPropogation)
+                        // Make sure we're still wanting to TX - the user may have stopped TX while
+                        // the grant tone was being played
+                        boolean continueWithOperation;
+                        synchronized (_groupsSelectedForTx)
                         {
-                            Timer tmr = new Timer();
-                            tmr.schedule(new TimerTask()
+                            continueWithOperation = _groupsSelectedForTx.contains(gd);
+                        }
+
+                        if(continueWithOperation)
+                        {
+                            gd.tx = true;
+                            gd.txPending = false;
+                            gd.txError = false;
+                            gd.txUsurped = false;
+                            gd.lastTxStartTime = Utils.nowMs();
+
+                            // Our TX is always starting in mute, so unmute it here if we're not (still) playing a sound
+                            if (_delayTxUnmuteToCaterForSoundPropogation)
                             {
-                                @Override
-                                public void run()
+                                Timer tmr = new Timer();
+                                tmr.schedule(new TimerTask()
                                 {
-                                    getEngine().engageUnmuteGroupTx(id);
+                                    @Override
+                                    public void run()
+                                    {
+                                        getEngine().engageUnmuteGroupTx(id);
+                                    }
+                                }, Constants.TX_UNMUTE_DELAY_MS_AFTER_GRANT_TONE);
+                            }
+                            else
+                            {
+                                getEngine().engageUnmuteGroupTx(id);
+                            }
+
+                            _lastAudioActivity = Utils.nowMs();
+
+                            notifyGroupUiListeners(gd);
+
+                            synchronized (_uiUpdateListeners)
+                            {
+                                for (IUiUpdateListener listener : _uiUpdateListeners)
+                                {
+                                    listener.onAnyTxActive();
                                 }
-                            }, Constants.TX_UNMUTE_DELAY_MS_AFTER_GRANT_TONE);
+                            }
                         }
                         else
                         {
-                            getEngine().engageUnmuteGroupTx(id);
-                        }
-
-                        _lastAudioActivity = Utils.nowMs();
-
-                        notifyGroupUiListeners(gd);
-
-                        synchronized (_uiUpdateListeners)
-                        {
-                            for (IUiUpdateListener listener : _uiUpdateListeners)
-                            {
-                                listener.onAnyTxActive();
-                            }
+                            Log.d(TAG, "group " + gd.id + " is no longer selected for TX after tone was played");
                         }
                     }
                 };
@@ -3784,6 +3913,31 @@ public class EngageApplication
 
                 // TX muted means something else here
                 //gd.txMuted = false;
+
+                notifyGroupUiListeners(gd);
+            }
+        });
+    }
+
+
+    @Override
+    public void onGroupRxVolumeChanged(final String id, final int leftLevelPerc, final int rightLevelPerc, final String eventExtraJson)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                //logEvent(Analytics.GROUP_TX_UNMUTED);
+
+                GroupDescriptor gd = getGroup(id);
+                if (gd == null)
+                {
+                    Log.e(TAG, "onGroupRxVolumeChanged: cannot find group id='" + id + "'");
+                    return;
+                }
+
+                Log.d(TAG, "onGroupRxVolumeChanged: id='" + id + "', n='" + gd.name + "'");
 
                 notifyGroupUiListeners(gd);
             }
@@ -4254,7 +4408,7 @@ public class EngageApplication
 
                     // Our JSON parameters indicate that the payload is binary human biometric data in Engage format
                     JSONObject bi = new JSONObject();
-                    bi.put(Engine.JsonFields.BlobHeader.payloadType, Engine.BlobType.engageHumanBiometrics.toInt());
+                    bi.put(Engine.JsonFields.BlobInfo.payloadType, Engine.BlobType.engageHumanBiometrics.toInt());
                     String jsonParams = bi.toString();
 
                     ActiveConfiguration ac = getActiveConfiguration();
@@ -4475,9 +4629,9 @@ public class EngageApplication
                 {
                     JSONObject blobInfo = new JSONObject(blobInfoJson);
 
-                    int payloadType = blobInfo.getInt(Engine.JsonFields.BlobHeader.payloadType);
-                    String source = blobInfo.getString(Engine.JsonFields.BlobHeader.source);
-                    String target = blobInfo.getString(Engine.JsonFields.BlobHeader.target);
+                    int payloadType = blobInfo.getInt(Engine.JsonFields.BlobInfo.payloadType);
+                    String source = blobInfo.getString(Engine.JsonFields.BlobInfo.source);
+                    String target = blobInfo.getString(Engine.JsonFields.BlobInfo.target);
 
                     PresenceDescriptor pd = _activeConfiguration.getPresenceDescriptor(source);
 
@@ -4527,18 +4681,22 @@ public class EngageApplication
                     }
                     else if (Engine.BlobType.fromInt(payloadType) == Engine.BlobType.appTextUtf8)
                     {
-                        // TODO: only pass on if for this node or for everyone!
-
-                        String message = new String(blob, Constants.CHARSET);
-
-                        synchronized (_groupTextMessageListeners)
+                        if(Utils.isNullGuid(target) || target.equals(_activeConfiguration.getNodeId()))
                         {
-                            for (IGroupTextMessageListener listener : _groupTextMessageListeners)
+                            String message = new String(blob, Constants.CHARSET);
+
+                            synchronized (_groupTextMessageListeners)
                             {
-                                listener.onGroupTextMessageRx(pd, message);
+                                for (IGroupTextMessageListener listener : _groupTextMessageListeners)
+                                {
+                                    listener.onGroupTextMessageRx(pd, message);
+                                }
                             }
                         }
-
+                        else
+                        {
+                            Log.d(TAG, "ignoring message targeting node '" + target + "'");
+                        }
                     }
                 }
                 catch (Exception e)

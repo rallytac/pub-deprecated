@@ -1610,33 +1610,29 @@ namespace AppConfigurationObjects
 
         /**
          * @brief [Optional] TODO: Shaun, whats this? This looks like its for RallyPoint config and not client?
-         *
-         * Description
          */
         bool                        verifyPeer;
 
         /**
          * @brief [Optional] TODO: Shaun, whats this? This looks like its for RallyPoint config and not client?
-         *
-         * Description
          */
         bool                        allowSelfSignedCertificate;
 
         /**
          * @brief [Optional] TODO: Shaun, whats this? This looks like its for RallyPoint config and not client?
-         *
-         * Description
          */
         std::vector<std::string>    caCertificates;
 
         /**
          * @brief [Optional] TODO: Shaun, whats this? This looks like its for RallyPoint config and not client?
-         *
-         * Description
          */
         int                         transactionTimeoutMs;
+
+
         bool                        disableMessageSigning;
 
+        /** @brief [Optional, Default: 5] Connection timeout in seconds to any RP in the cluster */
+        int                         connectionTimeoutSecs;
 
         Rallypoint()
         {
@@ -1652,6 +1648,7 @@ namespace AppConfigurationObjects
             verifyPeer = false;
             transactionTimeoutMs = 5000;
             disableMessageSigning = false;
+            connectionTimeoutSecs = 5;
         }
 
         bool matches(const Rallypoint& other)
@@ -1729,7 +1726,8 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(allowSelfSignedCertificate),
             TOJSON_IMPL(caCertificates),
             TOJSON_IMPL(transactionTimeoutMs),
-            TOJSON_IMPL(disableMessageSigning)
+            TOJSON_IMPL(disableMessageSigning),
+            TOJSON_IMPL(connectionTimeoutSecs)
         };
     }
 
@@ -1744,6 +1742,7 @@ namespace AppConfigurationObjects
         getOptional<std::vector<std::string>>("caCertificates", p.caCertificates, j);
         getOptional<int>("transactionTimeoutMs", p.transactionTimeoutMs, j, 5000);
         getOptional<bool>("disableMessageSigning", p.disableMessageSigning, j, false);
+        getOptional<int>("connectionTimeoutSecs", p.connectionTimeoutSecs, j, 5);
     }
 
     //-----------------------------------------------------------
@@ -1787,6 +1786,9 @@ namespace AppConfigurationObjects
         /** @brief Seconds between switching to a new target */
         int                                 rolloverSecs;
 
+        /** @brief [Optional, Default: 0] Default connection timeout in seconds to any RP in the cluster */
+        int                                 connectionTimeoutSecs;
+
         RallypointCluster()
         {
             clear();
@@ -1797,6 +1799,7 @@ namespace AppConfigurationObjects
             connectionStrategy = csRoundRobin;
             rallypoints.clear();
             rolloverSecs = 10;
+            connectionTimeoutSecs = 5;
         }
     };
 
@@ -1805,7 +1808,8 @@ namespace AppConfigurationObjects
         j = nlohmann::json{
             TOJSON_IMPL(connectionStrategy),
             TOJSON_IMPL(rallypoints),
-            TOJSON_IMPL(rolloverSecs)
+            TOJSON_IMPL(rolloverSecs),
+            TOJSON_IMPL(connectionTimeoutSecs)
         };
     }
     static void from_json(const nlohmann::json& j, RallypointCluster& p)
@@ -1814,6 +1818,7 @@ namespace AppConfigurationObjects
         getOptional<RallypointCluster::ConnectionStrategy_t>("connectionStrategy", p.connectionStrategy, RallypointCluster::ConnectionStrategy_t::csRoundRobin);
         getOptional<std::vector<Rallypoint>>("rallypoints", p.rallypoints, j);
         getOptional<int>("rolloverSecs", p.rolloverSecs, j, 10);
+        getOptional<int>("connectionTimeoutSecs", p.connectionTimeoutSecs, j, 5);
     }
 
 
@@ -2297,6 +2302,12 @@ namespace AppConfigurationObjects
         /** @brief The nodeId the talker is originating from. */
         std::string nodeId;
 
+        /** @brief Flags associated with a talker's transmission. */
+        uint16_t    rxFlags;
+
+        /** @brief Priority associated with a talker's transmission. */
+        int         txPriority;
+
         TalkerInformation()
         {
             clear();
@@ -2306,6 +2317,8 @@ namespace AppConfigurationObjects
         {
             alias.clear();
             nodeId.clear();
+            rxFlags = 0;
+            txPriority = 0;
         }
     };
 
@@ -2313,7 +2326,9 @@ namespace AppConfigurationObjects
     {
         j = nlohmann::json{
             TOJSON_IMPL(alias),
-            TOJSON_IMPL(nodeId)
+            TOJSON_IMPL(nodeId),
+            TOJSON_IMPL(rxFlags),
+            TOJSON_IMPL(txPriority)
         };
     }
     static void from_json(const nlohmann::json& j, TalkerInformation& p)
@@ -2321,6 +2336,8 @@ namespace AppConfigurationObjects
         p.clear();
         getOptional<std::string>("alias", p.alias, j, EMPTY_STRING);
         getOptional<std::string>("nodeId", p.nodeId, j, EMPTY_STRING);
+        getOptional<uint16_t>("rxFlags", p.rxFlags, j, 0);
+        getOptional<int>("txPriority", p.txPriority, j, 0);
     }
 
     //-----------------------------------------------------------
@@ -4208,11 +4225,14 @@ namespace AppConfigurationObjects
         /** @brief [Optional, Default: @ref csRoundRobin] Specifies the default RP cluster connection strategy to be followed. See @ref ConnectionStrategy_t for all strategy types */
         RallypointCluster::ConnectionStrategy_t rpClusterStrategy;
 
-        /** @brief Seconds between switching to a new target in a RP cluster */
+        /** @brief [Optional, Default: 10] Seconds between switching to a new target in a RP cluster */
         int                                     rpClusterRolloverSecs;
 
         /** @brief [Optional, Default: 250] Interval at which to check for RTP expiration. */
         int                                     rtpExpirationCheckIntervalMs;
+
+        /** @brief [Optional, Default: 5] Connection timeout in seconds to RP */
+        int                                     rpConnectionTimeoutSecs;
 
         EnginePolicyInternals()
         {
@@ -4232,6 +4252,7 @@ namespace AppConfigurationObjects
             rpClusterStrategy = RallypointCluster::ConnectionStrategy_t::csRoundRobin;
             rpClusterRolloverSecs = 10;
             rtpExpirationCheckIntervalMs = 250;
+            rpConnectionTimeoutSecs = 5;
         }
     };
 
@@ -4248,7 +4269,8 @@ namespace AppConfigurationObjects
             TOJSON_IMPL(enableLazySpeakerClosure),
             TOJSON_IMPL(rpClusterStrategy),
             TOJSON_IMPL(rpClusterRolloverSecs),
-            TOJSON_IMPL(rtpExpirationCheckIntervalMs)
+            TOJSON_IMPL(rtpExpirationCheckIntervalMs),
+            TOJSON_IMPL(rpConnectionTimeoutSecs)
         };
     }
     static void from_json(const nlohmann::json& j, EnginePolicyInternals& p)
@@ -4265,6 +4287,7 @@ namespace AppConfigurationObjects
         getOptional<RallypointCluster::ConnectionStrategy_t>("rpClusterStrategy", p.rpClusterStrategy, j, RallypointCluster::ConnectionStrategy_t::csRoundRobin);
         getOptional<int>("rpClusterRolloverSecs", p.rpClusterRolloverSecs, j, 10);
         getOptional<int>("rtpExpirationCheckIntervalMs", p.rtpExpirationCheckIntervalMs, j, 250);
+        getOptional<int>("rpConnectionTimeoutSecs", p.rpConnectionTimeoutSecs, j, 5);
     }
 
     //-----------------------------------------------------------
@@ -4296,6 +4319,9 @@ namespace AppConfigurationObjects
 
         /** @brief Specifies where the timeline recordings will be stored physically. */
         std::string                             storageRoot;
+
+        /** [DEPRECATED] Specifies the maximum storage to use for recordings in memory. */
+        int                                     maxStorageQuotaMb;
 
         /** Specifies the maximum storage to use for recordings in memory. */
         int                                     maxMemStorageMb;
@@ -4331,6 +4357,7 @@ namespace AppConfigurationObjects
         {
             enabled = true;
             storageRoot.clear();
+            maxStorageQuotaMb = 128;
             maxMemStorageMb = 128;
             maxDiskStorageMb = 1024;
             maxEventAgeSecs = (86400 * 30);         // 30 days
@@ -4347,6 +4374,7 @@ namespace AppConfigurationObjects
         j = nlohmann::json{
             TOJSON_IMPL(enabled),
             TOJSON_IMPL(storageRoot),
+            //TOJSON_IMPL(maxStorageQuotaMb),  // DEPRECATED so don't write to JSON
             TOJSON_IMPL(maxMemStorageMb),
             TOJSON_IMPL(maxDiskStorageMb),
             TOJSON_IMPL(maxEventAgeSecs),
@@ -4362,7 +4390,13 @@ namespace AppConfigurationObjects
         p.clear();
         getOptional<bool>("enabled", p.enabled, j, true);
         getOptional<std::string>("storageRoot", p.storageRoot, j, EMPTY_STRING);
-        getOptional<int>("maxMemStorageMb", p.maxMemStorageMb, j, 128);
+
+        // NOTE: maxStorageQuotaMb is deprecated but we will read it here and 
+        // default to 128MB if not found.  Then we'll use it as the default 
+        // for maxMemStorageMb
+        getOptional<int>("maxStorageQuotaMb", p.maxStorageQuotaMb, j, 128);
+        getOptional<int>("maxMemStorageMb", p.maxMemStorageMb, j, p.maxStorageQuotaMb);
+
         getOptional<int>("maxDiskStorageMb", p.maxDiskStorageMb, j, 1024);
         getOptional<long>("maxEventAgeSecs", p.maxEventAgeSecs, j, (86400 * 30));
         getOptional<long>("groomingIntervalSecs", p.groomingIntervalSecs, j, (60 * 30));
@@ -5547,7 +5581,8 @@ namespace AppConfigurationObjects
         {
             etUndefined           = 0,
             etAudio               = 1,
-            etLocation            = 2
+            etLocation            = 2,
+            etUser                = 3
         } EventType_t;
 
         typedef enum
@@ -6790,9 +6825,9 @@ namespace AppConfigurationObjects
         /** @brief A unqiue identifier for the bridge server */
         std::string                                 id;
 
-        /** @brief [DEFAULT: blank] Identifier of the OEM manufacturer. */
-        std::string                                 manufacturerId;
-
+        /** @brief Number of seconds between checks to see if the service configuration has been updated.  Default is 60.*/
+        int                                         serviceConfigurationFileCheckSecs;
+        
         /** @brief Name of a file containing the bridging configuration. */
         std::string                                 bridgingConfigurationFileName;
 
@@ -6837,7 +6872,7 @@ namespace AppConfigurationObjects
         void clear()
         {
             id.clear();
-            manufacturerId.clear();
+            serviceConfigurationFileCheckSecs = 60;
             bridgingConfigurationFileName.clear();
             bridgingConfigurationFileCommand.clear();
             bridgingConfigurationFileCheckSecs = 60;
@@ -6857,7 +6892,7 @@ namespace AppConfigurationObjects
     {
         j = nlohmann::json{
             TOJSON_IMPL(id),
-            TOJSON_IMPL(manufacturerId),
+            TOJSON_IMPL(serviceConfigurationFileCheckSecs),
             TOJSON_IMPL(bridgingConfigurationFileName),
             TOJSON_IMPL(bridgingConfigurationFileCommand),
             TOJSON_IMPL(bridgingConfigurationFileCheckSecs),
@@ -6876,7 +6911,7 @@ namespace AppConfigurationObjects
     {
         p.clear();
         getOptional<std::string>("id", p.id, j);
-        getOptional<std::string>("manufacturerId", p.manufacturerId, j);        
+        getOptional<int>("serviceConfigurationFileCheckSecs", p.serviceConfigurationFileCheckSecs, j, 60);
         getOptional<std::string>("bridgingConfigurationFileName", p.bridgingConfigurationFileName, j);
         getOptional<std::string>("bridgingConfigurationFileCommand", p.bridgingConfigurationFileCommand, j);
         getOptional<int>("bridgingConfigurationFileCheckSecs", p.bridgingConfigurationFileCheckSecs, j, 60);

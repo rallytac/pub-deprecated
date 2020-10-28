@@ -41,6 +41,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -530,6 +531,7 @@ public class Utils
 
 
                 rc.setUiMode(Constants.UiMode.values()[Globals.getSharedPreferences().getInt(PreferenceKeys.UI_MODE, Constants.DEF_UI_MODE.ordinal())]);
+                rc.setShowTextMessaging(Globals.getSharedPreferences().getBoolean(PreferenceKeys.UI_SHOW_TEXT_MESSAGING, Constants.DEF_UI_SHOW_TEXT_MESSAGING));
 
                 rc.setNotifyOnNodeJoin(Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_NOTIFY_NODE_JOIN, Constants.DEF_NOTIFY_NODE_JOIN));
                 rc.setNotifyOnNodeLeave(Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_NOTIFY_NODE_LEAVE, Constants.DEF_NOTIFY_NODE_LEAVE));
@@ -553,6 +555,9 @@ public class Utils
 
                 rc.setPttLatching(Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_UI_PTT_LATCHING, Constants.DEF_USER_UI_PTT_LATCHING));
                 rc.setPttVoiceControl(Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_UI_PTT_VOICE_CONTROL, Constants.DEF_USER_UI_PTT_VOICE_CONTROL));
+
+                rc.setAudioInputDeviceId(Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.USER_AUDIO_INPUT_DEVICE, Integer.toString(Constants.INVALID_AUDIO_DEVICE_ID))));
+                rc.setAudioOutputDeviceId(Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.USER_AUDIO_OUTPUT_DEVICE, Integer.toString(Constants.INVALID_AUDIO_DEVICE_ID))));
 
                 if(rc.getUserAlias().isEmpty())
                 {
@@ -604,6 +609,24 @@ public class Utils
         }
 
         return rc;
+    }
+
+    public static boolean isNullGuid(String guid)
+    {
+        if(isEmptyString(guid))
+        {
+            return true;
+        }
+        else if(guid.compareTo("{00000000-0000-0000-0000-000000000000}") == 0)
+        {
+            return true;
+        }
+        else if(guid.compareTo("00000000-0000-0000-0000-000000000000") == 0)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     public static String generateMissionId()
@@ -1183,28 +1206,27 @@ public class Utils
         return rc;
     }
 
-    /*
     public static byte[] readBinaryFile(Context ctx, Uri uri)
     {
         byte[] rc;
 
         try
         {
-            FileInputStream fis = new FileInputStream(uri.getPath());
+            InputStream inputStream = ctx.getContentResolver().openInputStream(uri);
 
-            rc = new byte[(int) file.length()];
-            InputStreamReader inputStreamReader = new InputStreamReader(ctx.getContentResolver().openInputStream(uri));
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-            bufferedReader.re
-            StringBuilder sb = new StringBuilder();
+            ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+            int bufferSize = 1024;
+            byte[] buffer = new byte[bufferSize];
 
-            String s;
-            while ((s = bufferedReader.readLine()) != null)
+            int len = 0;
+            while((len = inputStream.read(buffer)) != -1)
             {
-                sb.append(s);
+                byteBuffer.write(buffer, 0, len);
             }
 
-            rc = sb.toString();
+            inputStream.close();
+
+            rc = byteBuffer.toByteArray();
         }
         catch (Exception e)
         {
@@ -1214,7 +1236,6 @@ public class Utils
 
         return rc;
     }
-    */
 
     public static boolean doesFileExist(String fn)
     {

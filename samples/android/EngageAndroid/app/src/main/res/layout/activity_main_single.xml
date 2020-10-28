@@ -126,6 +126,17 @@
         app:srcCompat="@drawable/ic_group_list" />
 
     <ImageView
+        android:id="@+id/ivVoiceOrTextMessaging"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="24dp"
+        android:onClick="onSwitchToTextMessagingView"
+        android:visibility="visible"
+        app:layout_constraintStart_toEndOf="@+id/ivGroups"
+        app:layout_constraintTop_toTopOf="@+id/ivGroups"
+        app:srcCompat="@drawable/ic_text_messaging" />
+
+    <ImageView
         android:id="@+id/ivMainScreenMenu"
         android:onClick="onClickMenuIcon"
         android:layout_width="32dp"

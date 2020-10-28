@@ -4,6 +4,6 @@
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
     <color name="colorBlack">#000000</color>
-    <color name="colorSentMessage">#aa00aa</color>
+    <color name="colorSentMessage">#007777</color>
     <color name="colorReceivedMessage">#5f5f5f</color>
 </resources>

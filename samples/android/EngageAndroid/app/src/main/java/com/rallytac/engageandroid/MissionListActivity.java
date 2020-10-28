@@ -241,10 +241,18 @@ public class MissionListActivity extends AppCompatActivity
                         {
                             String json;
                             json = Globals.getEngageApplication().applyFlavorSpecificGeneratedMissionModifications(Globals.getEngageApplication().getEngine().engageGenerateMission(passphrase, groupCount, rp, name));
-                            ActiveConfiguration.installMissionJson(MissionListActivity.this, json, true);
 
-                            // Force a recreate to reload the database
-                            recreate();
+                            if(!ActiveConfiguration.doesMissionExistInDatabase(json))
+                            {
+                                ActiveConfiguration.installMissionJson(MissionListActivity.this, json, false);
+
+                                // Force a recreate to reload the database
+                                recreate();
+                            }
+                            else
+                            {
+                                Toast.makeText(MissionListActivity.this, R.string.action_would_create_duplicate_mission, Toast.LENGTH_LONG).show();
+                            }
                         }
                         else
                         {

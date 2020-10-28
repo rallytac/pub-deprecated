@@ -36,32 +36,15 @@
 
     <fragment
         android:id="@+id/card1"
-        android:name="com.rallytac.engageandroid.LargeCardFragment"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:name="com.rallytac.engageandroid.SmallCardFragmentForTextMessaging"
+        android:layout_width="250dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/tvLicensingBar"
-        app:layout_constraintEnd_toStartOf="@+id/ivPtt"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ivTeam"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/ivTeam" />
 
     <!--
-    <fragment
-        android:id="@+id/textMessaging"
-        android:name="com.rallytac.engageandroid.TextMessagingFragment"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/card1"
-        app:layout_constraintBottom_toTopOf="@+id/tvLicensingBar"
-        app:layout_constraintVertical_bias="0.0" />
-
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:map="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
@@ -79,6 +62,20 @@
         app:layout_constraintTop_toBottomOf="@+id/card1">
     </fragment>
     -->
+
+    <fragment
+        android:id="@+id/textMessaging"
+        android:name="com.rallytac.engageandroid.TextMessagingFragment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        app:layout_constraintBottom_toTopOf="@+id/tvLicensingBar"
+        app:layout_constraintEnd_toEndOf="@+id/ivPtt"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/card1"
+        app:layout_constraintTop_toBottomOf="@+id/card1"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/tvLicensingBar"
@@ -126,6 +123,16 @@
         app:srcCompat="@drawable/ic_group_list" />
 
     <ImageView
+        android:id="@+id/ivVoiceOrTextMessaging"
+        android:onClick="onSwitchToVoiceView"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="24dp"
+        app:layout_constraintStart_toEndOf="@+id/ivGroups"
+        app:layout_constraintTop_toTopOf="@+id/ivGroups"
+        app:srcCompat="@drawable/ic_voice" />
+
+    <ImageView
         android:id="@+id/ivMainScreenMenu"
         android:onClick="onClickMenuIcon"
         android:layout_width="32dp"
@@ -162,12 +169,15 @@
 
     <ImageView
         android:id="@+id/ivPtt"
-        android:layout_width="160dp"
-        android:layout_height="100dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
         android:layout_marginEnd="8dp"
         android:scaleType="fitXY"
         app:layout_constraintBottom_toBottomOf="@+id/card1"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/card1"
         app:layout_constraintTop_toTopOf="@+id/card1"
         app:srcCompat="@drawable/ic_ptt_idle" />
 

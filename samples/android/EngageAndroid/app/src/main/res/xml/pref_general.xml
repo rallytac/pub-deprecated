@@ -9,7 +9,7 @@
             android:title="@string/set_developer_use_dev_licensing"/>
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/set_hdr_identity">
+    <PreferenceScreen android:title="@string/set_hdr_identity" android:summary="Manage your identity">
         <EditTextPreference
             android:key="user_id"
             android:inputType="textEmailAddress"
@@ -36,9 +36,10 @@
             android:singleLine="true"
             android:title="Alias"
             android:hint="@string/set_identity_transmission_alias"/>
-    </PreferenceCategory>
+    </PreferenceScreen>
 
-    <PreferenceCategory android:title="@string/set_hdr_connectivity">
+
+    <PreferenceScreen android:title="@string/set_hdr_connectivity" android:summary="@string/set_summ_connectivity">
         <ListPreference
             android:key="network_bindingNic"
             android:negativeButtonText="@null"
@@ -59,9 +60,178 @@
             android:positiveButtonText="@null"
             android:title="@string/set_connectivity_multicast_failover_threshold"
             android:dependency="network_multicastFailover.enabled"/>
-    </PreferenceCategory>
+    </PreferenceScreen>
 
-    <PreferenceCategory android:title="@string/set_hdr_location">
+
+    <PreferenceScreen android:title="@string/set_hdr_audio" android:summary="@string/set_summ_audio">
+        <PreferenceCategory android:title="@string/set_hdr_audio_input_output" android:key="prefcat_input_output_audio_devices">
+            <ListPreference
+                android:key="user_audio.inputDevice"
+                android:negativeButtonText="@null"
+                android:positiveButtonText="@null"
+                android:title="@string/set_audio_input_device"/>
+
+            <ListPreference
+                android:key="user_audio.outputDevice"
+                android:negativeButtonText="@null"
+                android:positiveButtonText="@null"
+                android:title="@string/set_audio_output_device"/>
+        </PreferenceCategory>
+
+        <SwitchPreference
+            android:key="user_bt.use"
+            android:title="@string/set_audio_use_bluetooth_device"/>
+
+        <ListPreference
+            android:key="user_bt.deviceAddress"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="@string/set_audio_bluetooth_device"
+            android:dependency="user_bt.use"/>
+
+        <PreferenceCategory android:title="@string/set_hdr_audio_advanced">
+            <ListPreference
+                android:defaultValue="0"
+                android:entries="@array/engine_internal_audio_names"
+                android:entryValues="@array/engine_internal_audio_values"
+                android:key="user_audio.engine.internal.audio"
+                android:negativeButtonText="@null"
+                android:positiveButtonText="@null"
+                android:title="@string/set_engine_internal_audio" />
+
+            <ListPreference
+                android:defaultValue="0"
+                android:entries="@array/android_audio_api_names"
+                android:entryValues="@array/android_audio_api_values"
+                android:key="user_audio.android.api"
+                android:negativeButtonText="@null"
+                android:positiveButtonText="@null"
+                android:title="@string/set_android_audio_api" />
+
+            <SwitchPreference
+                android:defaultValue="false"
+                android:key="user_audio_jitter_buffer_low_latency.enabled"
+                android:title="@string/set_connectivity_enable_jitter_buffer_low_latency"/>
+
+            <SeekBarPreference
+                android:key="user_audio.output.boostFactor"
+                android:title="@string/set_audio_sppeaker_boost_factor"
+                android:defaultValue="0"
+                android:max="10"
+                asp:min="0"/>
+        </PreferenceCategory>
+
+        <PreferenceCategory android:title="@string/set_hdr_aec">
+            <SwitchPreference
+                android:key="user_audio.aec.enabled"
+                android:title="@string/set_aec_enable"
+                android:defaultValue="true"/>
+
+            <!--
+            <ListPreference
+                android:defaultValue="5"
+                android:entries="@array/aec_mode_names"
+                android:entryValues="@array/aec_mode_values"
+                android:key="user_audio.aec.mode"
+                android:negativeButtonText="@null"
+                android:positiveButtonText="@null"
+                android:title="@string/set_aec_aggressiveness"
+                android:dependency="user_audio.aec.enabled" />
+            -->
+
+            <SwitchPreference
+                android:key="user_audio.aec.cng"
+                android:title="@string/set_aec_enable_cng"
+                android:defaultValue="true"
+                android:dependency="user_audio.aec.enabled"/>
+
+            <EditTextPreference
+                android:key="user_audio.aec.speakerTailMs"
+                android:title="@string/set_aec_speaker_tail_ms"
+                android:inputType="number"
+                android:maxLines="1"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:defaultValue="60"
+                android:dependency="user_audio.aec.enabled"/>
+
+            <SwitchPreference
+                android:key="user_audio.aec.disableStereo"
+                android:title="@string/set_aec_disable_stereo_output"
+                android:defaultValue="true"
+                android:dependency="user_audio.aec.enabled"/>
+        </PreferenceCategory>
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="Experience" android:summary="@string/set_summ_experience">
+        <PreferenceCategory android:title="@string/set_hdr_notifications">
+            <SwitchPreference
+                android:key="user_notify.vibrations"
+                android:title="@string/set_notifications_enable_vibrations"/>
+
+            <SwitchPreference
+                android:key="user_notify.nodeJoin"
+                android:title="@string/set_notifications_when_members_join"/>
+
+            <SwitchPreference
+                android:key="user_notify.nodeLeave"
+                android:title="@string/set_notifications_when_members_leave"/>
+
+            <SwitchPreference
+                android:key="user_notify.newAudioRx"
+                android:title="@string/set_notifications_when_receiving_new_audio"/>
+
+            <SwitchPreference
+                android:key="user_notify.networkError"
+                android:title="@string/set_notifications_when_network_error"/>
+        </PreferenceCategory>
+
+        <PreferenceCategory android:title="@string/set_hdr_tone_levels">
+            <ListPreference
+                android:defaultValue="0.015"
+                android:entries="@array/notification_tone_level_names"
+                android:entryValues="@array/notification_tone_level_values"
+                android:key="user_toneLevel.ptt"
+                android:negativeButtonText="@null"
+                android:positiveButtonText="@null"
+                android:title="@string/set_tone_levels_ptt" />
+
+            <SwitchPreference
+                android:defaultValue="false"
+                android:key="user_notify.ptt_everyTime"
+                android:title="@string/set_tone_levels_play_ptt_tone_every_tx"/>
+
+            <ListPreference
+                android:defaultValue="0.015"
+                android:entries="@array/notification_tone_level_names"
+                android:entryValues="@array/notification_tone_level_values"
+                android:key="user_toneLevel.notification"
+                android:negativeButtonText="@null"
+                android:positiveButtonText="@null"
+                android:title="@string/set_tone_levels_notifications_and_warnings" />
+            <ListPreference
+                android:defaultValue="0.2"
+                android:entries="@array/notification_tone_level_names"
+                android:entryValues="@array/notification_tone_level_values"
+                android:key="user_toneLevel.error"
+                android:negativeButtonText="@null"
+                android:positiveButtonText="@null"
+                android:title="@string/set_tone_levels_errors" />
+        </PreferenceCategory>
+
+        <PreferenceCategory android:title="@string/set_hdr_user_interface">
+            <SwitchPreference
+                android:defaultValue="false"
+                android:key="user_ui.pttLatching"
+                android:title="@string/set_user_interface_latch_unlatch_ptt"/>
+            <SwitchPreference
+                android:defaultValue="false"
+                android:key="user_ui.pttButtonVoiceControl"
+                android:title="@string/set_user_interface_ptt_using_voice_control"/>
+        </PreferenceCategory>
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/set_hdr_location" android:summary="@string/set_summ_location">
         <SwitchPreference
             android:key="user_location.enabled"
             android:title="@string/set_location_share_my_location"/>
@@ -95,138 +265,7 @@
             android:positiveButtonText="@null"
             android:title="@string/set_location_displacement_trigger"
             android:dependency="user_location.enabled"/>
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="@string/set_hdr_audio">
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="user_audio_jitter_buffer_low_latency.enabled"
-            android:title="@string/set_connectivity_enable_jitter_buffer_low_latency"/>
-
-        <SeekBarPreference
-            android:key="user_audio.output.boostFactor"
-            android:title="@string/set_audio_sppeaker_boost_factor"
-            android:defaultValue="0"
-            android:max="10"
-            asp:min="0"/>
-
-        <SwitchPreference
-            android:key="user_bt.use"
-            android:title="@string/set_audio_use_bluetooth_device"/>
-
-        <ListPreference
-            android:key="user_bt.deviceAddress"
-            android:negativeButtonText="@null"
-            android:positiveButtonText="@null"
-            android:title="@string/set_audio_bluetooth_device"
-            android:dependency="user_bt.use"/>
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="@string/set_hdr_aec">
-        <SwitchPreference
-            android:key="user_audio.aec.enabled"
-            android:title="@string/set_aec_enable"
-            android:defaultValue="true"/>
-
-        <ListPreference
-            android:defaultValue="5"
-            android:entries="@array/aec_mode_names"
-            android:entryValues="@array/aec_mode_values"
-            android:key="user_audio.aec.mode"
-            android:negativeButtonText="@null"
-            android:positiveButtonText="@null"
-            android:title="@string/set_aec_aggressiveness"
-            android:dependency="user_audio.aec.enabled"/>
-
-        <SwitchPreference
-            android:key="user_audio.aec.cng"
-            android:title="@string/set_aec_enable_cng"
-            android:defaultValue="true"
-            android:dependency="user_audio.aec.enabled"/>
-
-        <EditTextPreference
-            android:key="user_audio.aec.speakerTailMs"
-            android:title="@string/set_aec_speaker_tail_ms"
-            android:inputType="number"
-            android:maxLines="1"
-            android:selectAllOnFocus="true"
-            android:singleLine="true"
-            android:defaultValue="60"
-            android:dependency="user_audio.aec.enabled"/>
-
-        <SwitchPreference
-            android:key="user_audio.aec.disableStereo"
-            android:title="@string/set_aec_disable_stereo_output"
-            android:defaultValue="true"
-            android:dependency="user_audio.aec.enabled"/>
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="@string/set_hdr_notifications">
-        <SwitchPreference
-            android:key="user_notify.vibrations"
-            android:title="@string/set_notifications_enable_vibrations"/>
-
-        <SwitchPreference
-            android:key="user_notify.nodeJoin"
-            android:title="@string/set_notifications_when_members_join"/>
-
-        <SwitchPreference
-            android:key="user_notify.nodeLeave"
-            android:title="@string/set_notifications_when_members_leave"/>
-
-        <SwitchPreference
-            android:key="user_notify.newAudioRx"
-            android:title="@string/set_notifications_when_receiving_new_audio"/>
-
-        <SwitchPreference
-            android:key="user_notify.networkError"
-            android:title="@string/set_notifications_when_network_error"/>
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="@string/set_hdr_tone_levels">
-        <ListPreference
-            android:defaultValue="0.015"
-            android:entries="@array/notification_tone_level_names"
-            android:entryValues="@array/notification_tone_level_values"
-            android:key="user_toneLevel.ptt"
-            android:negativeButtonText="@null"
-            android:positiveButtonText="@null"
-            android:title="@string/set_tone_levels_ptt" />
-
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="user_notify.ptt_everyTime"
-            android:title="@string/set_tone_levels_play_ptt_tone_every_tx"/>
-
-        <ListPreference
-            android:defaultValue="0.015"
-            android:entries="@array/notification_tone_level_names"
-            android:entryValues="@array/notification_tone_level_values"
-            android:key="user_toneLevel.notification"
-            android:negativeButtonText="@null"
-            android:positiveButtonText="@null"
-            android:title="@string/set_tone_levels_notifications_and_warnings" />
-        <ListPreference
-            android:defaultValue="0.2"
-            android:entries="@array/notification_tone_level_names"
-            android:entryValues="@array/notification_tone_level_values"
-            android:key="user_toneLevel.error"
-            android:negativeButtonText="@null"
-            android:positiveButtonText="@null"
-            android:title="@string/set_tone_levels_errors" />
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="@string/set_hdr_user_interface">
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="user_ui.pttLatching"
-            android:title="@string/set_user_interface_latch_unlatch_ptt"/>
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="user_ui.pttButtonVoiceControl"
-            android:title="@string/set_user_interface_ptt_using_voice_control"/>
-    </PreferenceCategory>
-
+    </PreferenceScreen>
 
     <PreferenceCategory android:title="@string/set_hdr_experimental" android:key="prefcat_experimental_general">
         <SwitchPreference

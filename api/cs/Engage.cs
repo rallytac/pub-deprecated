@@ -97,7 +97,9 @@ public class Engage
         void onGroupHealthReportFailed(string id, string eventExtraJson);        
 
         void onGroupStatsReport(string id, string statsReportJson, string eventExtraJson);
-        void onGroupStatsReportFailed(string id, string eventExtraJson);        
+        void onGroupStatsReportFailed(string id, string eventExtraJson);
+
+        void onGroupRxVolumeChanged(string id, int leftLevelPerc, int rightLevelPerc, string eventExtraJson);
     }
 
     public interface IHumanBiometricsNotifications
@@ -637,13 +639,14 @@ public class Engage
             public static String ts = "ts";
         }
 
-        public class BlobHeader
+        public class BlobInfo
         {
             public static String objectName = "blobHeader";
             public static String source = "source";
             public static String target = "target";
             public static String payloadType = "payloadType";
             public static String blobSize = "size";
+            public static String rtpHeader = "rtpHeader";
         }
 
         public class TimelineEvent
@@ -676,17 +679,25 @@ public class Engage
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void EngageStringCallback(string s, string eventExtraJson);
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void EngageString2Callback(string s1, string s2, string eventExtraJson);
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void EngageStringAndIntCallback(string s, int i, string eventExtraJson);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate void EngageString2AndInt2Callback(string s, int i1, int i2, string eventExtraJson);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void EngageStringAndArgvCallback(string s, IntPtr ptr, string eventExtraJson);
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void EngageStringAndBlobCallback(string s, IntPtr ptr, int i, string eventExtraJson);
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void EngageString2AndBlobCallback(string s, string j, IntPtr ptr, int i, string eventExtraJson);
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void EngageStringAndTwoIntCallback(string s, int i1, int i2, string eventExtraJson);
     #endregion
@@ -788,6 +799,8 @@ public class Engage
 
         public EngageString2Callback PFN_ENGAGE_GROUP_STATS_REPORT;
         public EngageStringCallback PFN_ENGAGE_GROUP_STATS_REPORT_FAILED;
+
+        public EngageString2AndInt2Callback PFN_ENGAGE_GROUP_RX_VOLUME_CHANGED;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]     // 9 bytes
@@ -940,6 +953,12 @@ public class Engage
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageSetLogLevel(int level);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageEnableSyslog(int enable);
+
+    [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int engageWatchdog(int enable);
 
     [DllImport(ENGAGE_DLL, CallingConvention = CallingConvention.Cdecl)]
     private static extern int engageLogMsg(int level, string tag, string msg);
@@ -1136,6 +1155,8 @@ public class Engage
         cb.PFN_ENGAGE_BRIDGE_CREATED = on_ENGAGE_BRIDGE_CREATED;
         cb.PFN_ENGAGE_BRIDGE_CREATE_FAILED = on_ENGAGE_BRIDGE_CREATE_FAILED;
         cb.PFN_ENGAGE_BRIDGE_DELETED = on_ENGAGE_BRIDGE_DELETED;
+
+        cb.PFN_ENGAGE_GROUP_RX_VOLUME_CHANGED = on_ENGAGE_GROUP_RX_VOLUME_CHANGED;
 
         return engageRegisterEventCallbacks(ref cb);
     }
@@ -1888,6 +1909,17 @@ public class Engage
             }
         }
     };
+
+    private EngageStringCallback on_ENGAGE_GROUP_RX_VOLUME_CHANGED = (string id, int leftLevelPerc, int rightLevelPerc, string eventExtraJson) =>
+    {
+        lock (_groupNotificationSubscribers)
+        {
+            foreach (IGroupNotifications n in _groupNotificationSubscribers)
+            {
+                n.onGroupRxVolumeChanged(id, leftLevelPerc, rightLevelPerc, eventExtraJson);
+            }
+        }
+    };
     #endregion
 
     #region Public functions
@@ -2103,6 +2135,16 @@ public class Engage
     public int setLogLevel(int level)
     {
         return engageSetLogLevel(level);
+    }    
+
+    public int enableSyslog(bool enable)
+    {
+        return engageEnableSyslog(enable ? 1 : 0);
+    }    
+
+    public int enableWatchdog(bool enable)
+    {
+        return engageEnableWatchdog(enable ? 1 : 0);
     }    
 
     public String getVersion()

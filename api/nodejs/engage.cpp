@@ -483,6 +483,25 @@ ENGAGE_CB_ID_PARAM(groupHealthReportFailed);
 ENGAGE_CB_ID_PLUS_ONE_STRING_PARAM(groupStatsReport);
 ENGAGE_CB_ID_PARAM(groupStatsReportFailed);
 
+void on_groupRxVolumeChanged(const char *id, int16_t leftLevelPerc, int16_t rightLevelPerc, const char * eventExtraJson)
+{
+    CrossThreadCallbackWorker *cbw = getCallback("groupRxVolumeChanged");
+    if(!cbw)
+    {
+        return;
+    }
+
+    std::vector<CrossThreadCallbackWorker::Parameter*> *params = new std::vector<CrossThreadCallbackWorker::Parameter*>();
+    params->push_back(new CrossThreadCallbackWorker::StringParameter(id));
+    params->push_back(new CrossThreadCallbackWorker::IntParameter((int)leftLevelPerc));
+    params->push_back(new CrossThreadCallbackWorker::IntParameter((int)rightLevelPerc));
+    params->push_back(new CrossThreadCallbackWorker::StringParameter(eventExtraJson));
+    cbw->enqueue(params);
+
+    cbw->RELEASE_OBJECT_REFERENCE();
+}
+
+
 //--------------------------------------------------------
 // Registers an event name and the JS callback function
 NAN_METHOD(on)
@@ -600,13 +619,18 @@ NAN_METHOD(initialize)
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_EVENT_STARTED, groupTimelineEventStarted);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_EVENT_UPDATED, groupTimelineEventUpdated);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_EVENT_ENDED, groupTimelineEventEnded);
+    
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_REPORT, groupTimelineReport);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_REPORT_FAILED, groupTimelineReportFailed);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_TIMELINE_GROOMED, groupTimelineGroomed);
+    
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_HEALTH_REPORT, groupHealthReport);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_HEALTH_REPORT_FAILED, groupHealthReportFailed);
+    
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_STATS_REPORT, groupStatsReport);
     ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_STATS_REPORT_FAILED, groupStatsReportFailed);
+
+    ENGAGE_CB_TABLE_ENTRY(PFN_ENGAGE_GROUP_RX_VOLUME_CHANGED, groupRxVolumeChanged);    
 
     engageRegisterEventCallbacks(&g_eventCallbacks);
 
@@ -634,7 +658,13 @@ NAN_METHOD(setLogLevel)
 //--------------------------------------------------------
 NAN_METHOD(engageEnableSyslog)
 {
-    engageEnableSyslog(INTVAL(0) == 1 ? true : false);
+    engageEnableSyslog(INTVAL(0) == 1 ? ENGAGE_SYSLOG_ENABLE : ENGAGE_SYSLOG_DISABLE);
+}
+
+//--------------------------------------------------------
+NAN_METHOD(engageEnableWatchdog)
+{
+    engageEnableWatchdog(INTVAL(0) == 1 ? ENGAGE_WATCHDOG_ENABLE : ENGAGE_WATCHDOG_DISABLE);
 }
 
 //--------------------------------------------------------

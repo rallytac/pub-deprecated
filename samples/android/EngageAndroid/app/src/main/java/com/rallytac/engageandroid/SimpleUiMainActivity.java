@@ -12,7 +12,9 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.media.SoundPool;
 import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
@@ -25,10 +27,13 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.net.Uri;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
@@ -44,6 +49,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Switch;
@@ -66,6 +72,7 @@ import com.rallytac.engage.engine.Engine;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.FileDescriptor;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -129,7 +136,25 @@ public class SimpleUiMainActivity
     private GroupSelectorAdapter _groupSelectorAdapter = null;
 
     private int _keycodePtt = 0;
-    private SoundPool _soundpool = null;
+
+    private String _missionFileLoadPassword = null;
+
+    private class TimelineEventPlayerTracker
+    {
+        private boolean _isPlayingEventAudio = false;
+        private View _currentExpandedEventDetail = null;
+        private TimelineEventListAdapter _eventListAdapter = null;
+        private MediaPlayer _mediaPlayer = null;
+        //private ImageView _ivPlayPause = null;
+        //private Timer _eventAudioPlayTimer = null;
+        //private boolean _timeLineEventPlayerSeekIsTouched = false;
+        //private SeekBar _timelineEventPlayerSeekbar = null;
+    }
+
+    static private final int TIMELINE_EVENT_AUDIO_SCALE = 100;
+
+    TimelineEventPlayerTracker _timelineEventPlayerTracker = new TimelineEventPlayerTracker();
+
 
     @Override
     public void onMapReady(final GoogleMap googleMap)
@@ -552,7 +577,14 @@ public class SimpleUiMainActivity
 
         if (_ac.getUiMode() == Constants.UiMode.vSingle)
         {
-            setContentView(R.layout.activity_main_single);
+            if(_ac.showTextMessaging())
+            {
+                setContentView(R.layout.activity_main_single_with_text_messaging);
+            }
+            else
+            {
+                setContentView(R.layout.activity_main_single);
+            }
         }
         else if (_ac.getUiMode() == Constants.UiMode.vMulti)
         {
@@ -565,10 +597,18 @@ public class SimpleUiMainActivity
         hideLicensingBar();
 
         String title;
-
-        title = _ac.getMissionName();
-
-        title = title.toUpperCase();
+        String fmt = getString(R.string.replacement_main_screen_title_bar);
+        if(Utils.isEmptyString(fmt))
+        {
+            title = _ac.getMissionName();
+            title = title.toUpperCase();
+        }
+        else
+        {
+            title = fmt;
+            title = title.replace("${appName}", getString(R.string.app_name));
+            title = title.replace("${missionName}", _ac.getMissionName().toUpperCase());
+        }
 
         TextView tvTitle = findViewById(R.id.tvTitleBar);
         if(tvTitle != null)
@@ -613,6 +653,8 @@ public class SimpleUiMainActivity
         */
 
         redrawCardFragments();
+
+        checkForLicenseInstallation();
     }
 
     @Override
@@ -645,6 +687,7 @@ public class SimpleUiMainActivity
     {
         Log.d(TAG, "onPause");//NON-NLS
         super.onPause();
+        stopTimelineAudioPlayer();
         stopAllTx();
         cancelTimers();
         unregisterFromApp();
@@ -654,6 +697,7 @@ public class SimpleUiMainActivity
     protected void onStop()
     {
         Log.d(TAG, "onStop");//NON-NLS
+        stopTimelineAudioPlayer();
         stopAllTx();
         cancelTimers();
         super.onStop();
@@ -663,6 +707,7 @@ public class SimpleUiMainActivity
     protected void onDestroy()
     {
         Log.d(TAG, "onDestroy");//NON-NLS
+        stopTimelineAudioPlayer();
         stopAllTx();
         cancelTimers();
         super.onDestroy();
@@ -673,6 +718,7 @@ public class SimpleUiMainActivity
     {
         if(_optAllowMultipleChannelView)
         {
+            stopTimelineAudioPlayer();
             stopAllTx();
             toggleViewMode();
         }
@@ -723,7 +769,7 @@ public class SimpleUiMainActivity
             {
                 try
                 {
-                    Globals.getEngageApplication().processDownloadedMissionAndSwitchIfOk(Utils.readTextFile(SimpleUiMainActivity.this, intent.getData()), null);
+                    Globals.getEngageApplication().processDownloadedMissionAndSwitchIfOk(Utils.readBinaryFile(SimpleUiMainActivity.this, intent.getData()), _missionFileLoadPassword);
                     onMissionChanged();
                 }
                 catch(Exception e)
@@ -1442,6 +1488,18 @@ public class SimpleUiMainActivity
             @Override
             public void run()
             {
+                FragmentManager fragMan = getSupportFragmentManager();
+                List<Fragment> fragments = fragMan.getFragments();
+
+                for(Fragment f : fragments)
+                {
+                    if(f instanceof TextMessagingFragment)
+                    {
+                        ((TextMessagingFragment)f).onTextMessageReceived(sourcePd, message);
+                    }
+                }
+
+                /*
                 StringBuilder sb = new StringBuilder();
 
                 if(!Utils.isEmptyString(sourcePd.displayName))
@@ -1461,6 +1519,7 @@ public class SimpleUiMainActivity
                 sb.append(message);
 
                 Toast.makeText(SimpleUiMainActivity.this, sb.toString(), Toast.LENGTH_LONG).show();
+                 */
             }
         });
     }
@@ -1488,58 +1547,171 @@ public class SimpleUiMainActivity
         public int audioId = -1;
         public long audioLengthMs = 0;
         public View view = null;
+        public boolean expanded = false;
     }
 
-    void stopSoundpoolPlayer()
+    void stopTimelineAudioPlayer()
     {
-        if(_soundpool != null)
+        /*
+        if(_eventAudioPlayTimer != null)
         {
-            _soundpool.release();
-            _soundpool = null;
+            _eventAudioPlayTimer.cancel();
+            _eventAudioPlayTimer = null;
         }
+        */
+
+        if(_timelineEventPlayerTracker._mediaPlayer != null)
+        {
+            _timelineEventPlayerTracker._mediaPlayer.stop();
+            _timelineEventPlayerTracker._mediaPlayer.release();
+            _timelineEventPlayerTracker._mediaPlayer = null;
+        }
+
+        _timelineEventPlayerTracker._isPlayingEventAudio = false;
+        //_timeLineEventPlayerSeekIsTouched = false;
     }
 
-    void playWaveFileForEvent(final TimelineEvent event)
+    void toggleTimelineEventDetail(View v)
     {
-        runOnUiThread(new Runnable()
+        stopTimelineAudioPlayer();
+
+        TimelineEvent currentTimelineEvent = null;
+        TimelineEvent newTimelineEvent = null;
+
+        if(_timelineEventPlayerTracker._currentExpandedEventDetail != null)
         {
-            @Override
-            public void run()
+            currentTimelineEvent = (TimelineEvent)_timelineEventPlayerTracker._currentExpandedEventDetail.getTag();
+            currentTimelineEvent.expanded = false;
+            _timelineEventPlayerTracker._currentExpandedEventDetail.setVisibility(View.GONE);
+            _timelineEventPlayerTracker._currentExpandedEventDetail = null;
+            //_timelineEventPlayerSeekbar = null;
+            //_timeLineEventPlayerSeekIsTouched = false;
+        }
+
+        v.setBackgroundColor(Color.RED);
+
+        newTimelineEvent = (TimelineEvent)v.getTag();
+        if(newTimelineEvent != currentTimelineEvent)
+        {
+            newTimelineEvent.expanded = true;
+            View expansion = v.findViewById(R.id.layEventExpansion);
+            //expansion.setVisibility(View.VISIBLE);
+            expansion.setTag(newTimelineEvent);
+            _timelineEventPlayerTracker._currentExpandedEventDetail = expansion;
+
+            //_timelineEventPlayerTracker._ivPlayPause = _timelineEventPlayerTracker._currentExpandedEventDetail.findViewById(R.id.ivPlayOrPause);
+
+            //_timelineEventPlayerTracker._ivPlayPause.setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_pause_media));
+
+            /*
+            _timelineEventPlayerSeekbar = _currentExpandedEventDetail.findViewById(R.id.eventAudioSeekbar);
+            _timelineEventPlayerSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
             {
-                if(_soundpool == null)
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int i, boolean b)
                 {
-                    _soundpool = new SoundPool.Builder().build();
-                    _soundpool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener()
+                    Log.w(TAG, "onProgressChanged i=" + i);
+                    if(_timeLineEventPlayerSeekIsTouched)
                     {
-                        @Override
-                        public void onLoadComplete(SoundPool soundPool, int sampleId, int status)
+                        _timelineEventMediaPlayer.seekTo(i * TIMELINE_EVENT_AUDIO_SCALE);
+                        if (!_timelineEventMediaPlayer.isPlaying())
                         {
-                            if(sampleId > 0)
-                            {
-                                _soundpool.play(sampleId, 1.0f, 1.0f, 1, 0, 1);
-                            }
+                            _timelineEventMediaPlayer.start();
                         }
-                    });
+                    }
                 }
 
-                if(event.audioId == -1)
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar)
                 {
-                    String path = event.audioUri.substring(7);
-                    event.audioId = _soundpool.load(path, 1);
+                    Log.w(TAG, "onStartTrackingTouch");
+                    _timeLineEventPlayerSeekIsTouched = true;
                 }
-                else
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar)
                 {
-                    if (event.audioId > 0)
-                    {
-                        _soundpool.play(event.audioId, 1.0f, 1.0f, 1, 0, 1);
-                    }
-                    else
-                    {
-                        Toast.makeText(SimpleUiMainActivity.this, "Cannot play " + event.audioUri, Toast.LENGTH_SHORT).show();
-                    }
+                    Log.w(TAG, "onStopTrackingTouch");
+                    _timeLineEventPlayerSeekIsTouched = false;
                 }
+            });
+            */
+
+            try
+            {
+                _timelineEventPlayerTracker._mediaPlayer = new MediaPlayer();
+                String path = newTimelineEvent.audioUri.substring(7);
+                _timelineEventPlayerTracker._mediaPlayer.setDataSource(this, Uri.parse(path));
+
+                _timelineEventPlayerTracker._mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener()
+                {
+                    @Override
+                    public void onPrepared(MediaPlayer mediaPlayer)
+                    {
+                        final int durationSecs = (mediaPlayer.getDuration() / 1000);
+                        Log.w(TAG, "onPrepared, durationSecs=" + durationSecs);
+
+                        /*
+                        _timelineEventPlayerSeekbar.post(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                _timelineEventPlayerSeekbar.setMax(durationSecs);
+                                _timelineEventPlayerSeekbar.setProgress(0);
+                            }
+                        });
+                        */
+
+                        /*
+                        _eventAudioPlayTimer = new Timer();
+                        _eventAudioPlayTimer.scheduleAtFixedRate(new TimerTask()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                if(!_timeLineEventPlayerSeekIsTouched)
+                                {
+                                    if(_timelineEventMediaPlayer.isPlaying())
+                                    {
+                                        int positionSecs = (_timelineEventMediaPlayer.getCurrentPosition() / 1000);
+                                        Log.d(TAG, "updating seekbar, position=" + positionSecs);
+                                        _timelineEventPlayerSeekbar.setProgress(positionSecs);
+                                    }
+                                }
+                            }
+                        }, 0, (TIMELINE_EVENT_AUDIO_SCALE / 2));
+                        */
+
+                        _timelineEventPlayerTracker._mediaPlayer.start();
+                    }
+                });
+
+                _timelineEventPlayerTracker._mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener()
+                {
+                    @Override
+                    public void onCompletion(MediaPlayer mediaPlayer)
+                    {
+                        // TODO: Maybe stop the timer?
+                        if(_timelineEventPlayerTracker != null)
+                        {
+                            //_timelineEventPlayerTracker._ivPlayPause.setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_play_media));
+                            _timelineEventPlayerTracker._eventListAdapter.notifyDataSetChanged();
+                        }
+                    }
+                });
+
+                _timelineEventPlayerTracker._mediaPlayer.prepareAsync();
             }
-        });
+            catch (Exception e)
+            {
+                stopTimelineAudioPlayer();
+                Toast.makeText(this, getString(R.string.err_cannot_play_event_audio), Toast.LENGTH_SHORT).show();
+            }
+
+        }
+
+        _timelineEventPlayerTracker._eventListAdapter.notifyDataSetChanged();
     }
 
     private class TimelineEventListAdapter extends ArrayAdapter<TimelineEvent>
@@ -1562,11 +1734,27 @@ public class SimpleUiMainActivity
             convertView = inflator.inflate(_resId, parent, false);
 
             final TimelineEvent item = getItem(position);
-            item.view = convertView;
+
+            convertView.setTag(item);
 
             ((ImageView)convertView.findViewById(R.id.ivEventType)).setImageDrawable(ContextCompat.getDrawable(_ctx, item.typeIcon));
             ((TextView)convertView.findViewById(R.id.tvSourceEntity)).setText(item.sourceEntity);
             ((TextView)convertView.findViewById(R.id.tvAudioLengthMs)).setText((item.audioLengthMs / 1000) + " secs");
+
+            View expansion = convertView.findViewById(R.id.layEventExpansion);
+
+            /*
+            if(item.expanded)
+            {
+                expansion.setVisibility(View.VISIBLE);
+            }
+            else
+            {
+                expansion.setVisibility(View.GONE);
+            }
+            */
+
+            expansion.setVisibility(View.GONE);
 
             String extraInfo;
 
@@ -1586,7 +1774,7 @@ public class SimpleUiMainActivity
                 @Override
                 public void onClick(View v)
                 {
-                    playWaveFileForEvent(item);
+                    toggleTimelineEventDetail(v);
                 }
             });
 
@@ -1673,15 +1861,15 @@ public class SimpleUiMainActivity
                 {
                     AlertDialog.Builder builder = new AlertDialog.Builder(SimpleUiMainActivity.this);
 
-                    final TimelineEventListAdapter arrayAdapter = new TimelineEventListAdapter(SimpleUiMainActivity.this, R.layout.timeline_event_list_entry, events);
+                    _timelineEventPlayerTracker._eventListAdapter = new TimelineEventListAdapter(SimpleUiMainActivity.this, R.layout.timeline_event_list_entry, events);
 
-                    builder.setAdapter(arrayAdapter, null);
+                    builder.setAdapter(_timelineEventPlayerTracker._eventListAdapter, null);
                     builder.setPositiveButton(R.string.button_close, new DialogInterface.OnClickListener()
                     {
                         @Override
                         public void onClick(DialogInterface dialog, int which)
                         {
-                            SimpleUiMainActivity.this.stopSoundpoolPlayer();
+                            SimpleUiMainActivity.this.stopTimelineAudioPlayer();
                         }
                     });
 
@@ -1894,17 +2082,48 @@ public class SimpleUiMainActivity
 
     private void startLoadMissionFromLocalFile()
     {
-        try
-        {
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.setType("*/*");
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            startActivityForResult(Intent.createChooser(intent, getString(R.string.select_a_file)), PICK_MISSION_FILE_REQUEST_CODE);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
+        _missionFileLoadPassword = null;
+
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+        View promptView = layoutInflater.inflate(R.layout.file_load_mission_password_dialog, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setView(promptView);
+
+        final EditText etPassword = promptView.findViewById(R.id.etPassword);
+
+        alertDialogBuilder.setCancelable(false)
+                .setPositiveButton(R.string.mission_file_load_button, new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+                        try
+                        {
+                            // Save this for later
+                            _missionFileLoadPassword = etPassword.getText().toString();
+
+                            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                            intent.setType("*/*");
+                            intent.addCategory(Intent.CATEGORY_OPENABLE);
+                            startActivityForResult(Intent.createChooser(intent, getString(R.string.select_a_file)), PICK_MISSION_FILE_REQUEST_CODE);
+                        }
+                        catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
+                })
+                .setNegativeButton(R.string.cancel,
+                        new DialogInterface.OnClickListener()
+                        {
+                            public void onClick(DialogInterface dialog, int id)
+                            {
+                                dialog.cancel();
+                            }
+                        });
+
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
+
     }
 
     private void startJsonPolicyEditorActivity()
@@ -2227,12 +2446,6 @@ public class SimpleUiMainActivity
                     trash.add(f);
                 }
             }
-
-            // TODO: Show the text message fragment
-            if(f instanceof TextMessagingFragment)
-            {
-                trash.add(f);
-            }
         }
 
         for(Fragment f : trash)
@@ -2321,6 +2534,23 @@ public class SimpleUiMainActivity
         }
     }
 
+    public void onClickPlayOrPauseEventAudio(View view)
+    {
+        Log.e(TAG, "onClickPlayOrPauseEventAudio todo");
+        ImageView iv = (ImageView)view;
+
+        if(_timelineEventPlayerTracker._mediaPlayer.isPlaying())
+        {
+            iv.setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_play_media));
+            _timelineEventPlayerTracker._mediaPlayer.pause();
+        }
+        else
+        {
+            iv.setImageDrawable(ContextCompat.getDrawable(SimpleUiMainActivity.this, R.drawable.ic_pause_media));
+            _timelineEventPlayerTracker._mediaPlayer.start();
+        }
+    }
+
     public void onClickTeamIcon(View view)
     {
         showTeamList();
@@ -2329,6 +2559,18 @@ public class SimpleUiMainActivity
     public void onClickGroupsIcon(View view)
     {
         showGroupList();
+    }
+
+    public void onSwitchToTextMessagingView(View view)
+    {
+        _ac.setShowTextMessaging(true);
+        doRecreate();
+    }
+
+    public void onSwitchToVoiceView(View view)
+    {
+        _ac.setShowTextMessaging(false);
+        doRecreate();
     }
 
     public void onClickShareIcon(View view)
@@ -2407,6 +2649,7 @@ public class SimpleUiMainActivity
         }
     }
 
+
     public void onClickTitleBar(View view)
     {
     }
@@ -2483,13 +2726,11 @@ public class SimpleUiMainActivity
                 {
                     if (event.getAction() == MotionEvent.ACTION_DOWN)
                     {
-                        Log.w(TAG, "#SB#: onTouch ACTION_DOWN - startTx");//NON-NLS
                         _pttRequested = true;
                         Globals.getEngageApplication().startTx(0, 0);
                     }
                     else if (event.getAction() == MotionEvent.ACTION_UP)
                     {
-                        Log.w(TAG, "#SB#: onTouch ACTION_UP - endTx");//NON-NLS
                         _pttRequested = false;
                         Globals.getEngageApplication().endTx();
                     }
@@ -3107,5 +3348,50 @@ public class SimpleUiMainActivity
         {
             Utils.showLongPopupMsg(this, e.getMessage());
         }
+    }
+
+    private void checkForLicenseInstallation()
+    {
+        if(Globals.getSharedPreferences().getBoolean(PreferenceKeys.CHECKED_FOR_LICENSING_DONE, false))
+        {
+            return;
+        }
+
+        SharedPreferences.Editor ed = Globals.getSharedPreferencesEditor();
+        ed.putBoolean(PreferenceKeys.CHECKED_FOR_LICENSING_DONE, true);
+        ed.apply();
+
+        String key = Globals.getSharedPreferences().getString(PreferenceKeys.USER_LICENSING_KEY, null);
+        if(!Utils.isEmptyString(key))
+        {
+            return;
+        }
+
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+
+        alertDialogBuilder.setTitle(getString(R.string.no_license_found_title));
+        alertDialogBuilder.setMessage(getString(R.string.no_license_found_question_enter_now));
+        alertDialogBuilder.setPositiveButton(getString(R.string.button_yes), new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+                startAboutActivity();
+            }
+        });
+        alertDialogBuilder.setNegativeButton(getString(R.string.button_no), new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+                dialog.cancel();
+            }
+        });
+
+        alertDialogBuilder.setCancelable(false);
+
+        AlertDialog dlg = alertDialogBuilder.create();
+        dlg.show();
+
     }
 }

@@ -88,6 +88,7 @@ static const int ENGAGE_LOG_LEVEL_INFORMATIONAL = 3;
 static const int ENGAGE_LOG_LEVEL_DEBUG = 4;
 /** @} */
 
+
 /** @addtogroup sysLogEnableDisable Syslog Enable/Disable
  *
  * These are simply inputs to engageEnableSyslog() representing
@@ -100,6 +101,21 @@ static const int ENGAGE_LOG_LEVEL_DEBUG = 4;
 static const int ENGAGE_SYSLOG_ENABLE = 1;
 /** @brief Disables syslog output */
 static const int ENGAGE_SYSLOG_DISABLE = 0;
+/** @} */
+
+
+/** @addtogroup watchdogEnableDisable Watchdog Enable/Disable
+ *
+ * These are simply inputs to engageEnableWatchdog() representing
+ * TRUE and FALSE values.
+ *
+ * @see engageEnableWatchdog
+ *  @{
+ */
+/** @brief Enables the watchdog - has no effect if the watchdog is disabled in the policy configuration */
+static const int ENGAGE_WATCHDOG_ENABLE = 1;
+/** @brief Disables the watchdog - has no effect if the watchdog is disabled in the policy configuration */
+static const int ENGAGE_WATCHDOG_DISABLE = 0;
 /** @} */
 
 
@@ -321,6 +337,9 @@ typedef struct _EngageEvents_t
 
     /** @brief TODO: */
     void (* _Nullable PFN_ENGAGE_GROUP_STATS_REPORT_FAILED)(const char * _Nonnull pId, const char * _Nullable eventExtraJson);
+
+    /** @brief TODO: */
+    void (* _Nullable PFN_ENGAGE_GROUP_RX_VOLUME_CHANGED)(const char * _Nonnull pId, int16_t leftLevelPerc, int16_t rightLevelPerc, const char * _Nullable eventExtraJson);
 } EngageEvents_t;
 /** @} */
 
@@ -342,7 +361,7 @@ typedef struct _EngageEvents_t
  * @param level Desired debugging level
  * @return ENGAGE_RESULT_OK if successful
  */
-ENGAGE_API int engageSetLogLevel(int level );
+ENGAGE_API int engageSetLogLevel(int level);
 
 
 /**
@@ -400,6 +419,7 @@ ENGAGE_API int engageRegisterEventCallbacks(const EngageEvents_t * _Nonnull pEve
 ENGAGE_API int engageInitialize(const char * _Nullable enginePolicyConfiguration,
                                 const char * _Nullable userIdentity,
                                 const char * _Nullable tempStoragePath);
+
 
 /**
  * @brief [SYNC] Shuts down the Engine
@@ -683,6 +703,7 @@ ENGAGE_API int engageMuteGroupRx(const char * _Nonnull id);
  * @see engageMuteGroupRx()
  */
 ENGAGE_API int engageUnmuteGroupRx(const char * _Nonnull id);
+
 
 /**
  * @brief [ASYNC] Mutes microphone audio capture
@@ -1140,6 +1161,7 @@ ENGAGE_API int engagePlatformServiceUndiscovered(const char * _Nonnull id);
  */
 ENGAGE_API int engageQueryGroupTimeline(const char * _Nonnull id, const char * _Nonnull jsonParams);
 
+
 /**
  * @brief [ASYNC] Requests that the Engine deliver a health report for the group
  *
@@ -1149,6 +1171,7 @@ ENGAGE_API int engageQueryGroupTimeline(const char * _Nonnull id, const char * _
  */
 ENGAGE_API int engageQueryGroupHealth(const char * _Nonnull id);
 
+
 /**
  * @brief [ASYNC] Requests that the Engine deliver a statistics report for the group
  *
@@ -1157,6 +1180,7 @@ ENGAGE_API int engageQueryGroupHealth(const char * _Nonnull id);
  * @see PFN_ENGAGE_GROUP_STATS_REPORT
  */
 ENGAGE_API int engageQueryGroupStats(const char * _Nonnull id);
+
 
 /**
  * @brief [SYNC] Log a message via the Engine's logger
@@ -1169,6 +1193,7 @@ ENGAGE_API int engageQueryGroupStats(const char * _Nonnull id);
  */
 ENGAGE_API int engageLogMsg(int level, const char * _Nonnull tag, const char * _Nonnull msg);
 
+
 /**
  * @brief [SYNC] Returns an array of network interface devices in JSON format
  *
@@ -1178,6 +1203,7 @@ ENGAGE_API int engageLogMsg(int level, const char * _Nonnull tag, const char * _
  */
 ENGAGE_API const char * _Nonnull engageGetNetworkInterfaceDevices();
 
+
 /**
  * @brief [SYNC] Returns an array of audio device descriptor interface devices in JSON format
  *
@@ -1186,6 +1212,7 @@ ENGAGE_API const char * _Nonnull engageGetNetworkInterfaceDevices();
  * @return Zero-terminated JSON string of array of @ref Configuration::AudioDeviceDescriptor objects
  */
 ENGAGE_API const char * _Nonnull engageGetAudioDevices();
+
 
 /**
  * @brief [SYNC] Generates a mission based on a key phrase
@@ -1203,6 +1230,7 @@ ENGAGE_API const char * _Nonnull engageGetAudioDevices();
  */
 ENGAGE_API const char * _Nonnull engageGenerateMission(const char * _Nonnull keyPhrase, int audioGroupCount, const char * _Nullable rallypointHost, const char * _Nullable missionName);
 
+
 /**
  * @brief [SYNC] Sets the (optional) mission ID for the Engine
  *
@@ -1215,6 +1243,7 @@ ENGAGE_API const char * _Nonnull engageGenerateMission(const char * _Nonnull key
  * @return ENGAGE_RESULT_OK if the call was successful
  */
 ENGAGE_API int engageSetMissionId(const char * _Nullable missionId);
+
 
 /**
  * @brief [SYNC] Opens/creates a certificate store
@@ -1230,6 +1259,7 @@ ENGAGE_API int engageSetMissionId(const char * _Nullable missionId);
  */
 ENGAGE_API int engageOpenCertStore(const char * _Nonnull fileName, const char * _Nullable passwordHexByteString);
 
+
 /**
  * @brief [SYNC] Returns a JSON descriptor of the currently opened certificate store.
  *
@@ -1239,6 +1269,7 @@ ENGAGE_API int engageOpenCertStore(const char * _Nonnull fileName, const char * 
  */
 ENGAGE_API const char * _Nonnull engageGetCertStoreDescriptor(void);
 
+
 /**
  * @brief [SYNC] Closes the current certificate store (if any)
  *
@@ -1247,6 +1278,7 @@ ENGAGE_API const char * _Nonnull engageGetCertStoreDescriptor(void);
  * @return ENGAGE_RESULT_OK
  */
 ENGAGE_API int engageCloseCertStore(void);
+
 
 /**
  * @brief [SYNC] Adds/updates a certificate and (optionally) private key using PEM strings
@@ -1262,6 +1294,7 @@ ENGAGE_API int engageCloseCertStore(void);
  * @return ENGAGE_RESULT_OK if operation was successful.
  */
 ENGAGE_API int engageSetCertStoreCertificatePem(const char * _Nonnull id, const char * _Nonnull certificatePem, const char * _Nullable privateKeyPem);
+
 
 /**
  * @brief [SYNC] Adds/updates a certificate and (optionally) private key using P12 content
@@ -1279,6 +1312,7 @@ ENGAGE_API int engageSetCertStoreCertificatePem(const char * _Nonnull id, const 
  */
 ENGAGE_API int engageSetCertStoreCertificateP12(const char * _Nonnull id, uint8_t * _Nonnull data, size_t size, const char * _Nullable password);
 
+
 /**
  * @brief [SYNC] Deletes a certificate and its private key (if any)
  *
@@ -1291,6 +1325,7 @@ ENGAGE_API int engageSetCertStoreCertificateP12(const char * _Nonnull id, uint8_
  */
 ENGAGE_API int engageDeleteCertStoreCertificate(const char * _Nonnull id);
 
+
 /**
  * @brief [SYNC] Returns a certificate in PEM format.  The private key (if any) is NOT returned.
  *
@@ -1299,6 +1334,7 @@ ENGAGE_API int engageDeleteCertStoreCertificate(const char * _Nonnull id);
  * @return Certificate PEM
  */
 ENGAGE_API const char * _Nonnull engageGetCertStoreCertificatePem(const char * _Nonnull id);
+
 
 /**
  * @brief [SYNC] Returns a JSON object describing the certificate PEM.
@@ -1309,6 +1345,7 @@ ENGAGE_API const char * _Nonnull engageGetCertStoreCertificatePem(const char * _
  * @return JSON
  */
 ENGAGE_API const char * _Nonnull engageGetCertificateDescriptorFromPem(const char * _Nonnull pem);
+
 
 /**
  * @brief [SYNC] Adds/updates an element (certificate and optionally private key) from another certificate store.
@@ -1324,6 +1361,7 @@ ENGAGE_API const char * _Nonnull engageGetCertificateDescriptorFromPem(const cha
  * @return ENGAGE_RESULT_OK if operation was successful.
  */
 ENGAGE_API int engageImportCertStoreElementFromCertStore(const char * _Nonnull id, const char * _Nonnull srcId, const char * _Nonnull srcFileName, const char * _Nonnull srcPasswordHexByteString);
+
 
 /**
  * @brief [SYNC] Returns an extended descriptor of named certificate store
@@ -1353,7 +1391,21 @@ ENGAGE_API const char * _Nonnull engageQueryCertStoreContents(const char * _Nonn
  * @see engageDeleteBridge(), ConfigurationObjects::Bridge
  */
 ENGAGE_API int engageCreateBridge(const char * _Nonnull jsonConfiguration);
+
+
+/**
+ * @brief [ASYNC] Deletes a bridge object
+ *
+ * Requests deletiom of a bridge object
+ *
+ * - ENGAGE_BRIDGE_DELETED is fired when the bridge is deleted.
+ *
+ * @param id The ID of the bridge
+ * @return ENGAGE_RESULT_OK if the submission request was successful
+ * @see engageCreateBridge(), ConfigurationObjects::Bridge
+ */
 ENGAGE_API int engageDeleteBridge(const char * _Nonnull id);
+
 
 /**
  * @brief [SYNC] Returns a hardware report
@@ -1363,6 +1415,69 @@ ENGAGE_API int engageDeleteBridge(const char * _Nonnull id);
  * @return Zero-terminated JSON string
  */
 ENGAGE_API const char * _Nonnull engageGetHardwareReport();
+
+
+/**
+ * @brief [ASYNC] Requests that the Engine add a timeline event
+ *
+ * @param id The ID of the group
+ * @param jsonParams Parameters for the add operation.
+ * @param blobData Optional pointer to an array of bytes for the event.
+ * @param blobSize Size of the array of bytes.
+ * @return ENGAGE_RESULT_OK if the submission request was successful
+ * @see PFN_ENGAGE_GROUP_TIMELINE_REPORT
+ */
+ENGAGE_API int engageAddGroupTimelineEvent(const char * _Nonnull id, const char * _Nonnull jsonParams, const uint8_t * _Nullable blobData, size_t blobSize);
+
+
+/**
+ * @brief [ASYNC] Requests that the Engine update a timeline event
+ *
+ * @param id The ID of the group
+ * @param jsonParams Parameters for the add operation.
+ * @param blobData Optional pointer to an array of bytes for the event.
+ * @param blobSize Size of the array of bytes.
+ * @return ENGAGE_RESULT_OK if the submission request was successful
+ * @see PFN_ENGAGE_GROUP_TIMELINE_REPORT
+ */
+ENGAGE_API int engageUpdateGroupTimelineEvent(const char * _Nonnull id, const char * _Nonnull jsonParams, const uint8_t * _Nullable blobData, size_t blobSize);
+
+
+/**
+ * @brief [ASYNC] Requests that the Engine delete timeline event
+ *
+ * @param id The ID of the group
+ * @param jsonParams Parameters for the delete operation.
+ * @return ENGAGE_RESULT_OK if the submission request was successful
+ * @see PFN_ENGAGE_GROUP_TIMELINE_REPORT
+ */
+ENGAGE_API int engageDeleteGroupTimelineEvent(const char * _Nonnull id, const char * _Nonnull jsonParams);
+
+
+/**
+ * @brief [SYNC] Returns the device identifier
+ *
+ * No events are generated by this API call.
+ *
+ * @return Zero-terminated string
+ */
+ENGAGE_API const char * _Nonnull engageGetDeviceId();
+
+
+/**
+ * @brief [SYNC] Enables or disables the Engine watchdog.
+ *
+ * This output to syslog has no effect on platforms which do not support syslog
+ * such as Windows.
+ *
+ * No events are generated by this API call.
+ *
+ * @see sysLogEnableDisable, engageSetLogLevel()
+ *
+ * @param enable ENGAGE_WATCHDOG_ENABLE or ENGAGE_WATCHDOG_DISABLE
+ * @return ENGAGE_RESULT_OK if successful
+ */
+ENGAGE_API int engageEnableWatchdog(int enable);
 
 #endif
 

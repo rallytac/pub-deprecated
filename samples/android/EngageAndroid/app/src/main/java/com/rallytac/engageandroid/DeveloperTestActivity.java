@@ -155,7 +155,7 @@ public class DeveloperTestActivity extends AppCompatActivity
         - The "jsonParams" parameter is optional but, if provided, may contain the following
         {
             "target" : "{engageTargetNodeId}",
-            "payloadType" : <one of the JsonFields.BlobHeader.PT_xxxxx values>,
+            "payloadType" : <one of the JsonFields.BlobInfo.PT_xxxxx values>,
             "rtpHeader":
             {
                 "pt": numeric_rtp_payload_type,
@@ -180,7 +180,7 @@ public class DeveloperTestActivity extends AppCompatActivity
             byte[] blob = blobString.getBytes();
 
             JSONObject bi = new JSONObject();
-            bi.put(Engine.JsonFields.BlobHeader.payloadType, Engine.BlobType.appTextUtf8.toInt());
+            bi.put(Engine.JsonFields.BlobInfo.payloadType, Engine.BlobType.appTextUtf8.toInt());
             String jsonParams = bi.toString();
 
             GroupDescriptor gd = getFirstPresenceGroup();
@@ -241,7 +241,7 @@ public class DeveloperTestActivity extends AppCompatActivity
 
             // Our JSON parameters indicate that the payload is binary human biometric data in Engage format
             JSONObject bi = new JSONObject();
-            bi.put(Engine.JsonFields.BlobHeader.payloadType, Engine.BlobType.engageHumanBiometrics.toInt());
+            bi.put(Engine.JsonFields.BlobInfo.payloadType, Engine.BlobType.engageHumanBiometrics.toInt());
             String jsonParams = bi.toString();
 
             // Send the blob to the presence group

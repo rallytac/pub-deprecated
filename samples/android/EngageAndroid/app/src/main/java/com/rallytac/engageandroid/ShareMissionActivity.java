@@ -327,7 +327,18 @@ public class ShareMissionActivity extends AppCompatActivity
                 File fd = File.createTempFile("mission-" + ac.getMissionName().replace(" ", "-"), ".json", Environment.getExternalStorageDirectory());//NON-NLS
 
                 FileOutputStream fos = new FileOutputStream(fd);
-                fos.write(_jsonConfiguration.toString().getBytes());
+
+                if(!Utils.isEmptyString(_pwd))
+                {
+                    String pwdHexString = Utils.toHexString(_pwd.getBytes(Utils.getEngageCharSet()));
+                    byte[] encryptedBytes = Globals.getEngageApplication().getEngine().encryptSimple(_jsonConfiguration.toString().getBytes(), pwdHexString);
+                    fos.write(encryptedBytes);
+                }
+                else
+                {
+                    fos.write(_jsonConfiguration.toString().getBytes());
+                }
+
                 fos.close();
 
                 Uri u = FileProvider.getUriForFile(this, getString(R.string.file_content_provider), fd);

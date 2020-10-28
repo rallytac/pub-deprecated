@@ -15,5 +15,6 @@ public class TextMessage
     public Date _ts;
     public Direction _direction;
     public String _sourceNodeId;
+    public String _sourceDisplayName;
     public String _messageText;
 }

@@ -5,15 +5,14 @@
 
 package com.rallytac.engageandroid;
 
-public class SmallTabletCardFragment extends SmallCardFragment
+public class SmallCardFragmentForTextMessaging extends CardFragment
 {
-    private static String TAG = SmallTabletCardFragment.class.getSimpleName();
+    private static String TAG = SmallCardFragmentForTextMessaging.class.getSimpleName();
 
     @Override
     protected int getLayoutId()
     {
-        return R.layout.fragment_small_card;
-        //return -1;
+        return R.layout.fragment_small_card_for_text_messaging;
     }
 
     @Override
@@ -31,7 +30,7 @@ public class SmallTabletCardFragment extends SmallCardFragment
     @Override
     protected void onCardDoubleTap()
     {
-        goToSingleViewForThisCard();
+        goToMultiView();
     }
 
     @Override
@@ -39,15 +38,12 @@ public class SmallTabletCardFragment extends SmallCardFragment
     {
         if(direction == GestureDirection.gdLeft || direction == GestureDirection.gdRight)
         {
-            goToSingleViewForThisCard();
+            goToMultiView();
         }
     }
 
-    private void goToSingleViewForThisCard()
+    private void goToMultiView()
     {
-        if(_gd != null)
-        {
-            ((SimpleUiMainActivity) getActivity()).showSingleView(_gd.id);
-        }
+        ((SimpleUiMainActivity) getActivity()).showMultiView();
     }
 }

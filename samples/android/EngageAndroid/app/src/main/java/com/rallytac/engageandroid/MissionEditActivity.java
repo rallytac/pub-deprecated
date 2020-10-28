@@ -137,7 +137,7 @@ public class MissionEditActivity extends AppCompatActivity
 
     private void addGroup()
     {
-        if(_mission._groups.size() < 4)
+        if(_mission._groups.size() < Globals.getEngageApplication().getMaxGroupsAllowed())
         {
             editGroup(null);
         }

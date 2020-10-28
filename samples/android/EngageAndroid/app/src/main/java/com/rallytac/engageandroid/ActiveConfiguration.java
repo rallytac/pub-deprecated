@@ -123,6 +123,7 @@ public class ActiveConfiguration
     private String _userAlias;
 
     private Constants.UiMode _uiMode;
+    private boolean _showTextMessaging;
     private float _pttToneNotificationLevel;
     private float _notificationToneNotificationLevel;
     private float _errorToneNotificationLevel;
@@ -145,6 +146,9 @@ public class ActiveConfiguration
     private String _cistechGv1DiscoveryAddress;
     private int _cistechGv1DiscoveryPort;
     private int _cistechGv1DiscoveryTimeoutSecs;
+
+    private int _audioInputDeviceId;
+    private int _audioOutputDeviceId;
 
     private String _inputJson;
 
@@ -306,6 +310,26 @@ public class ActiveConfiguration
         Globals.getSharedPreferencesEditor().apply();
     }
 
+    public int getAudioInputDeviceId()
+    {
+        return _audioInputDeviceId;
+    }
+
+    public void setAudioInputDeviceId(int deviceId)
+    {
+        _audioInputDeviceId = deviceId;
+    }
+
+    public int getAudioOutputDeviceId()
+    {
+        return _audioOutputDeviceId;
+    }
+
+    public void setAudioOutputDeviceId(int deviceId)
+    {
+        _audioOutputDeviceId = deviceId;
+    }
+
     public int getSpeakerOutputBoostFactor()
     {
         return _speakerOutputBoostFactor;
@@ -360,7 +384,6 @@ public class ActiveConfiguration
         Globals.getSharedPreferencesEditor().apply();
     }
 
-
     public Constants.UiMode getUiMode()
     {
         return _uiMode;
@@ -371,6 +394,19 @@ public class ActiveConfiguration
         _uiMode = mode;
 
         Globals.getSharedPreferencesEditor().putInt(PreferenceKeys.UI_MODE, _uiMode.ordinal());
+        Globals.getSharedPreferencesEditor().apply();
+    }
+
+    public boolean showTextMessaging()
+    {
+        return _showTextMessaging;
+    }
+
+    public void setShowTextMessaging(boolean val)
+    {
+        _showTextMessaging = val;
+
+        Globals.getSharedPreferencesEditor().putBoolean(PreferenceKeys.UI_SHOW_TEXT_MESSAGING, _showTextMessaging);
         Globals.getSharedPreferencesEditor().apply();
     }
 
@@ -684,6 +720,7 @@ public class ActiveConfiguration
         _multicastFailoverConfiguration.clear();
 
         _uiMode = Constants.DEF_UI_MODE;
+        _showTextMessaging = Constants.DEF_UI_SHOW_TEXT_MESSAGING;
         _pttToneNotificationLevel = Constants.DEF_PTT_TONE_LEVEL;
         _errorToneNotificationLevel = Constants.DEF_ERROR_TONE_LEVEL;
         _notificationToneNotificationLevel = Constants.DEF_NOTIFICATION_TONE_LEVEL;
@@ -977,8 +1014,33 @@ public class ActiveConfiguration
                     audio = new JSONObject();
                 }
 
-                // Default to stereo output
-                audio.put(Engine.JsonFields.EnginePolicy.Audio.outputChannels, 2);
+                int engineInternalAudioSetting = Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.USER_AUDIO_ENGINE_INTERNAL_AUDIO, Integer.toString(Constants.DEF_ENGINE_INTERNAL_AUDIO)));
+
+                switch(engineInternalAudioSetting)
+                {
+                    case 1:
+                        audio.put(Engine.JsonFields.EnginePolicy.Audio.internalRate, 16000);
+                        audio.put(Engine.JsonFields.EnginePolicy.Audio.internalChannels, 1);
+                        break;
+
+                    case 2:
+                        audio.put(Engine.JsonFields.EnginePolicy.Audio.internalRate, 8000);
+                        audio.put(Engine.JsonFields.EnginePolicy.Audio.internalChannels, 2);
+                        break;
+
+                    case 3:
+                        audio.put(Engine.JsonFields.EnginePolicy.Audio.internalRate, 8000);
+                        audio.put(Engine.JsonFields.EnginePolicy.Audio.internalChannels, 1);
+                        break;
+
+
+                    case 0:
+                    default:
+                        audio.put(Engine.JsonFields.EnginePolicy.Audio.internalRate, 16000);
+                        audio.put(Engine.JsonFields.EnginePolicy.Audio.internalChannels, 2);
+                        break;
+                }
+
 
                 JSONObject aec = audio.optJSONObject(Engine.JsonFields.EnginePolicy.Audio.Aec.objectName);
                 if(aec == null)
@@ -989,7 +1051,10 @@ public class ActiveConfiguration
                 boolean aecEnabled = Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_AUDIO_AEC_ENABLED, Constants.DEF_AEC_ENABLED);
                 aec.put(Engine.JsonFields.EnginePolicy.Audio.Aec.enabled, aecEnabled);
                 aec.put(Engine.JsonFields.EnginePolicy.Audio.Aec.cng, Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_AUDIO_AEC_CNG, Constants.DEF_AEC_CNG));
-                aec.put(Engine.JsonFields.EnginePolicy.Audio.Aec.mode, Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.USER_AUDIO_AEC_MODE, Integer.toString(Constants.DEF_AEC_MODE))));
+
+                //aec.put(Engine.JsonFields.EnginePolicy.Audio.Aec.mode, Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.USER_AUDIO_AEC_MODE, Integer.toString(Constants.DEF_AEC_MODE))));
+                aec.put(Engine.JsonFields.EnginePolicy.Audio.Aec.mode, Integer.parseInt(Integer.toString(Constants.DEF_AEC_MODE)));
+
                 aec.put(Engine.JsonFields.EnginePolicy.Audio.Aec.speakerTailMs, Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.USER_AUDIO_AEC_SPEAKER_TAIL_MS, Integer.toString(Constants.DEF_AEC_SPEAKER_TAIL_MS))));
 
                 audio.put(Engine.JsonFields.EnginePolicy.Audio.Aec.objectName, aec);
@@ -1000,9 +1065,19 @@ public class ActiveConfiguration
                     boolean disableStereo = Globals.getSharedPreferences().getBoolean(PreferenceKeys.USER_AUDIO_AEC_DISABLE_STEREO, Constants.DEF_AEC_STEREO_DISABLED);
                     if(disableStereo)
                     {
-                        audio.put(Engine.JsonFields.EnginePolicy.Audio.outputChannels, 1);
+                        audio.put(Engine.JsonFields.EnginePolicy.Audio.internalChannels, 1);
                     }
                 }
+
+                JSONObject androidAudio = audio.optJSONObject(Engine.JsonFields.EnginePolicy.Audio.Android.objectName);
+                if(androidAudio == null)
+                {
+                    androidAudio = new JSONObject();
+                }
+
+                androidAudio.put(Engine.JsonFields.EnginePolicy.Audio.Android.api, Integer.parseInt(Globals.getSharedPreferences().getString(PreferenceKeys.USER_AUDIO_ANDROID_AUDIO_API, Integer.toString(Constants.DEF_ANDROID_AUDIO_API))));
+
+                audio.put(Engine.JsonFields.EnginePolicy.Audio.Android.objectName, androidAudio);
 
                 rc.put(Engine.JsonFields.EnginePolicy.Audio.objectName, audio);
             }
@@ -1256,6 +1331,24 @@ public class ActiveConfiguration
         return rc;
     }
 
+    public static boolean doesMissionExistInDatabase(String json)
+    {
+        boolean rc = false;
+
+        ActiveConfiguration ac = new ActiveConfiguration();
+        if (ac.parseTemplate(json))
+        {
+            MissionDatabase database = MissionDatabase.load(Globals.getSharedPreferences(), Constants.MISSION_DATABASE_NAME);
+            if(database != null)
+            {
+                DatabaseMission dbm = database.getMissionById(ac.getMissionId());
+                rc = (dbm != null);
+            }
+        }
+
+        return rc;
+    }
+
     public static void installMissionJson(Context ctx, String json, boolean allowOverwrite)
     {
         ActiveConfiguration ac = new ActiveConfiguration();
@@ -1267,7 +1360,7 @@ public class ActiveConfiguration
             {
                 // Find the mission.
                 DatabaseMission dbm = database.getMissionById(ac.getMissionId());
-                if(allowOverwrite || dbm != null)
+                if(allowOverwrite || dbm == null)
                 {
                     if( database.addOrUpdateMissionFromActiveConfiguration(ac) )
                     {
@@ -1309,12 +1402,12 @@ public class ActiveConfiguration
         String encryptedString = str;
 
         // Look for the "/??" to see if there's a deflection URL
-        int endOfDeflection = encryptedString.indexOf("/??");
+        int endOfDeflection = encryptedString.indexOf(Constants.QR_DEFLECTION_URL_SEP);
 
         // If it's there, strip it off
         if (endOfDeflection > 0)
         {
-            encryptedString = encryptedString.substring(endOfDeflection + 3);
+            encryptedString = encryptedString.substring(endOfDeflection + Constants.QR_DEFLECTION_URL_SEP.length());
         }
 
         // Now we have a string with is Base91 encoded, we need to decode that

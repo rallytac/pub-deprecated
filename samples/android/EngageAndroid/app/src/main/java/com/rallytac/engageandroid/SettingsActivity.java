@@ -9,6 +9,7 @@ import android.annotation.TargetApi;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.media.AudioDeviceInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -18,6 +19,8 @@ import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import androidx.appcompat.app.ActionBar;
+
+import android.provider.Settings;
 import android.util.Log;
 import android.view.MenuItem;
 
@@ -146,6 +149,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity
         super.onCreate(savedInstanceState);
         setupActionBar();
 
+
+
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new GeneralPreferenceFragment()).commit();
     }
@@ -219,7 +224,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity
         }
     }
 
-
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class GeneralPreferenceFragment extends BasePreferenceFragment
     {
@@ -269,11 +273,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_SPEAKER_OUTPUT_BOOST_FACTOR));
 
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_ENABLED));
-            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_MODE));
+            //bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_MODE));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_CNG));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_SPEAKER_TAIL_MS));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_AEC_DISABLE_STEREO));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_JITTER_LOW_LATENCY_ENABLED));
+
+            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_ANDROID_AUDIO_API));
+            bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_ENGINE_INTERNAL_AUDIO));
 
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_VIBRATIONS));
             bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_NOTIFY_PTT_EVERY_TIME));
@@ -386,19 +393,41 @@ public class SettingsActivity extends AppCompatPreferenceActivity
                 }
 
                 // Fill the input selector
-                for(JSONObject ad : inputs)
                 {
-                    //Log.e(TAG, ad.toString());
+                    final ListPreference listPreference = (ListPreference) findPreference(PreferenceKeys.USER_AUDIO_INPUT_DEVICE);
+                    final CharSequence[] entries = new CharSequence[inputs.size()];
+                    final CharSequence[] entryValues = new CharSequence[inputs.size()];
+                    int index = 0;
+                    for (JSONObject ad : inputs)
+                    {
+                        entries[index] = ad.optString("name", "?") + " (" + Globals.getEngageApplication().androidAudioDeviceName(Integer.parseInt(ad.optString("type", "-1"))) + ") " + ad.optString("extra", "");
+                        entryValues[index] = Integer.toString(ad.optInt("deviceId", 0));
+                        index++;
+                    }
+
+                    listPreference.setEntries(entries);
+                    listPreference.setEntryValues(entryValues);
+                    bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_INPUT_DEVICE));
                 }
 
                 // Fill the output selector
-                for(JSONObject ad : outputs)
                 {
-                    //Log.e(TAG, ad.toString());
+                    final ListPreference listPreference = (ListPreference) findPreference(PreferenceKeys.USER_AUDIO_OUTPUT_DEVICE);
+                    final CharSequence[] entries = new CharSequence[outputs.size()];
+                    final CharSequence[] entryValues = new CharSequence[outputs.size()];
+                    int index = 0;
+                    for (JSONObject ad : outputs)
+                    {
+                        entries[index] = ad.optString("name", "?") + " (" + Globals.getEngageApplication().androidAudioDeviceName(Integer.parseInt(ad.optString("type", "-1"))) + ") " + ad.optString("extra", "");
+                        entryValues[index] = Integer.toString(ad.optInt("deviceId", 0));
+                        index++;
+                    }
+
+                    listPreference.setEntries(entries);
+                    listPreference.setEntryValues(entryValues);
+                    bindPreferenceSummaryToValue(findPreference(PreferenceKeys.USER_AUDIO_OUTPUT_DEVICE));
                 }
             }
-
-
 
 
             // Bluetooth audio device

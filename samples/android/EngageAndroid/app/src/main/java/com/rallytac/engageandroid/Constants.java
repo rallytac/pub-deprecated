@@ -23,6 +23,7 @@ public class Constants
     public final static String CHARSET = "UTF-8";//NON-NLS
 
     public final static UiMode DEF_UI_MODE = UiMode.vSingle;
+    public final static boolean DEF_UI_SHOW_TEXT_MESSAGING = false;
 
     public final static float DEF_PTT_TONE_LEVEL = (float)0.015;
     public final static float DEF_NOTIFICATION_TONE_LEVEL = (float)0.015;
@@ -31,9 +32,11 @@ public class Constants
     public final static int DEF_SPEAKER_OUTPUT_BOOST_FACTOR = 3;
     public final static boolean DEF_AEC_ENABLED = false;
     public final static boolean DEF_AEC_CNG = true;
-    public final static int DEF_AEC_MODE = 5;
+    public final static int DEF_AEC_MODE = 0;
     public final static int DEF_AEC_SPEAKER_TAIL_MS = 60;
     public final static boolean DEF_AEC_STEREO_DISABLED = true;
+    public final static int DEF_ANDROID_AUDIO_API = 0;
+    public final static int DEF_ENGINE_INTERNAL_AUDIO = 0;
 
     public final static boolean DEF_USE_RP = false;
     public final static String DEF_RP_ADDRESS = "";
@@ -92,4 +95,16 @@ public class Constants
     public final static int DEFAULT_ENCODER = 25;
     public final static int DEFAULT_TX_FRAMING_MS = 60;
     public static final String CERTSTORE_CHANGED_TO_FN = "CertStoreChangedToFn";//NON-NLS
+
+    public final static int MAX_TEXT_MESSAGE_INPUT_SIZE = 256;
+    public final static int TEXT_MESSAGE_BLOB_RTP_PAYLOAD_TYPE = 66;
+
+    public final static int INVALID_AUDIO_DEVICE_ID = -1;
+
+    public final static int DEF_MAX_GROUPS_ALLOWED = 4;
+
+    public final static int DEFAULT_NETWORK_TX_TTL = 64;
+    public final static int DEFAULT_NETWORK_QOS_PRIORITY = 4;
+
+    public final static long ENGAGE_RXFLAG_EMERGENCY = 0x1L;
 }

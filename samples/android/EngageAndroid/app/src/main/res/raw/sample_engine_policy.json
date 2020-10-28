@@ -11,7 +11,7 @@
 
   "internals":{
     "disableWatchdog":false,
-    "watchdogIntervalMs":1000,
+    "watchdogIntervalMs":5000,
     "watchdogHangDetectionMs":2000,
     "housekeeperIntervalMs":1000,
     "maxTxSecs":86400,
@@ -46,21 +46,15 @@
   },
 
   "audio":{
-    "speakerQueueMs":250,
-    "microphoneQueueMs":60,
-    "pcmSamplingRate":16000,
-    "pcmMinPlatformSampleCount":250,
-    "pcmMaxSamplesInQueue":1000,
-    "pcmSpeakerBuffers":5,
-    "outputChannels":2,
-    "outputGainPercentage":0,
-    "allowOutputOnTransmit": true,
+    "internalRate":16000,
+    "internalChannels":2,  
+    "allowOutputOnTransmit": false,
+    "muteTxOnTx":true,
     "enableAec":true
   },
 
   "security":{
     "certificate":{
-      "requireEllipticCurve":false,
       "certificate":"<filled in by app>",
       "key":"<filled in by app>"
     }
@@ -73,7 +67,7 @@
     "maxEventAgeSecs":86400,
     "maxEvents":1000,
     "groomingIntervalSecs":300,
-    "autosaveIntervalSecs":5,
+    "autosaveIntervalSecs":60,
     "disableSigningAndVerification":false
   },
 

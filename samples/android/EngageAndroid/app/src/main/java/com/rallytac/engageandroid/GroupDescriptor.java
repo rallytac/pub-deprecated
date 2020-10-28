@@ -203,6 +203,13 @@ public class GroupDescriptor implements Parcelable
                 }
 
                 sb.append(td.alias);
+
+                // TODO: Make this nicer
+                // Mark talker in emergency TX with an asterisk
+                if((td.rxFlags & Constants.ENGAGE_RXFLAG_EMERGENCY) == Constants.ENGAGE_RXFLAG_EMERGENCY)
+                {
+                    sb.append("*");
+                }
             }
         }
 

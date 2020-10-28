@@ -12,6 +12,8 @@ public class PreferenceKeys
 
     public static String UI_MODE = "ui.mode";//NON-NLS
 
+    public static String UI_SHOW_TEXT_MESSAGING = "ui.showTextMessaging";//NON-NLS
+
     public static String NETWORK_BINDING_NIC_NAME = "network_bindingNic";//NON-NLS
     public static String NETWORK_MULTICAST_FAILOVER_ENABLED = "network_multicastFailover.enabled";//NON-NLS
     public static String NETWORK_MULTICAST_FAILOVER_SECS = "network_multicastFailover.secs";//NON-NLS
@@ -40,6 +42,9 @@ public class PreferenceKeys
     public static String USER_AUDIO_AEC_SPEAKER_TAIL_MS = "user_audio.aec.speakerTailMs";//NON-NLS
     public static String USER_AUDIO_AEC_DISABLE_STEREO = "user_audio.aec.disableStereo";//NON-NLS
     public static String USER_AUDIO_JITTER_LOW_LATENCY_ENABLED = "user_audio_jitter_buffer_low_latency.enabled";//NON-NLS
+    public static String USER_AUDIO_ANDROID_AUDIO_API = "user_audio.android.api";//NON-NLS
+    public static String USER_AUDIO_ENGINE_INTERNAL_AUDIO = "user_audio.engine.internal.audio";//NON-NLS
+
 
     public static String USER_UI_PTT_LATCHING = "user_ui.pttLatching";//NON-NLS
     public static String USER_UI_PTT_VOICE_CONTROL = "user_ui.pttButtonVoiceControl";//NON-NLS
@@ -98,8 +103,12 @@ public class PreferenceKeys
     public static String USER_BT_DEVICE_USE = "user_bt.use";//NON-NLS
     public static String USER_BT_DEVICE_ADDRESS = "user_bt.deviceAddress";//NON-NLS
 
+    public static String USER_AUDIO_INPUT_DEVICE = "user_audio.inputDevice";//NON-NLS
+    public static String USER_AUDIO_OUTPUT_DEVICE = "user_audio.outputDevice";//NON-NLS
+
     public static String USER_LICENSING_KEY = "user_licensing.key";//NON-NLS
     public static String USER_LICENSING_ACTIVATION_CODE = "user_licensing.activationCode";//NON-NLS
+    public static String CHECKED_FOR_LICENSING_DONE = "checkedForLicensingDone";//NON-NLS
 
     public static String DEVELOPER_MODE_ACTIVE = "developer_modeActive";//NON-NLS
     public static String DEVELOPER_USE_DEV_LICENSING_SYSTEM = "developer_useDevLicensingSystem";//NON-NLS

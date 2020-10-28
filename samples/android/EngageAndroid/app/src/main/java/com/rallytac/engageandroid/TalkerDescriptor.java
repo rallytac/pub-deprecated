@@ -9,4 +9,6 @@ public class TalkerDescriptor
 {
     public String alias;
     public String nodeId;
+    public long rxFlags;
+    public int txPriority;
 }
