@@ -2,6 +2,7 @@
 
 Binaries are located on Bintray at [https://bintray.com/rallytac/pub](https://bintray.com/rallytac/pub).  Below you'll find links to the individual files on a version-by-version basis.
 
+---
 <details>
 <summary>1.189.9026</summary>
 
@@ -86,5 +87,5 @@ Binaries are located on Bintray at [https://bintray.com/rallytac/pub](https://bi
 - [semsig.exe](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/win_x64/semsig.exe)
 </details>
 
-
+---
 
