@@ -1,5 +1,9 @@
 # Change List
 
+## October 28, 2020 - 1.189.9026
+- Adds rxFlags and txPriority to talker information notifications
+- Corrects an incorrect duration calculation for audio timeline events
+
 ## October 17, 2020 - 1.186.9023
 - Adds the ability to disable/enable the Engine watchdog
 - Adds support for iOS
