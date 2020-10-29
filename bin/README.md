@@ -4,7 +4,9 @@ Binaries are located on Bintray at [https://bintray.com/rallytac/pub](https://bi
 
 Check out the [change log](ChangeLog.md) for details for each version.
 
+
 ---
+
 <details>
 <summary>1.189.9026</summary>
 
