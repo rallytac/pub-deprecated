@@ -2,6 +2,10 @@
 
 Binaries have moved to Bintray.
 
-<a href="https://www.bbc.com">BBC</a>
-<a href='https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/Engine.java'>android/Engine.java</a>
-[CNN](https://www.cnn.com)
+<details>
+    <summary>1.189.9026</summary>
+
+    ## android
+    [CNN](https://www.cnn.com)
+    [android/Engine.java](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/Engine.java)
+</details>
