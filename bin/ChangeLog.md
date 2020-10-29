@@ -1,4 +1,4 @@
-# Change List
+# Change Log
 
 ## October 28, 2020 - 1.189.9026
 - Adds rxFlags and txPriority to talker information notifications
