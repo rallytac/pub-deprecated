@@ -2,6 +2,8 @@
 
 Binaries are located on Bintray at [https://bintray.com/rallytac/pub](https://bintray.com/rallytac/pub).  Below you'll find links to the individual files on a version-by-version basis.
 
+Check out the [change log](ChangeLog.md) for details for each version.
+
 ---
 <details>
 <summary>1.189.9026</summary>
