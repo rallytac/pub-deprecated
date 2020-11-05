@@ -1,28 +1,16 @@
-# Binaries
-
-Binaries are located on Bintray at [https://bintray.com/rallytac/pub](https://bintray.com/rallytac/pub).  Below you'll find links to the individual files on a version-by-version basis.
-
-Check out the [change log](ChangeLog.md) for details for each version.
-
-
 ---
 
 <details>
 <summary>1.189.9026</summary>
 
-### api/c/include
-- [ConfigurationObjects.h](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/api/c/include/ConfigurationObjects.h)
-- [EngageAudioDevice.h](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/api/c/include/EngageAudioDevice.h)
-- [EngageIntegralDataTypes.h](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/api/c/include/EngageIntegralDataTypes.h)
-- [EngageInterface.h](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/api/c/include/EngageInterface.h)
 ### android
 - [Engine.java](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/Engine.java)
 - [engage-engine-release-1.189.9026.aar](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/engage-engine-release-1.189.9026.aar)
 - [engage-engine-release-1.189.9026.pom](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/engage-engine-release-1.189.9026.pom)
-- [libengage-shared.so (arm64-v8a)](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/arm64-v8a/libengage-shared.so)
-- [libengage-shared.so (armeabi-v7a)](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/armeabi-v7a/libengage-shared.so)
-- [libengage-shared.so (x86)](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/x86/libengage-shared.so)
-- [libengage-shared.so (x86_64)](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/x86_64/libengage-shared.so)
+- [libengage-shared.so](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/arm64-v8a/libengage-shared.so)
+- [libengage-shared.so](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/armeabi-v7a/libengage-shared.so)
+- [libengage-shared.so](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/x86/libengage-shared.so)
+- [libengage-shared.so](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/android/x86_64/libengage-shared.so)
 ### darwin_x64
 - [ecstool](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/darwin_x64/ecstool)
 - [engage-cmd](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/darwin_x64/engage-cmd)
@@ -31,20 +19,9 @@ Check out the [change log](ChangeLog.md) for details for each version.
 - [rallypointd](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/darwin_x64/rallypointd)
 - [semsig](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/darwin_x64/semsig)
 ### ios
-- [libengage-shared.dylib (arm64)](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/ios/arm64/libengage-shared.dylib)
-- [libengage-shared.dylib (armv7)](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/ios/armv7/libengage-shared.dylib)
-- [libengage-shared.dylib (x86_64)](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/ios/x86_64/libengage-shared.dylib)
-### linux_arm32
-- [ecstool](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm32/ecstool)
-- [engage-cmd](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm32/engage-cmd)
-- [engagebridged](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm32/engagebridged)
-- [engagebridged-1.189.9026-0.armhf.rpm](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm32/engagebridged-1.189.9026-0.armhf.rpm)
-- [engagebridged_1.189.9026-0_armhf.deb](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm32/engagebridged_1.189.9026-0_armhf.deb)
-- [libengage-shared.so](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm32/libengage-shared.so)
-- [rallypointd](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm32/rallypointd)
-- [rallypointd-1.189.9026-0.armhf.rpm](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm32/rallypointd-1.189.9026-0.armhf.rpm)
-- [rallypointd_1.189.9026-0_armhf.deb](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm32/rallypointd_1.189.9026-0_armhf.deb)
-- [semsig](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm32/semsig)
+- [libengage-shared.dylib](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/ios/arm64/libengage-shared.dylib)
+- [libengage-shared.dylib](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/ios/armv7/libengage-shared.dylib)
+- [libengage-shared.dylib](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/ios/x86_64/libengage-shared.dylib)
 ### linux_arm64
 - [ecstool](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm64/ecstool)
 - [engage-cmd](https://bintray.com/rallytac/pub/download_file?file_path=1.189.9026/linux_arm64/engage-cmd)
